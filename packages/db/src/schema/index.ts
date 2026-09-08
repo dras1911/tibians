@@ -12,6 +12,7 @@ export * from './auctions';
 export * from './auction-relations';
 export * from './time-series';
 export * from './calculator';
+export * from './calculator-config';
 export * from './valuation';
 export * from './ops';
 export * from './content';
@@ -24,6 +25,7 @@ export * from './views';
 import * as auctionRelations from './auction-relations';
 import * as auctions from './auctions';
 import * as calculator from './calculator';
+import * as calculatorConfig from './calculator-config';
 import * as content from './content';
 import * as ops from './ops';
 import * as reference from './reference';
@@ -37,6 +39,7 @@ export const schema = {
   ...auctionRelations,
   ...timeSeries,
   ...calculator,
+  ...calculatorConfig,
   ...valuation,
   ...ops,
   ...content,

@@ -26,6 +26,7 @@ import { schema } from './schema';
 
 export * from './schema';
 export * from './seed';
+export * from './config-loader';
 
 /**
  * Tworzy nowy pg.Pool + Drizzle wrapper.

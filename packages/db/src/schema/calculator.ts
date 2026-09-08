@@ -5,17 +5,10 @@
  * Stan normalnie żyje w URL (?voc=knight&skill=sword&...).
  * Te tabele TYLKO dla zapisanych/nazwanych buildów (Faza 4+).
  *
- * `calculator_config` — współczynniki formuł w DB, żeby zmieniać balans
- * bez deploya (loader z cache 60s — task 16).
+ * `calculator_config` — współczynniki formuł w DB (osobny plik
+ * `calculator-config.ts`, loader z cache 60s — task 16).
  */
-import {
-  index,
-  jsonb,
-  pgTable,
-  text,
-  timestamp,
-  uuid,
-} from 'drizzle-orm/pg-core';
+import { index, jsonb, pgTable, text, timestamp, uuid } from 'drizzle-orm/pg-core';
 
 /* ════════════════════════════════════════════════════════════════
  *  CALCULATOR_SAVES — zapisane buildy kalkulatorów
@@ -42,24 +35,5 @@ export const calculatorSaves = pgTable(
   ],
 );
 
-/* ════════════════════════════════════════════════════════════════
- *  CALCULATOR_CONFIG — współczynniki formuł (klucz → JSONB)
- *  Przykłady: 'exercise.weapon.durable.charges', 'stamina.regen.premium'
- *  Seed w `packages/db/src/seed/calculator-config.ts`.
- * ════════════════════════════════════════════════════════════════ */
-
-export const calculatorConfig = pgTable('calculator_config', {
-  key: text('key').primaryKey(), // 'exercise.weapon.durable.charges'
-  value: jsonb('value')
-    .$type<unknown>() // typ zależy od klucza — walidacja po stronie loadera
-    .notNull(),
-  description: text('description'),
-  updatedAt: timestamp('updated_at', { withTimezone: true })
-    .notNull()
-    .defaultNow(),
-});
-
 export type CalculatorSave = typeof calculatorSaves.$inferSelect;
 export type NewCalculatorSave = typeof calculatorSaves.$inferInsert;
-export type CalculatorConfig = typeof calculatorConfig.$inferSelect;
-export type NewCalculatorConfig = typeof calculatorConfig.$inferInsert;

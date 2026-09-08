@@ -14,19 +14,18 @@
 import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
 import { sql } from 'drizzle-orm';
 
-import {
-  calculatorConfig,
-  imbuements,
-  schema,
-  valuationRules,
-} from '../schema';
+import { imbuements, schema, valuationRules } from '../schema';
 
-import { CALCULATOR_CONFIG_SEED, toCalculatorConfigRows } from './calculator-config';
+import {
+  CALCULATOR_CONFIG_SEED,
+  seedCalculatorConfig,
+  toCalculatorConfigRows,
+} from './calculator-config';
 import { IMBUEMENTS_SEED, toImbuementRows } from './imbuements';
 import { VALUATION_RULES_SEED, toValuationRuleRows } from './valuation-rules';
 
 export { CALCULATOR_CONFIG_SEED, IMBUEMENTS_SEED, VALUATION_RULES_SEED };
-export { toCalculatorConfigRows, toImbuementRows, toValuationRuleRows };
+export { seedCalculatorConfig, toCalculatorConfigRows, toImbuementRows, toValuationRuleRows };
 
 export interface SeedReport {
   readonly calculatorConfig: number;
@@ -45,22 +44,7 @@ export async function runSeeds(
   const started = Date.now();
 
   // ── 1. calculator_config ────────────────────────────────────
-  const cfgRows = toCalculatorConfigRows();
-  const cfgInserted = await db
-    .insert(calculatorConfig)
-    .values(cfgRows)
-    .onConflictDoUpdate({
-      target: calculatorConfig.key,
-      set: {
-        value: sql`excluded.value`,
-        description: sql`excluded.description`,
-        updatedAt: sql`now()`,
-      },
-    });
-  const cfgCount =
-    'rowCount' in cfgInserted && typeof cfgInserted.rowCount === 'number'
-      ? cfgInserted.rowCount
-      : cfgRows.length;
+  const cfgCount = await seedCalculatorConfig(db);
 
   // ── 2. valuation_rules ──────────────────────────────────────
   const ruleRows = toValuationRuleRows();

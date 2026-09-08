@@ -195,3 +195,85 @@ export function safeXpForLevel(level: number): CalculatorResult<bigint> {
     throw error;
   }
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// xpToTarget(from, to) → bigint (T15)
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * Ile XP potrzeba, żeby przejść z `from` do `to` (oba poziomy jako integer).
+ *
+ * - Dla `from === to` zwraca `0n` (już tam jesteśmy).
+ * - Dla `from > to` zwraca `0n` (nie potrzebujesz XP, żeby „zejść" z poziomu).
+ * - Dla `to > MAX_LEVEL` rzuca `RangeError` (limit Tibii).
+ *
+ * **Formuła TibiaWiki Experience Table** — różnica dwóch wartości `xpForLevel`:
+ *
+ *   xpToTarget(from, to) = xpForLevel(to) − xpForLevel(from)
+ *
+ * @param from - obecny level (integer ≥ 0)
+ * @param to - docelowy level (integer ≥ 0)
+ * @returns różnica XP jako bigint ≥ 0
+ * @throws RangeError gdy `from` lub `to` są poza zakresem
+ *
+ * @example
+ * ```ts
+ * xpToTarget(8, 100);    // → 15_690_600n (= 15_694_800 − 4_200)
+ * xpToTarget(100, 200);  // → 113_695_000n (= 129_389_800 − 15_694_800)
+ * xpToTarget(200, 200);  // → 0n
+ * xpToTarget(200, 100);  // → 0n (już powyżej targetu)
+ * ```
+ *
+ * Source: https://tibia.fandom.com/wiki/Experience_Table
+ */
+export function xpToTarget(from: number, to: number): bigint {
+  if (!Number.isInteger(from)) {
+    throw new RangeError(
+      `[@tibians/calc] xpToTarget: from musi być integerem, otrzymano ${from}`,
+    );
+  }
+  if (!Number.isInteger(to)) {
+    throw new RangeError(
+      `[@tibians/calc] xpToTarget: to musi być integerem, otrzymano ${to}`,
+    );
+  }
+  if (from < 0) {
+    throw new RangeError(
+      `[@tibians/calc] xpToTarget: from nie może być ujemny, otrzymano ${from}`,
+    );
+  }
+  if (to > MAX_LEVEL) {
+    throw new RangeError(
+      `[@tibians/calc] xpToTarget: to > ${MAX_LEVEL} jest poza zakresem Tibii, otrzymano ${to}`,
+    );
+  }
+  if (from >= to) return 0n;
+  return xpForLevel(to) - xpForLevel(from);
+}
+
+/**
+ * Wariant `xpToTarget` zwracający `CalculatorResult<bigint>` (spójne Result API).
+ *
+ * @example
+ * ```ts
+ * const r = safeXpToTarget(8, 100);
+ * if (!r.ok) return r;
+ * const xpNeeded = r.value; // → 15_690_600n
+ * ```
+ */
+export function safeXpToTarget(
+  from: number,
+  to: number,
+): CalculatorResult<bigint> {
+  try {
+    return { ok: true, value: xpToTarget(from, to) };
+  } catch (error) {
+    if (error instanceof RangeError) {
+      return {
+        ok: false,
+        error: validationError("XP_LEVEL_OUT_OF_RANGE", error.message),
+      };
+    }
+    throw error;
+  }
+}
