@@ -1,0 +1,27 @@
+{
+  "myCharacters": {
+    "title": "Moje postacie",
+    "description": "Zapisane postacie przechowywane lokalnie w Twojej przeglądarce.",
+    "emptyState": "Nie masz jeszcze zapisanych postaci. Utwórz nową w Workspace.",
+    "createNew": "Utwórz nową",
+    "edit": "Edytuj",
+    "duplicate": "Duplikuj",
+    "delete": "Usuń",
+    "deleteConfirmTitle": "Usunąć postać?",
+    "deleteConfirmMessage": "Czy na pewno usunąć „{label}\"? Tej operacji nie można cofnąć.",
+    "deleteConfirmCancel": "Anuluj",
+    "deleteConfirmConfirm": "Usuń",
+    "save": "Zapisz",
+    "saveCurrent": "Zapisz bieżącą",
+    "saveLimitReached": "Limit osiągnięty — zaloguj się, aby usunąć ograniczenie",
+    "upgradeCTA": "Zaloguj się, aby zapisywać bez limitu",
+    "count": "{count, plural, one {# postać} few {# postacie} many {# postaci} other {# postaci}}",
+    "level": "Poziom {level}",
+    "sourceAuction": "Aukcja",
+    "sourceManual": "Ręczna",
+    "sourceImported": "Import",
+    "updatedAt": "Zaktualizowano {date}",
+    "limitBadge": "{count}/{limit}",
+    "limitBadgeUnlimited": "∞"
+  }
+}

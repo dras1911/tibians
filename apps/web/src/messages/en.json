@@ -1,0 +1,27 @@
+{
+  "myCharacters": {
+    "title": "My Characters",
+    "description": "Saved characters stored locally in your browser.",
+    "emptyState": "You don't have any saved characters yet. Create a new one in the Workspace.",
+    "createNew": "Create new",
+    "edit": "Edit",
+    "duplicate": "Duplicate",
+    "delete": "Delete",
+    "deleteConfirmTitle": "Delete character?",
+    "deleteConfirmMessage": "Are you sure you want to delete \"{label}\"? This cannot be undone.",
+    "deleteConfirmCancel": "Cancel",
+    "deleteConfirmConfirm": "Delete",
+    "save": "Save",
+    "saveCurrent": "Save current",
+    "saveLimitReached": "Limit reached — log in to remove the restriction",
+    "upgradeCTA": "Log in to save without limits",
+    "count": "{count, plural, one {# character} other {# characters}}",
+    "level": "Level {level}",
+    "sourceAuction": "Auction",
+    "sourceManual": "Manual",
+    "sourceImported": "Import",
+    "updatedAt": "Updated {date}",
+    "limitBadge": "{count}/{limit}",
+    "limitBadgeUnlimited": "∞"
+  }
+}
