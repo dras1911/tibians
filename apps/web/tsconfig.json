@@ -15,7 +15,17 @@
         "name": "next"
       }
     ],
-    "allowJs": true
+    "allowJs": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@tibians/ui": ["../../packages/ui/src/index.ts"],
+      "@tibians/ui/*": ["../../packages/ui/src/*"],
+      "@tibians/db": ["../../packages/db/src/index.ts"],
+      "@tibians/shared": ["../../packages/shared/src/index.ts"],
+      "@tibians/calc": ["../../packages/calc/src/index.ts"],
+      "@tibians/character-context": ["../../packages/character-context/src/index.ts"]
+    }
   },
   "include": [
     "next-env.d.ts",

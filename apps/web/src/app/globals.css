@@ -1,0 +1,52 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/*
+ * ★ Tibians tokens — single source of truth for OKLCH palette + typography.
+ * Imported from @tibians/ui so dark/light/typography rules ship from one file
+ * (no hardcoded colors anywhere in apps/web — see tailwind.config.ts).
+ */
+@import "@tibians/ui/styles.css";
+
+@layer base {
+  /*
+   * Anti-FOUC is handled by the inline <script> in app/layout.tsx.
+   * This block sets the global border-color + body colors so every
+   * component without explicit colors still feels coherent.
+   */
+  * {
+    border-color: var(--border-default);
+  }
+
+  html {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--bg-base);
+    color: var(--text-primary);
+    font-family: var(--font-sans);
+    font-size: var(--text-sm);
+    line-height: 1.55;
+    min-height: 100vh;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* Focus-visible handled in tokens.css but we repeat the rule here so a
+   * standalone preview without tokens still respects WCAG 2.2 AA. */
+  :focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Disable focus ring on mouse-only focus (keyboard only). */
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
