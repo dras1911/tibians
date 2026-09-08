@@ -16,9 +16,22 @@
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
   "dependencies": {
-    "zod": "^3.23.8"
+    "use-sync-external-store": "^1.4.0",
+    "zod": "^3.23.8",
+    "zustand": "^5.0.0"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
   },
   "devDependencies": {
+    "@types/react": "^19.0.0",
+    "@types/use-sync-external-store": "^0.0.6",
+    "react": "^19.0.0",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }
