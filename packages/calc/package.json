@@ -15,6 +15,14 @@
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit"
   },
+  "peerDependencies": {
+    "@tibians/character-context": "workspace:*"
+  },
+  "peerDependenciesMeta": {
+    "@tibians/character-context": {
+      "optional": false
+    }
+  },
   "devDependencies": {
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
