@@ -1,0 +1,101 @@
+{
+  "Common": {
+    "appName": "Tibians",
+    "skipToContent": "Przejdź do treści",
+    "openMenu": "Otwórz menu",
+    "closeMenu": "Zamknij menu",
+    "loading": "Ładowanie…",
+    "privacyPolicy": "Polityka prywatności",
+    "language": "Język"
+  },
+  "Nav": {
+    "brand": "Tibians",
+    "bazaar": "Bazaar",
+    "calculators": "Kalkulatory",
+    "reference": "Referencje",
+    "bosses": "Bosses",
+    "blog": "Blog",
+    "home": "Strona główna",
+    "openMenuAria": "Otwórz menu nawigacji",
+    "closeMenuAria": "Zamknij menu nawigacji",
+    "themeToggle": {
+      "label": "Motyw",
+      "light": "Jasny",
+      "dark": "Ciemny",
+      "system": "System"
+    },
+    "locale": {
+      "label": "Język",
+      "pl": "Polski",
+      "en": "English"
+    },
+    "megaMenu": {
+      "openAria": "Otwórz menu {section}",
+      "closeAria": "Zamknij menu"
+    }
+  },
+  "Bazaar": {
+    "title": "Bazaar",
+    "all": "Wszystkie aukcje",
+    "endingSoon": "Kończące się",
+    "statistics": "Statystyki",
+    "compare": "Porównaj",
+    "history": "Historia"
+  },
+  "Calculators": {
+    "title": "Kalkulatory",
+    "skillsTraining": {
+      "label": "Skills & Training",
+      "exerciseWeapons": "Exercise Weapons",
+      "trueSkill": "True Skill",
+      "stamina": "Stamina"
+    },
+    "stamina": "Stamina",
+    "valuation": {
+      "label": "Wycena postaci",
+      "characterValue": "Character Value"
+    },
+    "imbuementCharms": {
+      "label": "Imbuement & Charms",
+      "imbuement": "Imbuement cost",
+      "weeklyTasks": "Weekly Tasks",
+      "charmsDamage": "Charms Damage"
+    },
+    "experience": {
+      "label": "Experience",
+      "xp": "Experience / Levelling",
+      "leech": "Leech",
+      "expShare": "Exp Share"
+    },
+    "wheelOfDestiny": "Wheel of Destiny"
+  },
+  "Reference": {
+    "title": "Referencje",
+    "items": "Przedmioty",
+    "imbuements": "Imbuements",
+    "worlds": "Światy",
+    "outfits": "Outfits",
+    "mounts": "Mounts"
+  },
+  "Breadcrumb": {
+    "aria": "Okruszki nawigacji",
+    "home": "Strona główna"
+  },
+  "Footer": {
+    "tagline": "Kalkulatory, wycena postaci i analiza Char Bazaar dla graczy Tibii.",
+    "sections": {
+      "product": "Produkt",
+      "legal": "Prawne"
+    },
+    "links": {
+      "bazaar": "Bazaar",
+      "calculators": "Kalkulatory",
+      "reference": "Referencje",
+      "bosses": "Bosses",
+      "blog": "Blog"
+    },
+    "cipsoftDisclaimer": "Tibia is a registered trademark of CipSoft GmbH. Tibia and all products related to Tibia are copyright by CipSoft GmbH.",
+    "notAffiliated": "Tibians nie jest powiązany z CipSoft GmbH.",
+    "copyright": "© {year} Tibians — community hub dla graczy Tibii. Wszelkie prawa zastrzeżone."
+  }
+}

@@ -1,0 +1,101 @@
+{
+  "Common": {
+    "appName": "Tibians",
+    "skipToContent": "Skip to main content",
+    "openMenu": "Open menu",
+    "closeMenu": "Close menu",
+    "loading": "Loading…",
+    "privacyPolicy": "Privacy policy",
+    "language": "Language"
+  },
+  "Nav": {
+    "brand": "Tibians",
+    "bazaar": "Bazaar",
+    "calculators": "Calculators",
+    "reference": "Reference",
+    "bosses": "Bosses",
+    "blog": "Blog",
+    "home": "Home",
+    "openMenuAria": "Open navigation menu",
+    "closeMenuAria": "Close navigation menu",
+    "themeToggle": {
+      "label": "Theme",
+      "light": "Light",
+      "dark": "Dark",
+      "system": "System"
+    },
+    "locale": {
+      "label": "Language",
+      "pl": "Polski",
+      "en": "English"
+    },
+    "megaMenu": {
+      "openAria": "Open {section} menu",
+      "closeAria": "Close menu"
+    }
+  },
+  "Bazaar": {
+    "title": "Bazaar",
+    "all": "All auctions",
+    "endingSoon": "Ending soon",
+    "statistics": "Statistics",
+    "compare": "Compare",
+    "history": "History"
+  },
+  "Calculators": {
+    "title": "Calculators",
+    "skillsTraining": {
+      "label": "Skills & Training",
+      "exerciseWeapons": "Exercise Weapons",
+      "trueSkill": "True Skill",
+      "stamina": "Stamina"
+    },
+    "stamina": "Stamina",
+    "valuation": {
+      "label": "Character valuation",
+      "characterValue": "Character Value"
+    },
+    "imbuementCharms": {
+      "label": "Imbuement & Charms",
+      "imbuement": "Imbuement cost",
+      "weeklyTasks": "Weekly Tasks",
+      "charmsDamage": "Charms Damage"
+    },
+    "experience": {
+      "label": "Experience",
+      "xp": "Experience / Levelling",
+      "leech": "Leech",
+      "expShare": "Exp Share"
+    },
+    "wheelOfDestiny": "Wheel of Destiny"
+  },
+  "Reference": {
+    "title": "Reference",
+    "items": "Items",
+    "imbuements": "Imbuements",
+    "worlds": "Worlds",
+    "outfits": "Outfits",
+    "mounts": "Mounts"
+  },
+  "Breadcrumb": {
+    "aria": "Breadcrumb",
+    "home": "Home"
+  },
+  "Footer": {
+    "tagline": "Calculators, character valuation and Char Bazaar analytics for Tibia players.",
+    "sections": {
+      "product": "Product",
+      "legal": "Legal"
+    },
+    "links": {
+      "bazaar": "Bazaar",
+      "calculators": "Calculators",
+      "reference": "Reference",
+      "bosses": "Bosses",
+      "blog": "Blog"
+    },
+    "cipsoftDisclaimer": "Tibia is a registered trademark of CipSoft GmbH. Tibia and all products related to Tibia are copyright by CipSoft GmbH.",
+    "notAffiliated": "Tibians is not affiliated with CipSoft GmbH.",
+    "copyright": "© {year} Tibians — community hub for Tibia players. All rights reserved."
+  }
+}

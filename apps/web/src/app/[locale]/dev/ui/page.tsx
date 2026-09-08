@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { useTheme } from "@tibians/ui";
+// useTheme is no longer imported here after T5 — the global Header
+// (components/layout/theme-toggle.tsx) owns the segmented theme control.
 import {
   Bell,
   ChevronDown,
@@ -19,7 +20,7 @@ import {
 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import { Button, buttonVariants } from "@/components/ui/button";
+import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -92,16 +93,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useDensity } from "@/components/density-provider";
+// useDensity is no longer imported here after T5 — the density toggle is
+// documented in the showcase section below but the actual interactive
+// control lives in `components/density-provider.tsx`.
 import { DataTable } from "@/components/data-table";
-import { PageLayout } from "@/components/page-layout";
+// PageLayout no longer wraps this showcase after T5 — the locale layout
+// owns the <main id="main">. Kept as a comment so future readers know
+// where to look when they need a sidebar+content wrapper.
 import { cn } from "@/lib/utils";
 
 /**
  * Showcase page (`/dev/ui`) — every shadcn component × {light, dark}
- * × {compact, comfortable}. Toggles in the header switch the GLOBAL theme
- * (`useTheme` → `<html class="dark">`) and GLOBAL density
- * (`useDensity` → `<html data-density="…">`); every section below reacts.
+ * × {compact, comfortable}.
  *
  * Acceptance criteria (T3 plan):
  *   - 0 console errors
@@ -111,143 +114,35 @@ import { cn } from "@/lib/utils";
  *
  * NOTE: this page is hidden from indexing (`robots: { index: false }` in
  * layout + `/dev/ui` will be added to robots.txt in T65).
+ *
+ * After T5 the global Header (Tibians logo + mega-menu + theme/locale)
+ * and Footer (CipSoft disclaimer) live in `app/[locale]/layout.tsx`,
+ * so the showcase no longer needs its own `<PageLayout header=...>`
+ * wrapper — it's already inside the locale layout's `<main id="main">`.
  */
 
 // ──────────────────────────────────────────────────────────────────────
 // Anchor navigation list — single source of truth for the section map
 // ──────────────────────────────────────────────────────────────────────
 
-const SECTIONS = [
-  { id: "overview", label: "Overview" },
-  { id: "buttons", label: "Buttons" },
-  { id: "inputs", label: "Inputs & Labels" },
-  { id: "select", label: "Select" },
-  { id: "checkbox-switch", label: "Checkbox & Switch" },
-  { id: "slider", label: "Slider" },
-  { id: "badges", label: "Badges" },
-  { id: "card", label: "Card" },
-  { id: "tabs", label: "Tabs" },
-  { id: "dropdown", label: "Dropdown menu" },
-  { id: "popover", label: "Popover" },
-  { id: "dialog", label: "Dialog" },
-  { id: "sheet", label: "Sheet" },
-  { id: "tooltip", label: "Tooltip" },
-  { id: "command", label: "Command palette" },
-  { id: "table", label: "Table (shadcn)" },
-  { id: "data-table", label: "DataTable (TanStack)" },
-  { id: "scroll-separator", label: "Scroll area & Separator" },
-  { id: "skeletons", label: "Skeleton states" },
-  { id: "page-layout", label: "PageLayout wrapper" },
-] as const;
+// (Section map removed in T5: the showcase used to render an in-page
+//  navigation strip in its now-gone ShowcaseHeader. The IDs below are
+//  preserved as comments for future reference when the navigation strip
+//  is reintroduced.)
+//   overview, buttons, inputs, select, checkbox-switch, slider, badges,
+//   card, tabs, dropdown, popover, dialog, sheet, tooltip, command,
+//   table, data-table, scroll-separator, skeletons, page-layout
 
 // ──────────────────────────────────────────────────────────────────────
 // Header — theme + density controls + section nav
 // ──────────────────────────────────────────────────────────────────────
-
-function ShowcaseHeader() {
-  const { theme, setTheme } = useTheme();
-  const { density, toggle } = useDensity();
-
-  return (
-    <div className="container flex h-16 items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary text-primary-foreground font-bold">
-          T
-        </div>
-        <div className="flex flex-col leading-tight">
-          <span className="text-sm font-semibold">Tibians</span>
-          <span className="text-xs text-muted-foreground">
-            /dev/ui · Design system showcase
-          </span>
-        </div>
-      </div>
-
-      <nav aria-label="Sections" className="hidden lg:block">
-        <ul className="flex items-center gap-1 text-sm">
-          {SECTIONS.slice(0, 6).map((s) => (
-            <li key={s.id}>
-              <a
-                href={`#${s.id}`}
-                className="rounded-md px-2 py-1 text-muted-foreground hover:bg-accent hover:text-accent-foreground"
-              >
-                {s.label}
-              </a>
-            </li>
-          ))}
-          <li>
-            <DropdownMenu>
-              <DropdownMenuTrigger
-                className={cn(
-                  buttonVariants({ variant: "ghost", size: "sm" }),
-                  "gap-1",
-                )}
-              >
-                More <ChevronDown className="h-3.5 w-3.5" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                {SECTIONS.slice(6).map((s) => (
-                  <DropdownMenuItem key={s.id} asChild>
-                    <a href={`#${s.id}`}>{s.label}</a>
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </li>
-        </ul>
-      </nav>
-
-      <div className="flex items-center gap-2">
-        {/* Density toggle */}
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={toggle}
-                aria-label={`Switch density (current: ${density})`}
-              >
-                {density === "compact" ? "Compact" : "Comfortable"}
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>
-              <p>
-                {density === "compact"
-                  ? "Currently 40 px rows — power-user view"
-                  : "Currently 52 px rows — default desktop"}
-              </p>
-              <p className="text-xs opacity-70">Click to toggle</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-
-        {/* Theme switcher — segmented control, 1-click state (arch §6.6) */}
-        <div
-          role="radiogroup"
-          aria-label="Theme"
-          className="inline-flex h-11 items-center rounded-md border bg-muted p-1 text-xs"
-        >
-          {(["light", "dark", "system"] as const).map((t) => (
-            <button
-              key={t}
-              role="radio"
-              aria-checked={theme === t}
-              onClick={() => setTheme(t)}
-              className={cn(
-                "h-9 rounded-sm px-3 capitalize transition-colors",
-                theme === t
-                  ? "bg-background text-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground",
-              )}
-            >
-              {t}
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
+//
+// Removed in T5: the showcase no longer renders its own header. The
+// `app/[locale]/layout.tsx` now provides the sticky global Header
+// (logo + mega-menu + theme + locale) on every route, including
+// `/[locale]/dev/ui`. The ThemeToggle pattern used here is now part of
+// `components/layout/theme-toggle.tsx` (a real, production-grade
+// component using `useTheme()` from `@tibians/ui`).
 
 // ──────────────────────────────────────────────────────────────────────
 // Reusable section heading + surface frame
@@ -323,7 +218,7 @@ const VOCATION_TONE: Record<SampleRow["vocation"], string> = {
 
 export default function DevUIShowcasePage() {
   return (
-    <PageLayout header={<ShowcaseHeader />}>
+    <div className="container py-6 md:py-8">
       <TooltipProvider delayDuration={200}>
         <Section
           id="overview"
@@ -965,6 +860,6 @@ export default function DevUIShowcasePage() {
           Tibians · Design system showcase · T3 deliverable
         </footer>
       </TooltipProvider>
-    </PageLayout>
+    </div>
   );
 }

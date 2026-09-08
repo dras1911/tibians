@@ -3,77 +3,52 @@ import * as React from "react";
 import { cn } from "@/lib/utils";
 
 /**
- * PageLayout — header + optional sidebar + main + footer skeleton
- * (architecture §4.2). Used by every page after Task 5 wraps it with the
- * CipSoft footer + mega-menu header.
+ * PageLayout — INNER page layout helper. Provides an optional left
+ * sidebar + a content area inside a `container`.
  *
- * Slots are intentionally `ReactNode` so consumers can pass anything from
- * a string to a fully composed mega-menu. The grid layout uses CSS
- * variables and container queries; the sidebar collapses to the top of the
- * main column below `md` (768 px) — see task 5 for the Sheet-based
- * mobile menu replacement.
+ * Used by Bazaar (`/bazaar`), calculator pages (`/calculators/*`),
+ * reference (`/reference/*`) etc. — any page that needs a sticky
+ * sidebar (filters, table of contents, …).
+ *
+ * IMPORTANT: this component does NOT render `<header>` or `<footer>` —
+ * the locale layout (`app/[locale]/layout.tsx`) owns those slots so the
+ * CipSoft disclaimer (architecture §18.3) is guaranteed to appear on
+ * every route.
+ *
+ * IMPORTANT: this component does NOT render `<main>` either — the locale
+ * layout owns the single `<main id="main">` (skip-link target). When a
+ * page wraps itself in `<PageLayout>`, the children render inside the
+ * locale layout's main. Pages that don't use PageLayout still get the
+ * main from the locale layout.
  */
 interface PageLayoutProps {
-  /** Sticky header slot (logo, mega-menu, theme + locale switches). */
-  header?: React.ReactNode;
   /** Optional left rail. Hidden on `<md` viewports. */
   sidebar?: React.ReactNode;
   /** Main content. */
   children: React.ReactNode;
-  /** Optional footer (CipSoft disclaimer + secondary nav). */
-  footer?: React.ReactNode;
   className?: string;
 }
 
-function PageLayout({
-  header,
-  sidebar,
-  children,
-  footer,
-  className,
-}: PageLayoutProps) {
+function PageLayout({ sidebar, children, className }: PageLayoutProps) {
   return (
-    <div
-      className={cn(
-        "flex min-h-screen flex-col bg-background text-foreground",
-        className,
-      )}
-    >
-      {header ? (
-        <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
-          {header}
-        </header>
-      ) : null}
+    <div className={cn("container py-6 md:py-8", className)}>
+      <div
+        className={cn(
+          "grid gap-6",
+          sidebar ? "grid-cols-1 md:grid-cols-[16rem_1fr]" : "grid-cols-1",
+        )}
+      >
+        {sidebar ? (
+          <aside
+            className="hidden md:block"
+            aria-label="Section navigation"
+          >
+            <div className="sticky top-20">{sidebar}</div>
+          </aside>
+        ) : null}
 
-      <div className="container flex-1 py-6 md:py-8">
-        <div
-          className={cn(
-            "grid gap-6",
-            sidebar
-              ? "grid-cols-1 md:grid-cols-[16rem_1fr]"
-              : "grid-cols-1",
-          )}
-        >
-          {sidebar ? (
-            <aside
-              className="hidden md:block"
-              aria-label="Section navigation"
-            >
-              <div className="sticky top-20">{sidebar}</div>
-            </aside>
-          ) : null}
-
-          <main id="main-content" className="min-w-0">
-            {children}
-          </main>
-        </div>
+        <div className="min-w-0">{children}</div>
       </div>
-
-      {footer ? (
-        <footer className="border-t bg-background">
-          <div className="container py-6">{footer}</div>
-        </footer>
-      ) : null}
     </div>
   );
 }
