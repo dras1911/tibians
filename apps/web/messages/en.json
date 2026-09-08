@@ -44,6 +44,111 @@
   },
   "Calculators": {
     "title": "Calculators",
+    "index": {
+      "title": "Tibia Calculators",
+      "subtitle": "14 free tools for planning training, valuing your character and analysing results.",
+      "open": "Open",
+      "comingSoon": "Coming soon",
+      "categories": {
+        "skillsTraining": "Skills & Training",
+        "stamina": "Stamina",
+        "valuation": "Character valuation",
+        "imbuementCharms": "Imbuement & Charms",
+        "experience": "Experience",
+        "wheel": "Wheel & Planners"
+      },
+      "items": {
+        "exercise-weapons": {
+          "title": "Exercise Weapons",
+          "description": "Calculate how many exercise weapons you need for a target skill — with loyalty, double event and TC threshold."
+        },
+        "skills": {
+          "title": "Training / Skills",
+          "description": "Time and cost to train from current to target skill on any weapon."
+        },
+        "true-skill": {
+          "title": "True Skill",
+          "description": "Convert the displayed skill with loyalty bonus to base skill — the same value shown in highscores and Bazaar."
+        },
+        "blessings": {
+          "title": "Blessings",
+          "description": "Blessing cost and XP-loss protection at your level."
+        },
+        "stamina": {
+          "title": "Stamina",
+          "description": "Time to full stamina in hunt and offline modes — premium bonuses and regeneration windows included."
+        },
+        "character-value": {
+          "title": "Character Value",
+          "description": "Character valuation in TC: skills, features, progression, cosmetics and assets — with expandable breakdown."
+        },
+        "imbuement": {
+          "title": "Imbuement cost",
+          "description": "Basic / Powerful / Epic tier costs per imbuement and astral source requirements."
+        },
+        "weekly-tasks": {
+          "title": "Weekly Tasks",
+          "description": "Maximum XP per weekly task by level and difficulty (Beginner / Adept / Expert / Master)."
+        },
+        "charms": {
+          "title": "Charms Damage",
+          "description": "Damage and percent bonus from charms for your vocation, skill and monster type."
+        },
+        "experience": {
+          "title": "Experience / Levelling",
+          "description": "Total XP to a level, delta to target, and time at a given XP/h."
+        },
+        "leech": {
+          "title": "Leech",
+          "description": "Leech percent from a party accounting for level differences between members."
+        },
+        "exp-share": {
+          "title": "Exp Share",
+          "description": "XP split in a party using Tibia's formula based on level distance."
+        },
+        "planners-charms": {
+          "title": "Charm Planner",
+          "description": "Optimal charm point allocation for your vocation and build with a shareable link."
+        },
+        "planners-wheel": {
+          "title": "Wheel of Destiny Planner",
+          "description": "Wheel of Destiny builds per vocation — with descriptions and gem recommendations."
+        }
+      }
+    },
+    "layout": {
+      "backToIndex": "All calculators",
+      "formLabel": "Parameters",
+      "resultLabel": "Result",
+      "descriptionLabel": "Description",
+      "openInWorkspace": "Open in Workspace",
+      "calculatorNotFoundTitle": "Calculator not found",
+      "calculatorNotFoundDescription": "This calculator does not exist yet or is under construction.",
+      "calculatorNotFoundCta": "Back to the calculators list"
+    },
+    "resultDisplay": {
+      "primaryLabel": "Result",
+      "copyLink": "Copy link",
+      "copyLinkCopied": "Copied",
+      "copyLinkFailed": "Could not copy",
+      "recommendationLabel": "Recommendation",
+      "recommendationPositive": "Worth it",
+      "recommendationNegative": "Not worth it",
+      "recommendationNeutral": "Worth considering",
+      "recommendationWarning": "Warning",
+      "recommendationInfo": "Hint",
+      "recommendationSuccess": "Success",
+      "emptyTitle": "No result yet",
+      "emptyDescription": "Fill in the form to see the result.",
+      "primaryValueLabel": "Primary value",
+      "secondaryLabel": "Additional values"
+    },
+    "errors": {
+      "generic": "Something went wrong. Please try again.",
+      "invalidInput": "Invalid input.",
+      "missingField": "This field is required",
+      "calcFailed": "Calculation failed. Check your inputs."
+    },
     "skillsTraining": {
       "label": "Skills & Training",
       "exerciseWeapons": "Exercise Weapons",
@@ -79,7 +184,8 @@
   },
   "Breadcrumb": {
     "aria": "Breadcrumb",
-    "home": "Home"
+    "home": "Home",
+    "calculators": "Calculators"
   },
   "Footer": {
     "tagline": "Calculators, character valuation and Char Bazaar analytics for Tibia players.",

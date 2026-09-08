@@ -44,6 +44,111 @@
   },
   "Calculators": {
     "title": "Kalkulatory",
+    "index": {
+      "title": "Kalkulatory Tibii",
+      "subtitle": "14 darmowych narzędzi do planowania treningu, wyceny postaci i analizy wyników.",
+      "open": "Otwórz",
+      "comingSoon": "Wkrótce",
+      "categories": {
+        "skillsTraining": "Skills & Training",
+        "stamina": "Stamina",
+        "valuation": "Wycena postaci",
+        "imbuementCharms": "Imbuement & Charms",
+        "experience": "Experience",
+        "wheel": "Wheel & Planners"
+      },
+      "items": {
+        "exercise-weapons": {
+          "title": "Exercise Weapons",
+          "description": "Oblicz ile broni exercise zużyjesz do konkretnego skilla — z uwzględnieniem loyalty, double event i progu TC."
+        },
+        "skills": {
+          "title": "Training / Skills",
+          "description": "Czas i koszt treningu od aktualnego do docelowego skilla na dowolnej broni."
+        },
+        "true-skill": {
+          "title": "True Skill",
+          "description": "Przelicz wyświetlany skill z bonusem lojalności na bazowy — tak jak widzą go highscores i Bazaar."
+        },
+        "blessings": {
+          "title": "Blessings",
+          "description": "Koszt błogosławieństw i ochrona XP przed śmiercią na danym poziomie."
+        },
+        "stamina": {
+          "title": "Stamina",
+          "description": "Czas do pełnej staminy w trybie hunt i offline — z bonusami premium i okienkami regeneracji."
+        },
+        "character-value": {
+          "title": "Character Value",
+          "description": "Wycena postaci w TC: skill, features, progression, cosmetics i aktywa — z rozwijalnym breakdownem."
+        },
+        "imbuement": {
+          "title": "Imbuement cost",
+          "description": "Koszt tierów Basic / Powerful / Epic dla każdego imbuementu i źródła astral items."
+        },
+        "weekly-tasks": {
+          "title": "Weekly Tasks",
+          "description": "Maksymalne XP za zadanie tygodniowe w zależności od poziomu i trudności (Beginner/Adept/Expert/Master)."
+        },
+        "charms": {
+          "title": "Charms Damage",
+          "description": "Obrażenia i procentowy bonus z charmów dla danej profesji, skilla i typu potwora."
+        },
+        "experience": {
+          "title": "Experience / Levelling",
+          "description": "Całkowite XP do poziomu, delta do celu i czas przy zadanym XP/h."
+        },
+        "leech": {
+          "title": "Leech",
+          "description": "Procent leech z party z uwzględnieniem różnicy poziomów między graczami."
+        },
+        "exp-share": {
+          "title": "Exp Share",
+          "description": "Podział XP w party zgodnie z formułą Tibii uwzględniającą dystans leveli."
+        },
+        "planners-charms": {
+          "title": "Charm Planner",
+          "description": "Optymalny rozkład punktów charm dla Twojej profesji i buildu z linkiem do udostępnienia."
+        },
+        "planners-wheel": {
+          "title": "Wheel of Destiny Planner",
+          "description": "Build Wheel of Destiny dla każdej profesji — z opisem i rekomendacjami gemów."
+        }
+      }
+    },
+    "layout": {
+      "backToIndex": "Wszystkie kalkulatory",
+      "formLabel": "Parametry",
+      "resultLabel": "Wynik",
+      "descriptionLabel": "Opis",
+      "openInWorkspace": "Otwórz w Workspace",
+      "calculatorNotFoundTitle": "Nie znaleziono kalkulatora",
+      "calculatorNotFoundDescription": "Ten kalkulator jeszcze nie istnieje lub jest w budowie.",
+      "calculatorNotFoundCta": "Wróć do listy kalkulatorów"
+    },
+    "resultDisplay": {
+      "primaryLabel": "Wynik",
+      "copyLink": "Kopiuj link",
+      "copyLinkCopied": "Skopiowano",
+      "copyLinkFailed": "Nie udało się skopiować",
+      "recommendationLabel": "Rekomendacja",
+      "recommendationPositive": "Opłaca się",
+      "recommendationNegative": "Nie opłaca się",
+      "recommendationNeutral": "Warto rozważyć",
+      "recommendationWarning": "Uwaga",
+      "recommendationInfo": "Wskazówka",
+      "recommendationSuccess": "Sukces",
+      "emptyTitle": "Brak wyniku",
+      "emptyDescription": "Wypełnij formularz, aby zobaczyć wynik.",
+      "primaryValueLabel": "Główna wartość",
+      "secondaryLabel": "Dodatkowe wartości"
+    },
+    "errors": {
+      "generic": "Coś poszło nie tak. Spróbuj ponownie.",
+      "invalidInput": "Nieprawidłowe dane wejściowe.",
+      "missingField": "Pole jest wymagane",
+      "calcFailed": "Nie udało się policzyć. Sprawdź dane."
+    },
     "skillsTraining": {
       "label": "Skills & Training",
       "exerciseWeapons": "Exercise Weapons",
@@ -79,7 +184,8 @@
   },
   "Breadcrumb": {
     "aria": "Okruszki nawigacji",
-    "home": "Strona główna"
+    "home": "Strona główna",
+    "calculators": "Kalkulatory"
   },
   "Footer": {
     "tagline": "Kalkulatory, wycena postaci i analiza Char Bazaar dla graczy Tibii.",
