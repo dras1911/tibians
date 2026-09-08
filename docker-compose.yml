@@ -1,0 +1,73 @@
+# Docker Compose — Tibians dev stack
+#
+# Services:
+#   - db        PostgreSQL 17 (alpine) — persistent via `postgres-data` volume
+#   - adminer   DB admin UI (dev only, port exposed in override)
+#   - tibiadata Self-hosted TibiaData API (MIT, ghcr.io/tibiadata/tibiadata-api-go)
+#
+# Dev ports are exposed in docker-compose.override.yml (see task 6).
+# Production profile is a separate task (task 71).
+
+name: tibians
+
+services:
+  db:
+    image: postgres:17-alpine
+    container_name: tibians-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tibians}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-tibians}
+      POSTGRES_DB: ${POSTGRES_DB:-tibians}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - tibians-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tibians} -d ${POSTGRES_DB:-tibians}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    labels:
+      - "com.tibians.service=db"
+
+  adminer:
+    image: adminer:latest
+    container_name: tibians-adminer
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - tibians-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    labels:
+      - "com.tibians.service=adminer"
+
+  tibiadata:
+    image: ghcr.io/tibiadata/tibiadata-api-go:latest
+    container_name: tibians-tibiadata
+    restart: unless-stopped
+    networks:
+      - tibians-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://localhost:8080/readyz || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    labels:
+      - "com.tibians.service=tibiadata"
+
+volumes:
+  postgres-data:
+
+networks:
+  tibians-net:
+    driver: bridge

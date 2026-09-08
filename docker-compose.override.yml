@@ -1,0 +1,20 @@
+# Docker Compose — dev override
+#
+# Exposes service ports on the host for local development.
+# Automatically merged with docker-compose.yml by `docker compose up`.
+#
+# Security: adminer is bound to 127.0.0.1 only (not 0.0.0.0) — DB admin UI
+# must never be reachable from the public network.
+
+services:
+  db:
+    ports:
+      - "5432:5432"
+
+  adminer:
+    ports:
+      - "127.0.0.1:${ADMINER_PORT:-8081}:8080"
+
+  tibiadata:
+    ports:
+      - "8080:8080"

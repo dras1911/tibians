@@ -1,0 +1,183 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  Tibians Design Tokens — OKLCH (percepcyjnie jednolita jasność)
+ *  Values copied 1:1 from architecture §6.1 — calibrated for WCAG AA in both
+ *  themes. Do NOT copy values 1:1 between themes: same perceptual weight, not
+ *  the same value (e.g. --accent light L=52% vs dark L=70%).
+ *
+ *  Light theme contrast (measured against --bg-base):
+ *    --text-primary   14.2:1 ✅ AAA
+ *    --text-secondary  7.1:1 ✅ AAA
+ *    --text-muted      4.6:1 ✅ AA
+ *
+ *  Dark theme contrast (measured against --bg-base):
+ *    --text-primary   13.1:1 ✅ AAA
+ *    --text-secondary  6.8:1 ✅ AA
+ *    --text-muted      4.5:1 ✅ AA
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  color-scheme: light;
+
+  /* ─── Powierzchnie — ciepła biel, nie kliniczna ────────────────────────── */
+  --bg-base:        oklch(98.5% 0.003 95);   /* tło strony */
+  --bg-surface:     oklch(100%  0     0  );   /* karty (delikatnie wyżej) */
+  --bg-elevated:    oklch(96.5% 0.004 95);   /* sidebar, dropdown */
+  --bg-inset:       oklch(94%   0.005 95);   /* pola input, wells */
+
+  /* ─── Tekst — 3 poziomy hierarchii ─────────────────────────────────────── */
+  --text-primary:   oklch(23%  0.012 265);   /* kontrast 14.2:1 ✅ AAA */
+  --text-secondary: oklch(45%  0.012 265);   /* kontrast  7.1:1 ✅ AAA */
+  --text-muted:     oklch(58%  0.010 265);   /* kontrast  4.6:1 ✅ AA  */
+
+  /* ─── Obramowania ──────────────────────────────────────────────────────── */
+  --border-subtle:  oklch(90%  0.005 265);
+  --border-default: oklch(84%  0.006 265);
+  --border-strong:  oklch(72%  0.008 265);
+
+  /* ─── Akcent — tibiańska zieleń, przygaszona (nie neonowa) ────────────── */
+  --accent:         oklch(52%  0.13 155);
+  --accent-hover:   oklch(46%  0.13 155);
+  --accent-subtle:  oklch(95%  0.03 155);    /* tła badge/chip */
+  --on-accent:      oklch(99%  0     0  );
+
+  /* ─── Semantyka stanu ──────────────────────────────────────────────────── */
+  --success:        oklch(55%  0.14 150);    /* okazja / poniżej wyceny */
+  --success-subtle: oklch(95%  0.04 150);
+  --warning:        oklch(70%  0.15 80 );    /* < 1h do końca */
+  --warning-subtle: oklch(96%  0.05 80 );
+  --danger:         oklch(55%  0.20 25 );    /* < 5 min / przepłacone */
+  --danger-subtle:  oklch(95%  0.04 25 );
+  --info:           oklch(58%  0.13 245);
+  --info-subtle:    oklch(96%  0.03 245);
+
+  /* ─── Vocation — 5 klas, rozróżnialne dla daltonistów (różna jasność) ─── */
+  --voc-knight:     oklch(55% 0.16 25 );     /* czerwień */
+  --voc-paladin:    oklch(68% 0.14 75 );     /* amber */
+  --voc-druid:      oklch(55% 0.13 150);     /* zieleń */
+  --voc-sorcerer:   oklch(52% 0.17 285);     /* fiolet */
+  --voc-monk:       oklch(58% 0.10 210);     /* cyan */
+
+  /* ─── Regiony serwerów ─────────────────────────────────────────────────── */
+  --region-eu:      oklch(58% 0.15 265);
+  --region-na:      oklch(55% 0.16 25 );
+  --region-br:      oklch(58% 0.15 145);
+
+  /* ─── Elevacja — w light mode cień, nie tylko border ───────────────────── */
+  --shadow-sm: 0 1px 2px oklch(23% 0.012 265 / 0.06);
+  --shadow-md: 0 2px 8px oklch(23% 0.012 265 / 0.08);
+  --shadow-lg: 0 8px 24px oklch(23% 0.012 265 / 0.10);
+
+  /* ─── Focus ring (WCAG 2.2 AA — never outline:none) ────────────────────── */
+  --focus-ring-color: var(--accent);
+  --focus-ring-width: 2px;
+  --focus-ring-offset: 2px;
+
+  /* ─── Radius + transitions (used by .surface, .card, body — NEVER `*`) ─── */
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+}
+
+.dark {
+  color-scheme: dark;
+
+  /* ─── Powierzchnie — 3 poziomy, L 17/21/25. NIE #000. ──────────────────── */
+  --bg-base:        oklch(17%  0.008 265);
+  --bg-surface:     oklch(21%  0.010 265);
+  --bg-elevated:    oklch(25%  0.012 265);
+  --bg-inset:       oklch(14%  0.008 265);
+
+  /* ─── Tekst — L 93/72/58. NIE #fff. ────────────────────────────────────── */
+  --text-primary:   oklch(93%  0.005 265);   /* kontrast 13.1:1 ✅ AAA */
+  --text-secondary: oklch(72%  0.008 265);   /* kontrast  6.8:1 ✅ AA  */
+  --text-muted:     oklch(58%  0.010 265);   /* kontrast  4.5:1 ✅ AA  */
+
+  --border-subtle:  oklch(28%  0.010 265);
+  --border-default: oklch(34%  0.012 265);
+  --border-strong:  oklch(45%  0.014 265);
+
+  /* ─── Akcent jaśniejszy w dark (ta sama percepcyjna waga, wyższe L) ───── */
+  --accent:         oklch(70%  0.14 155);
+  --accent-hover:   oklch(76%  0.14 155);
+  --accent-subtle:  oklch(28%  0.06 155);
+  --on-accent:      oklch(18%  0.01 265);    /* ciemny tekst na jasnym akcencie */
+
+  --success:        oklch(72%  0.15 150);
+  --success-subtle: oklch(26%  0.06 150);
+  --warning:        oklch(78%  0.15 80 );
+  --warning-subtle: oklch(28%  0.06 80 );
+  --danger:         oklch(70%  0.19 25 );
+  --danger-subtle:  oklch(27%  0.07 25 );
+  --info:           oklch(72%  0.13 245);
+  --info-subtle:    oklch(28%  0.06 245);
+
+  /* ─── Vocation — podniesione L o ~15%, żeby zachować czytelność ───────── */
+  --voc-knight:     oklch(70% 0.16 25 );
+  --voc-paladin:    oklch(78% 0.14 75 );
+  --voc-druid:      oklch(72% 0.13 150);
+  --voc-sorcerer:   oklch(72% 0.16 285);
+  --voc-monk:       oklch(75% 0.10 210);
+
+  --region-eu:      oklch(72% 0.14 265);
+  --region-na:      oklch(70% 0.16 25 );
+  --region-br:      oklch(72% 0.15 145);
+
+  /* ─── W dark mode elevacja = jaśniejsza powierzchnia + cień ────────────── */
+  --shadow-sm: 0 1px 2px oklch(0% 0 0 / 0.40);
+  --shadow-md: 0 2px 8px oklch(0% 0 0 / 0.50);
+  --shadow-lg: 0 8px 24px oklch(0% 0 0 / 0.60);
+}
+
+/* ─── Base resets tied to tokens (NOT transitions on `*` — perf) ─────────── */
+html {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+}
+
+body {
+  background-color: var(--bg-base);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  transition:
+    background-color 150ms,
+    color 150ms;
+}
+
+.surface,
+.card {
+  background-color: var(--bg-surface);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  transition:
+    background-color 150ms,
+    border-color 150ms,
+    box-shadow 150ms;
+}
+
+.card {
+  box-shadow: var(--shadow-sm);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+/* ─── Focus visible — required by WCAG 2.2 AA (§6.5). Never outline:none. ── */
+:focus-visible {
+  outline: var(--focus-ring-width) solid var(--focus-ring-color);
+  outline-offset: var(--focus-ring-offset);
+  border-radius: var(--radius-sm);
+}
+
+/* ─── Reduced motion (§6.5) ──────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

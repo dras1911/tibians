@@ -1,0 +1,12 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  Tibians Styles — single-import entry point.
+ *
+ *  Usage in apps/web:
+ *    import '@tibians/ui/styles.css'
+ *
+ *  This aggregates tokens.css (OKLCH palette + dark/light) and typography.css
+ *  (Inter Variable + JetBrains Mono + .numeric with tabular-nums).
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+@import './tokens.css';
+@import './typography.css';

@@ -1,0 +1,96 @@
+/* ═══════════════════════════════════════════════════════════════════════════
+ *  Tibians Typography — scale 1.200 (minor third).
+ *  Fonts loaded via next/font/google in apps/web (self-hosted by Next.js).
+ *
+ *  ★ MUST HAVE for any numeric data: `tabular-nums` prevents layout jitter
+ *  during live updates (countdown tick, bid refresh every 30 s). Without it,
+ *  "25 501 → 25 511" shifts the entire column because `1` is narrower than `8`.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+:root {
+  --font-sans: 'Inter Variable', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', 'Cascadia Code', Consolas, monospace;
+
+  /* ─── Skala — 1.200 (minor third) ──────────────────────────────────────── */
+  --text-xs:   0.75rem;    /* 12px — badge, meta w tabeli */
+  --text-sm:   0.875rem;   /* 14px — DOMYŚLNY rozmiar danych w tabeli/karcie */
+  --text-base: 1rem;       /* 16px — body text */
+  --text-lg:   1.125rem;   /* 18px — lead */
+  --text-xl:   1.2rem;     /* 19.2px — h3 */
+  --text-2xl:  1.44rem;    /* 23.04px — h2 */
+  --text-3xl:  1.728rem;   /* 27.65px — h1 strony */
+  --text-4xl:  2.074rem;   /* 33.18px — hero */
+
+  --leading-tight: 1.2;
+  --leading-snug:  1.35;
+  --leading-base:  1.55;
+  --leading-loose: 1.7;
+}
+
+/* ─── Headings ───────────────────────────────────────────────────────────── */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 600;
+  line-height: var(--leading-tight);
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.015em;
+}
+
+h1 { font-size: var(--text-3xl); }
+h2 { font-size: var(--text-2xl); }
+h3 { font-size: var(--text-xl); }
+h4 { font-size: var(--text-lg); }
+h5 { font-size: var(--text-base); }
+h6 { font-size: var(--text-sm); }
+
+/* ─── Body text ──────────────────────────────────────────────────────────── */
+body {
+  font-size: var(--text-sm);
+  line-height: var(--leading-base);
+  font-weight: 400;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+/* ─── ★ Numeric class — tabular-nums MUST HAVE (§6.2) ──────────────────── */
+/*
+ * Apply to ANY element that displays numbers that change over time:
+ *   - bid values (refresh every 30 s via SSE)
+ *   - countdown timers (tick every 1 s locally)
+ *   - skill values, level, charm points, etc.
+ *
+ * Without `font-variant-numeric: tabular-nums`, proportional digits cause
+ * layout jitter as numbers change. With it, every digit is the same width.
+ *
+ * Compatible selectors (so the rule applies to common patterns):
+ *   .numeric             — explicit class
+ *   td[data-numeric]     — table cells with numeric data
+ *   .bid, .skill-value, .countdown — semantic shortcuts
+ */
+.numeric,
+td[data-numeric],
+.bid,
+.skill-value,
+.countdown {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+  letter-spacing: -0.01em;
+}
+
+/* ─── Mono utility (e.g. IDs, tokens, version strings) ───────────────────── */
+.mono {
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-feature-settings: 'tnum' 1;
+}
+
+/* ─── Misc utilities ─────────────────────────────────────────────────────── */
+.muted    { color: var(--text-muted); }
+.secondary { color: var(--text-secondary); }
+
+@media (prefers-reduced-motion: no-preference) {
+  html { scroll-behavior: smooth; }
+}
