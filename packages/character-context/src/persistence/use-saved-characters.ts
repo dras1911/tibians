@@ -1,4 +1,4 @@
-/**
+﻿/**
  * @tibians/character-context — `useSavedCharacters()` hook (task 12).
  *
  * Type-safe React hook nad warstwą localStorage "Moje postacie".
@@ -30,9 +30,26 @@ import { SAVED_CHARACTERS_KEY } from "./local-storage-characters.js";
  * Snapshot listy. Poza przeglądarką (SSR) zwraca `[]` — nigdy nie rzuca.
  * Zwraca nową referencję tylko gdy lista faktycznie się zmieniła
  * (porównanie przez JSON — tanie dla ≤ kilkunastu wpisów).
+ *
+ * `useSyncExternalStore` porównuje snapshots przez `Object.is` — gdybyśmy
+ * zwracali nową tablicę przy każdym wywołaniu, React wpadłby w nieskończoną
+ * pętlę re-renderów ("Maximum update depth exceeded"). Dlatego cache'ujemy
+ * ostatnią wartość i zwracamy tę samą referencję dopóki JSON się nie zmieni.
  */
+let cachedSnapshot: SavedCharacter[] | null = null;
+let cachedSnapshotKey = "";
+
 function getSnapshot(): SavedCharacter[] {
-  return listSavedCharacters();
+  const next = listSavedCharacters();
+  const key = JSON.stringify(next);
+  if (key !== cachedSnapshotKey) {
+    cachedSnapshot = next;
+    cachedSnapshotKey = key;
+  }
+  // `cachedSnapshot` jest zawsze ustawione po pierwszym wywołaniu
+  // (JSON.stringify([]) === "[]" ≠ ""), więc `?? []` jest nieosiągalne.
+  /* v8 ignore next 1 */
+  return cachedSnapshot ?? [];
 }
 
 /**

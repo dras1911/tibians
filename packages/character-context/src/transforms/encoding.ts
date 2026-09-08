@@ -320,6 +320,8 @@ export function decodeSnapshot(payload: string): CharacterSnapshot {
   }
 
   // 2) Flaga kompresji (noUncheckedIndexedAccess: TS wymaga `??` dla Uint8Array[])
+  //    withFlag.length >= 1 jest sprawdzone wyżej, więc `?? -1` jest nieosiągalne.
+  /* v8 ignore next 1 */
   const flag = withFlag[0] ?? -1;
   const data = withFlag.subarray(1);
   let jsonBytes: Uint8Array;
@@ -392,6 +394,8 @@ export function isValidSnapshotUrl(payload: string): boolean {
   // Spróbuj odczytać pierwszy bajt (flagę).
   const first = base64UrlToBytes(payload.slice(0, 4));
   if (first.length < 1) return false;
+  // first.length >= 1 jest sprawdzone wyżej, więc `?? -1` jest nieosiągalne.
+  /* v8 ignore next 1 */
   const flag = first[0] ?? -1;
   return (
     flag === FLAG_PLAIN.charCodeAt(0) || flag === FLAG_GZIP.charCodeAt(0)
@@ -426,6 +430,8 @@ export function extractPayloadFromUrl(hrefOrSearch: string): string | null {
       search = idx >= 0 ? hrefOrSearch.slice(idx) : `?${hrefOrSearch}`;
     } else if (/^[A-Za-z0-9_-]+$/.test(hrefOrSearch)) {
       // Goły payload base64url (bez `?s=` i bez scheme) — zwróć bezpośrednio.
+      // Regex `+` gwarantuje length > 0, więc gałąź `: null` jest nieosiągalna.
+      /* v8 ignore next 1 */
       return hrefOrSearch.length > 0 ? hrefOrSearch : null;
     } else {
       // Pełny URL (lub cokolwiek z scheme/protokol) → parsuj przez URL.

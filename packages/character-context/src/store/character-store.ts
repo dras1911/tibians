@@ -220,6 +220,9 @@ export type CharacterStore = CharacterStoreState & CharacterStoreActions;
  */
 function setIn<T>(obj: T, path: string, value: unknown): T {
   const segments = path.split(".");
+  // `"".split(".")` zwraca `[""]` (length 1), więc ten warunek jest
+  // nieosiągalny przez publiczne API — defensywna asercja.
+  /* v8 ignore next 3 */
   if (segments.length === 0) {
     throw new Error(`updateNestedField: pusta ścieżka`);
   }
