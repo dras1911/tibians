@@ -120,3 +120,50 @@ export {
 } from "./source.js";
 
 export { computeValueConfidence } from "./value-confidence.js";
+
+// ──────────────────────────────────────────────────────────────────────────
+// Transformacje (task 10) — snapshot ↔ form ↔ URL
+// ──────────────────────────────────────────────────────────────────────────
+
+export {
+  // 4 główne transformacje
+  formDataToSnapshot,
+  snapshotToFormData,
+  snapshotToUrl,
+  urlToSnapshot,
+  safeUrlToSnapshot,
+  // Encoding helpers + diagnostyka
+  encodeSnapshot,
+  decodeSnapshot,
+  isValidSnapshotUrl,
+  extractPayloadFromUrl,
+  formatUrlSize,
+  // Stałe
+  VOCATION_BASE_TO_PROMOTED,
+  DEFAULT_WORKSPACE_PATH,
+  URL_QUERY_PARAM,
+  // Błędy
+  CorruptedSnapshotUrlError,
+} from "./transforms/index.js";
+
+export type {
+  ManualFormData,
+  SnapshotUrl,
+  SnapshotUrlOptions,
+  EncodedSnapshot,
+  SafeUrlToSnapshotResult,
+} from "./transforms/index.js";
+
+// ──────────────────────────────────────────────────────────────────────────
+// URL transforms — re-export dla wygody konsumentów, którzy chcą
+// bezpośrednio operować na URL bez store'a (np. narzędzia diagnostyczne).
+// Pełne API T10 jest już wyeksportowane z `transforms/index.js` powyżej.
+// ──────────────────────────────────────────────────────────────────────────
+
+// (Brak dodatkowych eksportów — T10 w pełni pokrywa use case'y store'a.)
+
+// ──────────────────────────────────────────────────────────────────────────
+// Store — Zustand vanilla + React hook + selektory
+// ──────────────────────────────────────────────────────────────────────────
+
+export * from "./store/index.js";
