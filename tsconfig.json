@@ -1,0 +1,12 @@
+{
+  "files": [],
+  "references": [
+    { "path": "./apps/web" },
+    { "path": "./apps/scraper" },
+    { "path": "./packages/ui" },
+    { "path": "./packages/db" },
+    { "path": "./packages/shared" },
+    { "path": "./packages/calc" },
+    { "path": "./packages/character-context" }
+  ]
+}
