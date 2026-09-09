@@ -252,6 +252,163 @@
       "leech": "Leech",
       "expShare": "Exp Share"
     },
+    "expShare": {
+      "title": "Exp Share",
+      "description": "XP split in a party using Tibia's formula (equal share + vocation diversity bonus).",
+      "labels": {
+        "totalXp": "Total XP to split",
+        "totalXpHelp": "Total XP amount to distribute among party members.",
+        "totalXpPlaceholder": "e.g. 10000",
+        "playerLevel": "Your level",
+        "playerLevelHelp": "Your level (integer ∈ [{min}, {max}]).",
+        "playerLevelPlaceholder": "e.g. 100",
+        "playerVocation": "Your vocation",
+        "playerVocationHelp": "Your character class.",
+        "playerVocationPlaceholder": "Pick a vocation",
+        "partyMembers": "Party members",
+        "partyMembersHelp": "Add up to 4 members (besides yourself). Tibia allows max 5 people in a party.",
+        "partyMembersCount": "{count} / {max}",
+        "memberName": "Name",
+        "memberNamePlaceholder": "e.g. Ally",
+        "memberNameAria": "Party member {index} name",
+        "memberLevel": "Level",
+        "memberLevelAria": "Party member {index} level",
+        "memberVocation": "Vocation",
+        "memberVocationAria": "Party member {index} vocation",
+        "removeMember": "Remove {name}",
+        "addMember": "Add party member"
+      },
+      "vocations": {
+        "Knight": "Knight",
+        "Paladin": "Paladin",
+        "Druid": "Druid",
+        "Sorcerer": "Sorcerer",
+        "Monk": "Monk"
+      },
+      "result": {
+        "playerShareLabel": "Your XP share",
+        "distinctVocations": "Distinct vocations",
+        "vocationBonus": "Vocation bonus",
+        "totalMembers": "Total in party",
+        "tableTitle": "XP share per member",
+        "tableSubtitle": "{count} members, leader lvl {level} {vocation}",
+        "table": {
+          "name": "Name",
+          "level": "Level",
+          "vocation": "Vocation",
+          "xpShare": "XP share",
+          "you": "You",
+          "soloNote": "No party — all XP goes to you."
+        }
+      },
+      "recommendations": {
+        "solo": "Solo — all XP for you.",
+        "bonusLow": "1 vocation in party → +{bonus}% bonus (Tibia baseline).",
+        "bonusOk": "{count} distinct vocations → +{bonus}% vocation bonus.",
+        "bonusMax": "5 distinct vocations → +{bonus}% vocation bonus (max)."
+      },
+      "errors": {
+        "invalidLevel": "Level must be an integer ∈ [{min}, {max}]",
+        "invalidName": "Name required (max 20 chars)",
+        "invalidTotalXp": "Enter XP as a non-negative integer (max 10¹²)",
+        "illegalPartyRange": "Party level difference exceeds Tibia legal range (ratio > 1.5).",
+        "duplicateNames": "Party member names must be unique."
+      }
+    },
+    "leech": {
+      "title": "Leech",
+      "description": "Leech percent from a party accounting for level differences (CipSoft + community reduction).",
+      "labels": {
+        "characterLevel": "Your level",
+        "characterLevelHelp": "Your level (integer ∈ [{min}, {max}]).",
+        "characterLevelPlaceholder": "e.g. 100",
+        "characterVocation": "Your vocation",
+        "characterVocationHelp": "Your character class.",
+        "characterVocationPlaceholder": "Pick a vocation",
+        "reductionPerLevel": "Reduction per level diff",
+        "reductionPerLevelHelp": "Community convention: how much % share drops per level of difference (default 0.05 = 5%).",
+        "reductionPerLevelPlaceholder": "e.g. 0.05",
+        "partyMembers": "Party members (carriers)",
+        "partyMembersHelp": "Add up to 4 higher-level characters you leech XP from.",
+        "partyMembersCount": "{count} / {max}",
+        "memberName": "Name",
+        "memberNamePlaceholder": "e.g. Carrier",
+        "memberNameAria": "Party member {index} name",
+        "memberLevel": "Level",
+        "memberLevelAria": "Party member {index} level",
+        "memberVocation": "Vocation",
+        "memberVocationAria": "Party member {index} vocation",
+        "removeMember": "Remove {name}",
+        "addMember": "Add party member"
+      },
+      "vocations": {
+        "Knight": "Knight",
+        "Paladin": "Paladin",
+        "Druid": "Druid",
+        "Sorcerer": "Sorcerer",
+        "Monk": "Monk"
+      },
+      "result": {
+        "maxLeechLabel": "Maximum leech share",
+        "partySize": "Party size",
+        "characterLevel": "Your level",
+        "avgLeech": "Average leech share",
+        "tableTitle": "Per-member leech share",
+        "tableSubtitle": "{count} party members",
+        "legal": "Legal",
+        "illegal": "Illegal"
+      },
+      "recommendations": {
+        "solo": "No party — solo, all XP for you.",
+        "illegal": "Level difference exceeds Tibia legal range — leech = 0%.",
+        "equal": "Tibia equal split (50/50) — full leech with no reduction.",
+        "ok": "Leech share in normal range — worth hunting in this configuration.",
+        "low": "Low leech share — consider changing the party configuration."
+      },
+      "errors": {
+        "invalidLevel": "Level must be an integer ∈ [{min}, {max}]",
+        "invalidName": "Name required (max 20 chars)",
+        "invalidReduction": "Reduction must be ∈ [0, 1]"
+      }
+    },
+    "experience": {
+      "title": "Experience / Levelling",
+      "description": "Time needed to advance from current to target level at a given XP/h rate.",
+      "fields": {
+        "currentLevel": {
+          "label": "Current level",
+          "help": "Your current level (integer ∈ [0, 2500]).",
+          "placeholder": "e.g. 100"
+        },
+        "targetLevel": {
+          "label": "Target level",
+          "help": "Level you want to reach (must be > current).",
+          "placeholder": "e.g. 101"
+        },
+        "xpPerHour": {
+          "label": "XP/h rate",
+          "help": "Your typical hunt XP-per-hour rate (e.g. 250,000).",
+          "placeholder": "e.g. 250000"
+        }
+      },
+      "result": {
+        "timeLabel": "Time to target",
+        "xpDelta": "XP to gain",
+        "levelDelta": "Levels to gain",
+        "xpPerHour": "XP/h rate"
+      },
+      "recommendations": {
+        "alreadyThere": "You're already at the target level — nothing to gain.",
+        "underDay": "Less than a day — quick level-up.",
+        "underWeek": "Less than a week — standard level-up.",
+        "longTerm": "Long-term grind — consider changing pace or target."
+      },
+      "errors": {
+        "invalidCurrent": "Enter level as an integer ∈ [0, 2500]",
+        "invalidTarget": "Target level must be > current (≤ 2500)",
+        "invalidRate": "XP/h rate must be an integer > 0"
+      }
+    },
     "wheelOfDestiny": "Wheel of Destiny",
     "exerciseWeapons": {
       "title": "Exercise Weapons",

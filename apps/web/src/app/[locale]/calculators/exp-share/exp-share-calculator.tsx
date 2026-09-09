@@ -86,13 +86,13 @@ const VOCATIONS: readonly PartyVocation[] = [
 const partyMemberSchema = z.object({
   name: z
     .string()
-    .min(1, "name required")
-    .max(20, "name too long"),
+    .min(1, "invalidName")
+    .max(20, "invalidName"),
   level: z
-    .number({ invalid_type_error: "must be number" })
-    .int("must be integer")
-    .min(MIN_LEVEL, `must be ≥ ${MIN_LEVEL}`)
-    .max(MAX_LEVEL, `must be ≤ ${MAX_LEVEL}`),
+    .number({ invalid_type_error: "invalidLevel" })
+    .int("invalidLevel")
+    .min(MIN_LEVEL, "invalidLevel")
+    .max(MAX_LEVEL, "invalidLevel"),
   vocation: z.enum([
     "Knight",
     "Paladin",
@@ -105,15 +105,15 @@ const partyMemberSchema = z.object({
 const formSchema = z
   .object({
     totalXp: z
-      .number({ invalid_type_error: "must be number" })
-      .int("must be integer")
-      .min(0, "must be ≥ 0")
-      .max(1_000_000_000_000, "must be ≤ 10¹²"),
+      .number({ invalid_type_error: "invalidTotalXp" })
+      .int("invalidTotalXp")
+      .min(0, "invalidTotalXp")
+      .max(1_000_000_000_000, "invalidTotalXp"),
     playerLevel: z
-      .number({ invalid_type_error: "must be number" })
-      .int("must be integer")
-      .min(MIN_LEVEL, `must be ≥ ${MIN_LEVEL}`)
-      .max(MAX_LEVEL, `must be ≤ ${MAX_LEVEL}`),
+      .number({ invalid_type_error: "invalidLevel" })
+      .int("invalidLevel")
+      .min(MIN_LEVEL, "invalidLevel")
+      .max(MAX_LEVEL, "invalidLevel"),
     playerVocation: z.enum([
       "Knight",
       "Paladin",
@@ -132,7 +132,7 @@ const formSchema = z
       return max <= 1.5 * min;
     },
     {
-      message: "party outside Tibia legal level range",
+      message: "illegalPartyRange",
       path: ["partyMembers"],
     },
   );
@@ -203,7 +203,9 @@ function setPlayerVocation(value: PartyVocation): void {
 
 function setPartyMember(idx: number, patch: Partial<PartyMemberDraft>): void {
   const members = state.partyMembers.slice();
-  members[idx] = { ...members[idx], ...patch, name: members[idx].name ?? patch.name ?? '' };
+  const existing = members[idx];
+  if (!existing) return;
+  members[idx] = { ...existing, ...patch, name: existing.name ?? patch.name ?? "" };
   emit({ ...state, partyMembers: members });
 }
 
