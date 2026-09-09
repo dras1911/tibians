@@ -52,10 +52,17 @@ importers:
         version: 2.1.9(@types/node@22.20.1)(jsdom@30.0.1)
 
   apps/scraper:
+    dependencies:
+      undici:
+        specifier: ^8.10.2
+        version: 8.10.2
     devDependencies:
       '@types/node':
         specifier: ^22.10.0
         version: 22.20.1
+      tsx:
+        specifier: ^4.19.2
+        version: 4.23.13
       typescript:
         specifier: ^5.7.2
         version: 5.9.3

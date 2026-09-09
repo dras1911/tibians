@@ -4,7 +4,13 @@
  * Re-exports the typed TibiaData v4 client (task 8) plus its cache /
  * circuit breaker / retry helpers so the rest of the monorepo can consume
  * them without reaching into the `tibiadata/` subfolder.
+ *
+ * Dodatkowo: moduł aukcji Bazaar (task 28) — Zod schemas + TS typy dla
+ * `Auction` i 6 relacji 1:N z arch. §7.2. Współdzielone przez scraper,
+ * API i UI (Faza 5-7).
  */
+
+export * as Auction from "./auction/index.js";
 
 export * as TibiaData from "./tibiadata/index.js";
 export {
