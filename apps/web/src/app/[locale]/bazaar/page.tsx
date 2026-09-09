@@ -28,6 +28,7 @@ import { getTranslations } from "next-intl/server";
 
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/breadcrumbs";
 import { BazaarClient, toAuctionSummaries } from "@/components/bazaar";
+import { Skeleton } from "@/components/ui/skeleton";
 import { listAuctions, getFacetCounts, getWorldsByRegion } from "@/lib/server/auctions";
 import {
   auctionFiltersSchema,
@@ -208,16 +209,18 @@ export default async function BazaarPage({
 
       {/* Lista + sidebar (client island) */}
       <div className="mt-6">
-        <BazaarClient
-          auctions={toAuctionSummaries(rows)}
-          total={total}
-          totalPages={totalPages}
-          page={pagination.page}
-          pageSize={pagination.pageSize}
-          facetCounts={facetCounts}
-          worldsByRegion={worldsByRegion}
-          defaultView={defaultView}
-        />
+        <React.Suspense fallback={<BazaarClientSkeleton />}>
+          <BazaarClient
+            auctions={toAuctionSummaries(rows)}
+            total={total}
+            totalPages={totalPages}
+            page={pagination.page}
+            pageSize={pagination.pageSize}
+            facetCounts={facetCounts}
+            worldsByRegion={worldsByRegion}
+            defaultView={defaultView}
+          />
+        </React.Suspense>
       </div>
 
       {/* JSON-LD ItemList schema (SEO §4.3 + arch §5 — ItemList). */}
@@ -263,4 +266,28 @@ function flattenSearchParams(
 function inferDefaultViewFromHeaders(ua: string | null): "cards" | "table" {
   if (!ua) return "cards";
   return /Mobile|Android|iPhone/i.test(ua) ? "cards" : "table";
+}
+
+/**
+ * Skeleton renderowany w `<Suspense fallback>` (Next.js 15 +
+ * `useSearchParams()`). Zapobiega fallbackowi SSR dla client islandu
+ * Bazaar — T43 URL state.
+ */
+function BazaarClientSkeleton() {
+  return (
+    <div
+      role="status"
+      aria-label="Loading Bazaar…"
+      className="grid gap-6 md:grid-cols-[16rem_1fr]"
+    >
+      <aside className="hidden md:block">
+        <Skeleton className="h-96 w-full rounded-lg" />
+      </aside>
+      <div className="space-y-3">
+        <Skeleton className="h-12 w-full rounded-md" />
+        <Skeleton className="h-12 w-full rounded-md" />
+        <Skeleton className="h-64 w-full rounded-lg" />
+      </div>
+    </div>
+  );
 }

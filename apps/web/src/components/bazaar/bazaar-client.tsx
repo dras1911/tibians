@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * BazaarClient — client-side glue dla strony `/bazaar` (plan T39-T41).
+ * BazaarClient — client-side glue dla strony `/bazaar` (plan T39-T44).
  *
  * Odpowiedzialności (arch §5 + §6.4):
- *   1. **URL state sync** (T43): wszystkie zmiany filtrów → `router.replace()`
- *      z `scroll: false` — nie zaśmieca historii.
+ *   1. **URL state sync** (T43): `useBazaarFilters()` zarządza wszystkimi
+ *      filtrami. Read = natychmiastowy, Write = debounce 300 ms (częste
+ *      interakcje z filtrami nie spamują historii przeglądarki).
  *   2. **Renderowanie sidebara + toolbara + listy** (T41 + T40).
  *   3. **Widok Cards / Table** (T40): `useState` synchronizowany z
  *      `localStorage['tibians:bazaar:view']`.
@@ -17,9 +18,13 @@
  *   6. **Porównanie** (T62): stan `comparedIds` w URL `?compare=id1,id2`.
  *      Tutaj trzymamy prosty state (lifted up do tego klienta).
  *   7. **Mobile FAB → Sheet** (T14): filtr dostępny przez `Sheet`.
+ *   8. **Sticky rząd aktywnych chipów + Kopiuj link** (T43): renderowany
+ *      przez `<ActiveFiltersBar>` tuż pod toolbar.
+ *   9. **Presety filtrów** (T44): `<PresetDropdown>` w prawym górnym
+ *      rogu toolbara.
  *
  * Filozofia (arch §5):
- *   - URL jest źródłem prawdy (T43).
+ *   - URL jest źródłem prawdy (T43) — `useBazaarFilters` czyta i pisze.
  *   - Server zwraca dane posortowane + spaginowane — re-render po
  *     zmianie URL to `next/link` z `replace()`, dzięki czemu SSR
  *     ponownie renderuje stronę (ISR cache tag `auctions`).
@@ -32,6 +37,7 @@ import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { ToastProvider } from "@/components/ui/toast";
 import {
   Sheet,
   SheetContent,
@@ -46,54 +52,19 @@ import {
   AuctionTable,
   AuctionResultsToolbar,
   AuctionFiltersSidebar,
-  type AuctionFiltersSidebarProps,
   type AuctionSummary,
-  type BazaarFilters,
   type BazaarSortKey,
   type BazaarView,
   type FacetCounts,
 } from "./index";
+import { ActiveFiltersBar } from "./active-filters-bar";
+import { PresetDropdown } from "./preset-dropdown";
+import { useBazaarFilters } from "@/lib/hooks/use-bazaar-filters";
 
 // ─────────────────────────────────────────────────────────────────────
-// URL ↔ Filters ↔ Pagination helpers
+// URL ↔ Pagination/Sort helpers (T39 — sort + page mieszkają poza
+// useBazaarFilters, bo są zarządzane przez toolbar/paginację)
 // ─────────────────────────────────────────────────────────────────────
-
-/**
- * Kanoniczne mapowanie URL → filtry Bazaar.
- * Wszystkie URL parametry są stringami; konwersja typów odbywa się tu.
- */
-function readFiltersFromSearchParams(
-  searchParams: URLSearchParams,
-): BazaarFilters {
-  const vocation = searchParams.get("vocation");
-  const region = searchParams.get("region");
-  const world = searchParams.get("world");
-  const pvpType = searchParams.get("pvpType");
-  const battleye = searchParams.get("battleye");
-  const search = searchParams.get("search");
-
-  return {
-    vocation: (vocation as BazaarFilters["vocation"]) ?? undefined,
-    levelMin: parseIntOr(searchParams.get("levelMin"), undefined),
-    levelMax: parseIntOr(searchParams.get("levelMax"), undefined),
-    bidMin: parseIntOr(searchParams.get("bidMin"), undefined),
-    bidMax: parseIntOr(searchParams.get("bidMax"), undefined),
-    region: (region as BazaarFilters["region"]) ?? undefined,
-    world: world ?? undefined,
-    pvpType: (pvpType as BazaarFilters["pvpType"]) ?? undefined,
-    battleye: (battleye as BazaarFilters["battleye"]) ?? undefined,
-    hasSoulWar: searchParams.get("hasSoulWar") === "1" ? true : undefined,
-    hasPrimalOrdeal:
-      searchParams.get("hasPrimalOrdeal") === "1" ? true : undefined,
-    search: search ?? undefined,
-  };
-}
-
-function parseIntOr(value: string | null, fallback: number | undefined) {
-  if (value === null || value === "") return fallback;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : fallback;
-}
 
 /**
  * Kanoniczny URL sortKey → AuctionSortKey dla API (arch §7.3).
@@ -142,14 +113,6 @@ function readSortKeyFromSearchParams(
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// AuctionFiltersSidebar props bridge (BazaarFilters → AuctionFiltersSidebar)
-// ─────────────────────────────────────────────────────────────────────
-
-function toSidebarFilters(f: BazaarFilters): AuctionFiltersSidebarProps["filters"] {
-  return f;
-}
-
-// ─────────────────────────────────────────────────────────────────────
 // Empty facets (gdy brak danych z parent)
 // ─────────────────────────────────────────────────────────────────────
 
@@ -185,7 +148,24 @@ export interface BazaarClientProps {
   defaultView: BazaarView;
 }
 
-export function BazaarClient({
+/**
+ * BazaarClient — używa `useBazaarFilters()` dla URL state filtrów
+ * (T43). Renderuje `<ActiveFiltersBar>` (T43) + `<PresetDropdown>`
+ * (T44) wokół głównego grida.
+ *
+ * UWAGA: ten komponent używa `useSearchParams()`, więc **musi być
+ * renderowany wewnątrz `<Suspense>`** (Next.js 15 App Router) —
+ * parent (`page.tsx`) zapewnia to opakowanie.
+ */
+export function BazaarClient(props: BazaarClientProps) {
+  return (
+    <ToastProvider>
+      <BazaarClientInner {...props} />
+    </ToastProvider>
+  );
+}
+
+function BazaarClientInner({
   auctions,
   total,
   totalPages,
@@ -201,11 +181,10 @@ export function BazaarClient({
   const tFilters = useTranslations("Bazaar.filters");
   const tPag = useTranslations("Bazaar.pagination");
 
-  // URL state — źródło prawdy (arch §5 + T43).
-  const filters = React.useMemo(
-    () => readFiltersFromSearchParams(searchParams),
-    [searchParams],
-  );
+  // URL state — filtry (T43: useBazaarFilters).
+  const { filters, setFilters, reset } = useBazaarFilters();
+
+  // URL state — sortowanie (nie jest w useBazaarFilters, bo to nie filtr).
   const sortKey = React.useMemo(
     () => readSortKeyFromSearchParams(searchParams),
     [searchParams],
@@ -222,9 +201,8 @@ export function BazaarClient({
     () => new Set(),
   );
 
-  /**
-   * Push nowego URL — `replace()` żeby nie zaśmiecać historii (arch §5).
-   */
+  // ── Patch URL (sort / page / pageSize) — `replace()` żeby nie zaśmiecać
+  // historii (arch §5). Filtry idą przez `setFilters` z debounce.
   const replaceUrl = React.useCallback(
     (patch: Record<string, string | number | undefined | null>) => {
       const params = new URLSearchParams(searchParams.toString());
@@ -242,46 +220,6 @@ export function BazaarClient({
     },
     [router, searchParams],
   );
-
-  const handleFilterChange = React.useCallback(
-    (next: BazaarFilters) => {
-      replaceUrl({
-        vocation: next.vocation,
-        levelMin: next.levelMin,
-        levelMax: next.levelMax,
-        bidMin: next.bidMin,
-        bidMax: next.bidMax,
-        region: next.region,
-        world: next.world,
-        pvpType: next.pvpType,
-        battleye: next.battleye,
-        hasSoulWar: next.hasSoulWar ? "1" : null,
-        hasPrimalOrdeal: next.hasPrimalOrdeal ? "1" : null,
-        search: next.search,
-        // Reset do strony 1 po zmianie filtrów (UX: nie wyrzucaj na pustą stronę).
-        page: 1,
-      });
-    },
-    [replaceUrl],
-  );
-
-  const handleReset = React.useCallback(() => {
-    replaceUrl({
-      vocation: null,
-      levelMin: null,
-      levelMax: null,
-      bidMin: null,
-      bidMax: null,
-      region: null,
-      world: null,
-      pvpType: null,
-      battleye: null,
-      hasSoulWar: null,
-      hasPrimalOrdeal: null,
-      search: null,
-      page: 1,
-    });
-  }, [replaceUrl]);
 
   const handleSortChange = React.useCallback(
     (next: BazaarSortKey) => {
@@ -310,10 +248,26 @@ export function BazaarClient({
     [],
   );
 
+  // ── Bridge: useBazaarFilters.setFilters resetuje `?page` do 1 przy
+  // zmianie filtrów (analogicznie do starego handlera w BazaarClient).
+  const handleFilterChange = React.useCallback(
+    (next: typeof filters) => {
+      setFilters(next);
+      // Reset paginacji (bez debounce — natychmiastowy reset strony).
+      replaceUrl({ page: 1 });
+    },
+    [setFilters, replaceUrl],
+  );
+
+  const handleReset = React.useCallback(() => {
+    reset();
+    replaceUrl({ page: 1 });
+  }, [reset, replaceUrl]);
+
   // ── Sidebar (desktop) + FAB trigger (mobile) ─────────────────────
   const sidebarContent = (
     <AuctionFiltersSidebar
-      filters={toSidebarFilters(filters)}
+      filters={filters}
       onFilterChange={handleFilterChange}
       onReset={handleReset}
       facetCounts={facetCounts ?? EMPTY_FACETS}
@@ -324,16 +278,23 @@ export function BazaarClient({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Top bar (toolbar) ──────────────────────────────────────── */}
-      <AuctionResultsToolbar
-        total={total}
-        sortKey={sortKey}
-        onSortChange={handleSortChange}
-        pageSize={pageSize}
-        onPageSizeChange={handlePageSizeChange}
-        view={view}
-        onViewChange={setView}
-      />
+      {/* ── Top bar (toolbar + preset dropdown) ─────────────────────── */}
+      <div className="flex flex-wrap items-end justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <AuctionResultsToolbar
+            total={total}
+            sortKey={sortKey}
+            onSortChange={handleSortChange}
+            pageSize={pageSize}
+            onPageSizeChange={handlePageSizeChange}
+            view={view}
+            onViewChange={setView}
+          />
+        </div>
+        <div className="flex shrink-0 items-center gap-2">
+          <PresetDropdown />
+        </div>
+      </div>
 
       {/* ── Mobile FAB: filtry ─────────────────────────────────────── */}
       <div className="md:hidden">
@@ -347,6 +308,9 @@ export function BazaarClient({
           {tFilters("openFilters")}
         </Button>
       </div>
+
+      {/* ── Active filters (sticky — T43) ─────────────────────────── */}
+      <ActiveFiltersBar />
 
       {/* ── Layout: sidebar + content ─────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-[16rem_1fr]">
@@ -365,7 +329,7 @@ export function BazaarClient({
               <SheetTitle>{tFilters("title")}</SheetTitle>
               <SheetDescription>
                 {tFilters("openFiltersCount", {
-                  count: countActiveFilters(filters),
+                  count: countActiveFiltersLocal(filters),
                 })}
               </SheetDescription>
             </SheetHeader>
@@ -429,9 +393,10 @@ export function BazaarClient({
 // Helpers (lokalne)
 // ─────────────────────────────────────────────────────────────────────
 
-function countActiveFilters(f: BazaarFilters): number {
+function countActiveFiltersLocal(f: ReturnType<typeof useBazaarFilters>["filters"]): number {
   let count = 0;
   if (f.vocation) count++;
+  if (f.skillType || f.skillMin !== undefined) count++;
   if (f.levelMin !== undefined || f.levelMax !== undefined) count++;
   if (f.bidMin !== undefined || f.bidMax !== undefined) count++;
   if (f.region) count++;
@@ -440,6 +405,25 @@ function countActiveFilters(f: BazaarFilters): number {
   if (f.battleye) count++;
   if (f.hasSoulWar) count++;
   if (f.hasPrimalOrdeal) count++;
+  if (f.hasWorldTransfer) count++;
+  if (f.hasPreySlot) count++;
+  if (f.hasCharmExpansion) count++;
+  if (f.hasWeeklyTaskExp) count++;
+  if (f.hasTwistOfFate) count++;
+  if (f.imbuesFull) count++;
+  if (f.mustHaveItemId !== undefined) count++;
+  if (
+    f.gemsMinLesser !== undefined ||
+    f.gemsMinRegular !== undefined ||
+    f.gemsMinGreater !== undefined
+  )
+    count++;
+  if (
+    f.storeMinOutfits !== undefined ||
+    f.storeMinMounts !== undefined ||
+    f.storeMinItems !== undefined
+  )
+    count++;
   if (f.search) count++;
   return count;
 }
@@ -495,5 +479,3 @@ function EmptyState({ onReset }: EmptyStateProps) {
     </Card>
   );
 }
-
-// (Separator import removed — kept minimal.)

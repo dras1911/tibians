@@ -7,7 +7,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
-    "./auction": "./src/auction/index.ts"
+    "./auction": "./src/auction/index.ts",
+    "./bazaar": "./src/bazaar/index.ts"
   },
   "scripts": {
     "build": "tsc -p tsconfig.json",

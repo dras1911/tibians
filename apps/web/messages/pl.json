@@ -36,11 +36,265 @@
     },
     "Bazaar": {
         "title": "Bazaar",
+        "description": "Przeglądaj aktualne aukcje postaci Tibia.",
         "all": "Wszystkie aukcje",
         "endingSoon": "Kończące się",
         "statistics": "Statystyki",
         "compare": "Porównaj",
-        "history": "Historia"
+        "history": "Historia",
+        "list": {
+            "pageTitle": "Bazaar — aktualne aukcje postaci",
+            "pageDescription": "Przeglądaj aktualne aukcje postaci Tibia z filtrami vocation, level, cena, region i PvP.",
+            "totalCount": "{count, plural, =0 {Brak aukcji} one {# aukcja} few {# aukcje} many {# aukcji} other {# aukcji}}",
+            "resultsFor": "Wyniki dla filtrów",
+            "noFilters": "Wszystkie aktywne aukcje",
+            "emptyTitle": "Brak aukcji dla tych filtrów",
+            "emptyDescription": "Spróbuj rozszerzyć zakres lub usunąć kilka filtrów.",
+            "emptyCta": "Wyczyść wszystkie filtry",
+            "loadError": "Nie udało się pobrać aukcji. Spróbuj ponownie."
+        },
+        "sort": {
+            "label": "Sortuj",
+            "endingSoon": "Kończące się najwcześniej",
+            "endingSoonDesc": "Kończące się najpóźniej",
+            "bidAsc": "Cena: rosnąco",
+            "bidDesc": "Cena: malejąco",
+            "levelAsc": "Level: rosnąco",
+            "levelDesc": "Level: malejąco",
+            "nameAsc": "Nazwa A-Z",
+            "nameDesc": "Nazwa Z-A",
+            "newest": "Najnowsze"
+        },
+        "pageSize": {
+            "label": "Na stronę",
+            "option": "{count} / stronę"
+        },
+        "view": {
+            "label": "Widok",
+            "cards": "Karty",
+            "table": "Tabela",
+            "cardsAria": "Pokaż jako karty",
+            "tableAria": "Pokaż jako tabelę"
+        },
+        "card": {
+            "currentBid": "Aktualna oferta",
+            "minimumBid": "Minimalna oferta",
+            "endingIn": "Kończy się za",
+            "ended": "Zakończona",
+            "endsAt": "Koniec: {date}",
+            "details": "Szczegóły",
+            "compare": "Dodaj do porównania",
+            "unselectCompare": "Usuń z porównania",
+            "openExternal": "Otwórz na Tibia.com",
+            "estimatedValue": "Szacowana wartość",
+            "outfitAlt": "Outfit postaci {name}",
+            "noImage": "Brak outfitu",
+            "tags": {
+                "soulWar": "💀 Soul War",
+                "primalOrdeal": "🦖 Primal Ordeal",
+                "bliss77": "✨ Błogosławieństwa 7/7",
+                "imbueFull": "⚒ 23/23 imbuementy",
+                "worldTransfer": "🌍 World Transfer",
+                "charmExpansion": "🎯 Charm Expansion",
+                "preySlot": "🎰 Prey Slot"
+            },
+            "heuristic": "Tagi heurystyczne",
+            "skillsHeading": "Skille",
+            "vocationLevel": "{vocation} · poziom {level}"
+        },
+        "table": {
+            "caption": "Lista aktywnych aukcji Bazaar",
+            "outfit": "Outfit",
+            "name": "Nazwa",
+            "level": "Lvl",
+            "vocation": "Vocation",
+            "world": "Świat",
+            "region": "Region",
+            "pvp": "PvP",
+            "battleye": "BattlEye",
+            "bid": "Oferta (TC)",
+            "ends": "Kończy się",
+            "actions": "Akcje",
+            "select": "Zaznacz"
+        },
+        "filters": {
+            "title": "Filtry",
+            "reset": "Wyczyść wszystkie",
+            "activeTitle": "Aktywne filtry",
+            "clear": "Wyczyść",
+            "openFilters": "Filtry",
+            "openFiltersCount": "Filtry ({count})",
+            "closeFilters": "Zamknij filtry",
+            "facet": "({count})",
+            "sections": {
+                "vocation": "Vocation",
+                "level": "Level",
+                "price": "Maksymalna cena",
+                "world": "Świat",
+                "pvpType": "Typ PvP",
+                "battleye": "BattlEye"
+            },
+            "vocation": {
+                "knight": "Knight",
+                "paladin": "Paladin",
+                "druid": "Druid",
+                "sorcerer": "Sorcerer",
+                "monk": "Monk"
+            },
+            "levelPresets": {
+                "label": "Presety",
+                "starter": "8-50",
+                "mid": "50-150",
+                "high": "150-300",
+                "endgame": "300-600",
+                "elite": "600+"
+            },
+            "levelMin": "Od",
+            "levelMax": "Do",
+            "pricePlaceholder": "np. 15000",
+            "priceSuffix": "TC",
+            "priceHint": "≈ {rate} €/TC",
+            "worldPlaceholder": "Szukaj świata…",
+            "worldEmpty": "Brak światów",
+            "regions": {
+                "EU": "🇪🇺 Europa",
+                "NA": "🇺🇸 Ameryka Pn.",
+                "BR": "🇧🇷 Brazylia"
+            },
+            "toggles": {
+                "onlyRegion": "Tylko {region}",
+                "onlyOptionalPvP": "Tylko Optional PvP",
+                "onlyYellowBattleye": "Tylko żółte BattlEye"
+            },
+            "pvpType": {
+                "Open PvP": "Open PvP",
+                "Optional PvP": "Optional PvP",
+                "Hardcore PvP": "Hardcore PvP",
+                "Retro Open PvP": "Retro Open PvP",
+                "Retro Hardcore PvP": "Retro Hardcore PvP"
+            },
+            "battleye": {
+                "protected": "🟢 Zielone (chronione)",
+                "initially protected": "🟡 Żółte (tymczasowo)",
+                "not protected": "🔴 Wyłączone"
+            },
+            "activeChip": {
+                "world": "Świat: {value}",
+                "vocation": "Vocation: {value}",
+                "level": "Level {min}–{max}",
+                "levelOpen": "Level ≥ {min}",
+                "levelCapped": "Level ≤ {max}",
+                "bidMax": "Cena ≤ {value} TC",
+                "bidMin": "Cena ≥ {value} TC",
+                "region": "Region: {value}",
+                "pvpType": "PvP: {value}",
+                "battleye": "BattlEye: {value}",
+                "hasSoulWar": "Soul War",
+                "hasPrimalOrdeal": "Primal Ordeal",
+                "search": "Szukaj: {value}",
+                "skillType": "Skill {value} ≥ {min}",
+                "hasWorldTransfer": "World Transfer",
+                "hasPreySlot": "Prey Slot",
+                "hasCharmExpansion": "Charm Expansion",
+                "hasWeeklyTaskExp": "Weekly Task Expansion",
+                "hasTwistOfFate": "Twist of Fate",
+                "imbuesFull": "23/23 imbuementy",
+                "mustHaveItem": "Item: {value}",
+                "gemsMinLesser": "Gemy lesser ≥ {value}",
+                "gemsMinRegular": "Gemy regular ≥ {value}",
+                "gemsMinGreater": "Gemy greater ≥ {value}",
+                "storeMinOutfits": "Store outfitów ≥ {value}",
+                "storeMinMounts": "Store mountów ≥ {value}",
+                "storeMinItems": "Store itemów ≥ {value}"
+            },
+            "advanced": {
+                "title": "Zaawansowane",
+                "open": "Rozwiń zaawansowane filtry",
+                "close": "Zwiń zaawansowane filtry",
+                "skillMin": {
+                    "label": "Skill minimum",
+                    "helper": "Kontekstowy per vocation — przestaw vocation wyżej, aby zobaczyć inne opcje.",
+                    "skill": "Skill",
+                    "min": "Minimum"
+                },
+                "skills": {
+                    "magic": "Magic",
+                    "sword": "Sword",
+                    "club": "Club",
+                    "axe": "Axe",
+                    "distance": "Distance",
+                    "shielding": "Shielding",
+                    "fist": "Fist",
+                    "fishing": "Fishing",
+                    "melee": "Melee (sword/club/axe)"
+                },
+                "mustHave": {
+                    "label": "Must-have",
+                    "soulWar": "💀 Soul War",
+                    "primalOrdeal": "🦖 Primal Ordeal",
+                    "worldTransfer": "🌍 World Transfer",
+                    "imbuesFull": "⚒ 23/23 imbuementy",
+                    "charmExpansion": "🎯 Charm Expansion",
+                    "preySlot": "🎰 Prey Slot",
+                    "weeklyTaskExp": "📅 Weekly Task Expansion",
+                    "twistOfFate": "🌀 Twist of Fate"
+                },
+                "rareItem": {
+                    "label": "Rare item",
+                    "placeholder": "Szukaj przedmiotu…",
+                    "empty": "Brak wyników",
+                    "loading": "Ładowanie…",
+                    "minChars": "Wpisz co najmniej 2 znaki",
+                    "selected": "Wybrano: {name}",
+                    "clear": "Wyczyść"
+                },
+                "gems": {
+                    "label": "Gemy (minimum)",
+                    "lesser": "Lesser",
+                    "regular": "Regular",
+                    "greater": "Greater"
+                },
+                "store": {
+                    "label": "Store counts (minimum)",
+                    "outfits": "Outfity",
+                    "mounts": "Mounty",
+                    "items": "Itemy"
+                }
+            },
+            "presets": {
+                "title": "Presety",
+                "load": "Załaduj preset",
+                "loadEmpty": "Brak zapisanych presetów",
+                "save": "Zapisz aktualne",
+                "savePrompt": "Nazwa presetu…",
+                "saveConfirm": "Zapisz",
+                "saveCancel": "Anuluj",
+                "delete": "Usuń",
+                "deleteConfirm": "Usunąć preset?",
+                "limit": "Limit: {count} / {max}",
+                "limitReached": "Limit presetów osiągnięty ({max}). Usuń istniejący, aby zapisać nowy.",
+                "apply": "Zastosuj",
+                "custom": "Własne",
+                "hardcoded": "Wbudowane",
+                "saveError": "Nie udało się zapisać presetu",
+                "saved": "Preset zapisany",
+                "removed": "Preset usunięty"
+            },
+            "active": {
+                "title": "Aktywne filtry",
+                "clear": "Wyczyść wszystko",
+                "copyLink": "📋 Kopiuj link",
+                "linkCopied": "Skopiowano link do schowka",
+                "linkCopyFailed": "Nie udało się skopiować"
+            }
+        },
+        "pagination": {
+            "page": "Strona {page} z {total}",
+            "previous": "Poprzednia",
+            "next": "Następna",
+            "first": "Pierwsza",
+            "last": "Ostatnia"
+        }
     },
     "Calculators": {
         "title": "Kalkulatory",

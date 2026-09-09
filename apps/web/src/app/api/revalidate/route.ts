@@ -223,9 +223,12 @@ export async function POST(request: NextRequest): Promise<Response> {
  */
 function constantTimeEqual(a: string, b: string): boolean {
   if (a.length !== b.length) {
-    let diff = a.length ^ b.length;
+    // Różne długości → różne wartości. Iterujemy po `a`, żeby czas
+    // wykonania zależał od jego długości (timing-safe).
     for (let i = 0; i < a.length; i++) {
-      diff |= a.charCodeAt(i) ^ (i < b.length ? b.charCodeAt(i) : 0);
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const _ = a.charCodeAt(i) ^ (i < b.length ? b.charCodeAt(i) : 0);
+      void _;
     }
     return false;
   }

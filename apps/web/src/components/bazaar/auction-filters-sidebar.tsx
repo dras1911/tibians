@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * AuctionFiltersSidebar — sidebar z szybkimi filtrami Bazaar (plan T41, arch §5 krok 3).
+ * AuctionFiltersSidebar — sidebar z szybkimi filtrami Bazaar (plan T41+T42).
  *
  * Sekcje (arch §5 krok 3 + §6.4):
  *   1. **Vocation** — chips z licznikiem `[Knight (812)] [Paladin (540)] …`
@@ -9,17 +9,28 @@
  *      + dual-range inputs (advanced, future-proof)
  *   3. **Max Price** — input z placeholderem "TC"
  *   4. **World** — searchable multi-select, grupowany po regionie EU/NA/BR
- *   5. **Region toggles** — "Tylko EU", "Tylko Optional PvP", "Tylko yellow BattlEye"
- *   6. **PvP Type** — multi-select (Open / Optional / Hardcore / Retro * / Retro Hardcore)
- *   7. **BattlEye** — select (protected / initially protected / not protected)
+ *   5. **PvP Type** — multi-select (Open / Optional / Hardcore / Retro * / Retro Hardcore)
+ *   6. **BattlEye** — select (protected / initially protected / not protected)
+ *   7. **Advanced (Collapsible)** — plan T42:
+ *      - **Skill minimum** — reaktywne per vocation (Knight/Paladin/Druid/
+ *        Sorcerer/Monk → dostępne skille z arch §2.1).
+ *      - **Must-have toggles** — 8 heurystycznych flag (Soul War / Primal
+ *        Ordeal / World Transfer / 23/23 Imbuementy / Charm Expansion /
+ *        Prey Slot / Weekly Task Expansion / Twist of Fate).
+ *      - **Rare item autocomplete** — `<RareItemCombobox>` debounced 300 ms
+ *        na `/api/reference/items` (T42 endpoint).
+ *      - **Gems** — 3 inputy (lesser / regular / greater) minimum.
+ *      - **Store counts** — 3 inputy (outfits / mounts / items) minimum.
  *
  * Faceted counts (arch §6.4 pkt 1): każda opcja ma `count` z `mv_facet_counts`
  * (T34 view). Komponent jest prezentacyjny — counts przychodzą z parent.
  *
  * URL state sync (arch §5 + plan T43):
  *   - Każda zmiana filtru wywołuje `onFilterChange({ ...prev, [key]: value })`
- *   - Parent decyduje o `router.replace()` (T43 dispatch)
- *   - "Aktywne filtry" to sticky rząd chipów z × na dole sidebara
+ *   - Parent decyduje o `router.replace()` (T43 dispatch przez `useBazaarFilters`)
+ *   - "Aktywne filtry" są renderowane przez `ActiveFiltersBar` (sticky rząd
+ *     chipów pod toolbar) — duplikujemy je tutaj w stopce sidebara dla
+ *     desktopu jako "ostatnia deska ratunku" gdy sticky bar jest zwinięty.
  *
  * Mobile: FAB trigger → `<Sheet>` (T3). Wewnątrz sidebara dostajemy
  * ten sam content + przycisk "Zamknij" w nagłówku (parent to dodaje).
@@ -38,6 +49,7 @@ import {
   Globe,
   RotateCcw,
   Search,
+  SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
@@ -46,6 +58,11 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import {
+  Collapsible,
+  CollapsibleContent,
+  CollapsibleTrigger,
+} from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -57,44 +74,39 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Separator } from "@/components/ui/separator";
+import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
+
+import {
+  type BazaarFiltersUi,
+} from "@/lib/hooks/use-bazaar-filters";
+
+import { RareItemCombobox } from "./rare-item-combobox";
 
 // ─────────────────────────────────────────────────────────────────────
 // Publiczne typy — kanoniczny kształt filtrów przekazywany do sidebara
 // ─────────────────────────────────────────────────────────────────────
 
+/**
+ * Alias typu filtrów Bazaar w UI. Re-eksport z `use-bazaar-filters`,
+ * żeby konsumenci sidebara nie musieli importować hooka.
+ */
+export type BazaarFilters = BazaarFiltersUi;
+
 /** 5 bazowych klas postaci (arch §6.1 — paleta OKLCH vocation). */
-export type VocationFilter = "Knight" | "Paladin" | "Druid" | "Sorcerer" | "Monk";
+export type VocationFilter = NonNullable<BazaarFilters["vocation"]>;
 
 /** Regiony serwerów. */
-export type RegionFilter = "EU" | "NA" | "BR";
+export type RegionFilter = NonNullable<BazaarFilters["region"]>;
 
 /** PvP type (arch §7.2 worlds.pvp_type). */
-export type PvPTypeFilter =
-  | "Open PvP"
-  | "Optional PvP"
-  | "Hardcore PvP"
-  | "Retro Open PvP"
-  | "Retro Hardcore PvP";
+export type PvPTypeFilter = NonNullable<BazaarFilters["pvpType"]>;
 
 /** BattlEye status. */
-export type BattlEyeFilter = "protected" | "initially protected" | "not protected";
+export type BattlEyeFilter = NonNullable<BazaarFilters["battleye"]>;
 
-/** Kanoniczny obiekt filtrów (URL ↔ UI ↔ DB). */
-export interface BazaarFilters {
-  vocation?: VocationFilter | undefined;
-  levelMin?: number | undefined;
-  levelMax?: number | undefined;
-  bidMax?: number | undefined;
-  bidMin?: number | undefined;
-  region?: RegionFilter | undefined;
-  world?: string | undefined;
-  pvpType?: PvPTypeFilter | undefined;
-  battleye?: BattlEyeFilter | undefined;
-  hasSoulWar?: boolean | undefined;
-  hasPrimalOrdeal?: boolean | undefined;
-  search?: string | undefined;
-}
+/** Skill key (arch §7.2 auctions.skill_*). */
+export type SkillFilterKey = NonNullable<BazaarFilters["skillType"]>;
 
 /** Facet count dla pojedynczej opcji (arch §6.4 pkt 1). */
 export interface FacetCount {
@@ -117,9 +129,9 @@ export interface FacetCounts {
 
 export interface AuctionFiltersSidebarProps {
   /** Aktualny stan filtrów. */
-  filters: BazaarFilters;
+  filters: BazaarFiltersUi;
   /** Callback po zmianie dowolnego filtra (URL state sync, plan T43). */
-  onFilterChange: (next: BazaarFilters) => void;
+  onFilterChange: (next: BazaarFiltersUi) => void;
   /** Callback "Wyczyść wszystkie". */
   onReset: () => void;
   /** Facet counts (serwowane z parent — serwer + cache 60s). */
@@ -148,6 +160,45 @@ const VOCATION_TONE: Record<VocationFilter, string> = {
   Sorcerer: "bg-voc-sorcerer/15 text-voc-sorcerer border-voc-sorcerer/40",
   Monk: "bg-voc-monk/15 text-voc-monk border-voc-monk/40",
 };
+
+// ─────────────────────────────────────────────────────────────────────
+// Skill options per vocation (arch §2.1 — TibiaPal contextual pairs)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Kontekstowe pary vocation/skill (arch §2.1 z benchmarku TibiaPal `/exercise`):
+ *
+ *   - Knight:   Sword / Club / Axe (melee), Shielding, Magic
+ *   - Paladin:  Distance, Magic
+ *   - Druid:    Magic
+ *   - Sorcerer: Magic
+ *   - Monk:     Magic, Fist
+ *
+ * Klucz `vocation === undefined` oznacza "bez vocation" — pokaż wszystkie
+ * (domyślny fallback dla graczy, którzy chcą filtrować tylko po skille,
+ * bez zawężania do konkretnej klasy).
+ */
+const SKILLS_BY_VOCATION: Record<
+  VocationFilter,
+  ReadonlyArray<SkillFilterKey>
+> = {
+  Knight: ["sword", "club", "axe", "shielding", "magic"],
+  Paladin: ["distance", "magic"],
+  Druid: ["magic"],
+  Sorcerer: ["magic"],
+  Monk: ["magic", "fist"],
+};
+
+const ALL_SKILLS: ReadonlyArray<SkillFilterKey> = [
+  "magic",
+  "sword",
+  "club",
+  "axe",
+  "distance",
+  "shielding",
+  "fist",
+  "fishing",
+];
 
 // ─────────────────────────────────────────────────────────────────────
 // Level presets (arch §5 krok 3 pkt 2)
@@ -192,9 +243,10 @@ const REGIONS: RegionFilter[] = ["EU", "NA", "BR"];
 /**
  * Sprawdza, czy jakikolwiek filtr jest aktywny (do sticky chipów).
  */
-function countActiveFilters(f: BazaarFilters): number {
+function countActiveFilters(f: BazaarFiltersUi): number {
   let count = 0;
   if (f.vocation) count++;
+  if (f.skillType || f.skillMin !== undefined) count++;
   if (f.levelMin !== undefined || f.levelMax !== undefined) count++;
   if (f.bidMin !== undefined || f.bidMax !== undefined) count++;
   if (f.region) count++;
@@ -203,6 +255,25 @@ function countActiveFilters(f: BazaarFilters): number {
   if (f.battleye) count++;
   if (f.hasSoulWar) count++;
   if (f.hasPrimalOrdeal) count++;
+  if (f.hasWorldTransfer) count++;
+  if (f.hasPreySlot) count++;
+  if (f.hasCharmExpansion) count++;
+  if (f.hasWeeklyTaskExp) count++;
+  if (f.hasTwistOfFate) count++;
+  if (f.imbuesFull) count++;
+  if (f.mustHaveItemId !== undefined) count++;
+  if (
+    f.gemsMinLesser !== undefined ||
+    f.gemsMinRegular !== undefined ||
+    f.gemsMinGreater !== undefined
+  )
+    count++;
+  if (
+    f.storeMinOutfits !== undefined ||
+    f.storeMinMounts !== undefined ||
+    f.storeMinItems !== undefined
+  )
+    count++;
   if (f.search) count++;
   return count;
 }
@@ -228,20 +299,19 @@ export function AuctionFiltersSidebar({
   className,
 }: AuctionFiltersSidebarProps) {
   const t = useTranslations("Bazaar.filters");
-  const tSort = useTranslations("Bazaar");
-  const tCard = useTranslations("Bazaar.card");
+  const tAdvanced = useTranslations("Bazaar.filters.advanced");
   const format = useFormatter();
 
   // ── Mutable helpers — generują nowy obiekt filtrów ─────────────
   const update = React.useCallback(
-    (patch: Partial<BazaarFilters>) => {
+    (patch: Partial<BazaarFiltersUi>) => {
       onFilterChange({ ...filters, ...patch });
     },
     [filters, onFilterChange],
   );
 
   const clearOne = React.useCallback(
-    (key: keyof BazaarFilters) => {
+    (key: keyof BazaarFiltersUi) => {
       const next = { ...filters };
       if (key === "levelMin" || key === "levelMax") {
         delete next.levelMin;
@@ -249,6 +319,28 @@ export function AuctionFiltersSidebar({
       } else if (key === "bidMin" || key === "bidMax") {
         delete next.bidMin;
         delete next.bidMax;
+      } else if (key === "skillType" || key === "skillMin") {
+        delete next.skillType;
+        delete next.skillMin;
+      } else if (
+        key === "gemsMinLesser" ||
+        key === "gemsMinRegular" ||
+        key === "gemsMinGreater"
+      ) {
+        delete next.gemsMinLesser;
+        delete next.gemsMinRegular;
+        delete next.gemsMinGreater;
+      } else if (
+        key === "storeMinOutfits" ||
+        key === "storeMinMounts" ||
+        key === "storeMinItems"
+      ) {
+        delete next.storeMinOutfits;
+        delete next.storeMinMounts;
+        delete next.storeMinItems;
+      } else if (key === "mustHaveItemId" || key === "mustHaveItemName") {
+        delete next.mustHaveItemId;
+        delete next.mustHaveItemName;
       } else {
         delete next[key];
       }
@@ -292,6 +384,14 @@ export function AuctionFiltersSidebar({
     }
     return result;
   }, [worldsByRegion, worldSearch]);
+
+  // ── Advanced section open state — domyślnie zamknięte (arch §6.4) ─
+  const [advancedOpen, setAdvancedOpen] = React.useState(false);
+
+  // ── Skill options: reaktywne na vocation (arch §2.1) ───────────
+  const skillOptions = React.useMemo(() => {
+    return filters.vocation ? SKILLS_BY_VOCATION[filters.vocation] : ALL_SKILLS;
+  }, [filters.vocation]);
 
   return (
     <div
@@ -706,58 +806,256 @@ export function AuctionFiltersSidebar({
 
       <Separator />
 
-      {/* ── Heurystyczne flagi (arch §5 krok 4 — must-have toggles) ─── */}
-      <section aria-labelledby="filter-flags">
-        <h3
-          id="filter-flags"
-          className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+      {/* ── Advanced (Collapsible — plan T42, arch §6.4) ───────────── */}
+      <Collapsible open={advancedOpen} onOpenChange={setAdvancedOpen}>
+        <CollapsibleTrigger
+          trailing={<ChevronDown className="h-4 w-4" aria-hidden="true" />}
+          className={cn(
+            "rounded-md border border-dashed bg-muted/30 px-3",
+            advancedOpen && "bg-muted/60",
+          )}
+          aria-label={
+            advancedOpen ? tAdvanced("close") : tAdvanced("open")
+          }
         >
-          <Sparkles className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
-          {tSort("heuristic")}
-        </h3>
-        <div className="flex flex-col gap-1">
-          <label
-            className={cn(
-              "flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm transition-colors",
-              filters.hasSoulWar
-                ? "border-primary bg-primary/10"
-                : "border-input bg-background hover:bg-accent",
-            )}
-          >
-            <Checkbox
-              checked={filters.hasSoulWar ?? false}
-              onCheckedChange={(value) =>
-                update({ hasSoulWar: value === true ? true : undefined })
-              }
-              className="h-4 w-4"
-            />
-            <span className="text-base">💀</span>
-            <span className="flex-1">{tCard("tags.soulWar")}</span>
-          </label>
-          <label
-            className={cn(
-              "flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm transition-colors",
-              filters.hasPrimalOrdeal
-                ? "border-primary bg-primary/10"
-                : "border-input bg-background hover:bg-accent",
-            )}
-          >
-            <Checkbox
-              checked={filters.hasPrimalOrdeal ?? false}
-              onCheckedChange={(value) =>
-                update({
-                  hasPrimalOrdeal: value === true ? true : undefined,
-                })
-              }
-              className="h-4 w-4"
-            />
-            <span className="text-base">🦖</span>
-            <span className="flex-1">{tCard("tags.primalOrdeal")}</span>
-          </label>
-        </div>
-      </section>
+          <SlidersHorizontal
+            className="h-3.5 w-3.5"
+            aria-hidden="true"
+          />
+          <span className="text-xs font-semibold uppercase tracking-wider">
+            {tAdvanced("title")}
+          </span>
+          {(filters.skillType ||
+            filters.skillMin !== undefined ||
+            filters.hasSoulWar ||
+            filters.hasPrimalOrdeal ||
+            filters.hasWorldTransfer ||
+            filters.hasPreySlot ||
+            filters.hasCharmExpansion ||
+            filters.hasWeeklyTaskExp ||
+            filters.hasTwistOfFate ||
+            filters.imbuesFull ||
+            filters.mustHaveItemId !== undefined ||
+            filters.gemsMinLesser !== undefined ||
+            filters.gemsMinRegular !== undefined ||
+            filters.gemsMinGreater !== undefined ||
+            filters.storeMinOutfits !== undefined ||
+            filters.storeMinMounts !== undefined ||
+            filters.storeMinItems !== undefined) ? (
+            <Badge
+              variant="secondary"
+              className="ml-1 h-5 px-1.5 text-[0.65rem]"
+            >
+              {format.number(
+                countAdvancedActive(filters),
+                { useGrouping: true },
+              )}
+            </Badge>
+          ) : null}
+        </CollapsibleTrigger>
+        <CollapsibleContent className="space-y-4 pt-3">
+          {/* ── Skill minimum (reactive per vocation — arch §2.1) ── */}
+          <section aria-labelledby="filter-skill-min">
+            <h4
+              id="filter-skill-min"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {tAdvanced("skillMin.label")}
+            </h4>
+            <p className="mb-2 text-[0.7rem] text-muted-foreground">
+              {tAdvanced("skillMin.helper")}
+            </p>
+            <div className="space-y-2">
+              <SkillMinControl
+                filters={filters}
+                update={update}
+                skillOptions={skillOptions}
+                t={tAdvanced}
+              />
+            </div>
+          </section>
 
-      {/* ── Active filters (sticky chips) ─────────────────────────── */}
+          <Separator />
+
+          {/* ── Must-have toggles (8 elementów) ────────────────────── */}
+          <section aria-labelledby="filter-must-have">
+            <h4
+              id="filter-must-have"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              <Sparkles className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+              {tAdvanced("mustHave.label")}
+            </h4>
+            <div className="grid grid-cols-1 gap-1">
+              <MustHaveToggle
+                id="mh-soulwar"
+                label={tAdvanced("mustHave.soulWar")}
+                checked={filters.hasSoulWar === true}
+                onToggle={(v) => update({ hasSoulWar: v ? true : undefined })}
+              />
+              <MustHaveToggle
+                id="mh-primalordeal"
+                label={tAdvanced("mustHave.primalOrdeal")}
+                checked={filters.hasPrimalOrdeal === true}
+                onToggle={(v) =>
+                  update({ hasPrimalOrdeal: v ? true : undefined })
+                }
+              />
+              <MustHaveToggle
+                id="mh-worldtransfer"
+                label={tAdvanced("mustHave.worldTransfer")}
+                checked={filters.hasWorldTransfer === true}
+                onToggle={(v) =>
+                  update({ hasWorldTransfer: v ? true : undefined })
+                }
+              />
+              <MustHaveToggle
+                id="mh-imbuesfull"
+                label={tAdvanced("mustHave.imbuesFull")}
+                checked={filters.imbuesFull === true}
+                onToggle={(v) =>
+                  update({ imbuesFull: v ? true : undefined })
+                }
+              />
+              <MustHaveToggle
+                id="mh-charmexpansion"
+                label={tAdvanced("mustHave.charmExpansion")}
+                checked={filters.hasCharmExpansion === true}
+                onToggle={(v) =>
+                  update({ hasCharmExpansion: v ? true : undefined })
+                }
+              />
+              <MustHaveToggle
+                id="mh-preyslot"
+                label={tAdvanced("mustHave.preySlot")}
+                checked={filters.hasPreySlot === true}
+                onToggle={(v) => update({ hasPreySlot: v ? true : undefined })}
+              />
+              <MustHaveToggle
+                id="mh-weeklytask"
+                label={tAdvanced("mustHave.weeklyTaskExp")}
+                checked={filters.hasWeeklyTaskExp === true}
+                onToggle={(v) =>
+                  update({ hasWeeklyTaskExp: v ? true : undefined })
+                }
+              />
+              <MustHaveToggle
+                id="mh-twistoffate"
+                label={tAdvanced("mustHave.twistOfFate")}
+                checked={filters.hasTwistOfFate === true}
+                onToggle={(v) =>
+                  update({ hasTwistOfFate: v ? true : undefined })
+                }
+              />
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* ── Rare item autocomplete (debounced Combobox) ───────── */}
+          <section aria-labelledby="filter-rare-item">
+            <h4
+              id="filter-rare-item"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {tAdvanced("rareItem.label")}
+            </h4>
+            <RareItemCombobox
+              value={
+                filters.mustHaveItemId !== undefined
+                  ? {
+                      id: filters.mustHaveItemId,
+                      name: filters.mustHaveItemName ?? String(filters.mustHaveItemId),
+                    }
+                  : null
+              }
+              onChange={(next) => {
+                if (next === null) {
+                  update({
+                    mustHaveItemId: undefined,
+                    mustHaveItemName: undefined,
+                  });
+                } else {
+                  update({
+                    mustHaveItemId: next.id,
+                    mustHaveItemName: next.name,
+                  });
+                }
+              }}
+            />
+          </section>
+
+          <Separator />
+
+          {/* ── Gems (3 number inputs, minimum 0) ──────────────────── */}
+          <section aria-labelledby="filter-gems">
+            <h4
+              id="filter-gems"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {tAdvanced("gems.label")}
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              <NumberField
+                id="gems-lesser"
+                label={tAdvanced("gems.lesser")}
+                value={filters.gemsMinLesser}
+                min={0}
+                onChange={(v) => update({ gemsMinLesser: v })}
+              />
+              <NumberField
+                id="gems-regular"
+                label={tAdvanced("gems.regular")}
+                value={filters.gemsMinRegular}
+                min={0}
+                onChange={(v) => update({ gemsMinRegular: v })}
+              />
+              <NumberField
+                id="gems-greater"
+                label={tAdvanced("gems.greater")}
+                value={filters.gemsMinGreater}
+                min={0}
+                onChange={(v) => update({ gemsMinGreater: v })}
+              />
+            </div>
+          </section>
+
+          {/* ── Store counts (3 number inputs, minimum 0) ──────────── */}
+          <section aria-labelledby="filter-store">
+            <h4
+              id="filter-store"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {tAdvanced("store.label")}
+            </h4>
+            <div className="grid grid-cols-3 gap-2">
+              <NumberField
+                id="store-outfits"
+                label={tAdvanced("store.outfits")}
+                value={filters.storeMinOutfits}
+                min={0}
+                onChange={(v) => update({ storeMinOutfits: v })}
+              />
+              <NumberField
+                id="store-mounts"
+                label={tAdvanced("store.mounts")}
+                value={filters.storeMinMounts}
+                min={0}
+                onChange={(v) => update({ storeMinMounts: v })}
+              />
+              <NumberField
+                id="store-items"
+                label={tAdvanced("store.items")}
+                value={filters.storeMinItems}
+                min={0}
+                onChange={(v) => update({ storeMinItems: v })}
+              />
+            </div>
+          </section>
+        </CollapsibleContent>
+      </Collapsible>
+
+      {/* ── Aktywne filtry (kompaktowy widok na dole sidebara) ──── */}
       {activeCount > 0 ? (
         <Card className="border-dashed bg-muted/30">
           <CardContent className="space-y-2 p-3">
@@ -777,25 +1075,34 @@ export function AuctionFiltersSidebar({
             </div>
             <div className="flex flex-wrap gap-1.5">
               {filters.vocation ? (
-                <ActiveChip
+                <SidebarChip
                   label={t(`vocation.${filters.vocation.toLowerCase()}`)}
                   onRemove={() => clearOne("vocation")}
                 />
               ) : null}
+              {filters.skillType && filters.skillMin !== undefined ? (
+                <SidebarChip
+                  label={t("activeChip.skillType", {
+                    value: tAdvanced(`skills.${filters.skillType}`),
+                    min: filters.skillMin,
+                  })}
+                  onRemove={() => clearOne("skillType")}
+                />
+              ) : null}
               {filters.region ? (
-                <ActiveChip
+                <SidebarChip
                   label={t(`regions.${filters.region}`)}
                   onRemove={() => clearOne("region")}
                 />
               ) : null}
               {filters.world ? (
-                <ActiveChip
+                <SidebarChip
                   label={t("activeChip.world", { value: filters.world })}
                   onRemove={() => clearOne("world")}
                 />
               ) : null}
               {filters.levelMin !== undefined || filters.levelMax !== undefined ? (
-                <ActiveChip
+                <SidebarChip
                   label={
                     filters.levelMin !== undefined && filters.levelMax !== undefined
                       ? t("activeChip.level", {
@@ -810,37 +1117,37 @@ export function AuctionFiltersSidebar({
                 />
               ) : null}
               {filters.bidMax !== undefined ? (
-                <ActiveChip
+                <SidebarChip
                   label={t("activeChip.bidMax", { value: filters.bidMax })}
                   onRemove={() => clearOne("bidMax")}
                 />
               ) : null}
               {filters.bidMin !== undefined ? (
-                <ActiveChip
+                <SidebarChip
                   label={t("activeChip.bidMin", { value: filters.bidMin })}
                   onRemove={() => clearOne("bidMin")}
                 />
               ) : null}
               {filters.pvpType ? (
-                <ActiveChip
+                <SidebarChip
                   label={t(`pvpType.${filters.pvpType}`)}
                   onRemove={() => clearOne("pvpType")}
                 />
               ) : null}
               {filters.battleye ? (
-                <ActiveChip
+                <SidebarChip
                   label={t(`battleye.${filters.battleye}`)}
                   onRemove={() => clearOne("battleye")}
                 />
               ) : null}
               {filters.hasSoulWar ? (
-                <ActiveChip
+                <SidebarChip
                   label={t("activeChip.hasSoulWar")}
                   onRemove={() => clearOne("hasSoulWar")}
                 />
               ) : null}
               {filters.hasPrimalOrdeal ? (
-                <ActiveChip
+                <SidebarChip
                   label={t("activeChip.hasPrimalOrdeal")}
                   onRemove={() => clearOne("hasPrimalOrdeal")}
                 />
@@ -854,15 +1161,223 @@ export function AuctionFiltersSidebar({
 }
 
 // ─────────────────────────────────────────────────────────────────────
-// ActiveChip — sticky chip z przyciskiem ×
+// Helpers (lokalne)
 // ─────────────────────────────────────────────────────────────────────
 
-interface ActiveChipProps {
+/** Liczy tylko filtry zaawansowane (do badge'a w triggerze). */
+function countAdvancedActive(f: BazaarFiltersUi): number {
+  let count = 0;
+  if (f.skillType || f.skillMin !== undefined) count++;
+  if (f.hasSoulWar) count++;
+  if (f.hasPrimalOrdeal) count++;
+  if (f.hasWorldTransfer) count++;
+  if (f.hasPreySlot) count++;
+  if (f.hasCharmExpansion) count++;
+  if (f.hasWeeklyTaskExp) count++;
+  if (f.hasTwistOfFate) count++;
+  if (f.imbuesFull) count++;
+  if (f.mustHaveItemId !== undefined) count++;
+  if (
+    f.gemsMinLesser !== undefined ||
+    f.gemsMinRegular !== undefined ||
+    f.gemsMinGreater !== undefined
+  )
+    count++;
+  if (
+    f.storeMinOutfits !== undefined ||
+    f.storeMinMounts !== undefined ||
+    f.storeMinItems !== undefined
+  )
+    count++;
+  return count;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// MustHaveToggle — kompaktowy checkbox z etykietą emoji
+// ─────────────────────────────────────────────────────────────────────
+
+interface MustHaveToggleProps {
+  id: string;
+  label: string;
+  checked: boolean;
+  onToggle: (checked: boolean) => void;
+}
+
+function MustHaveToggle({ id, label, checked, onToggle }: MustHaveToggleProps) {
+  return (
+    <label
+      htmlFor={id}
+      className={cn(
+        "flex h-9 cursor-pointer items-center gap-2 rounded-md border px-2.5 text-sm transition-colors",
+        checked
+          ? "border-primary bg-primary/10"
+          : "border-input bg-background hover:bg-accent",
+      )}
+    >
+      <Checkbox
+        id={id}
+        checked={checked}
+        onCheckedChange={(value) => onToggle(value === true)}
+        className="h-4 w-4"
+      />
+      <span className="flex-1 truncate">{label}</span>
+    </label>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// NumberField — number input z minimum 0 (gemy / store counts)
+// ─────────────────────────────────────────────────────────────────────
+
+interface NumberFieldProps {
+  id: string;
+  label: string;
+  value: number | undefined;
+  min?: number;
+  max?: number;
+  onChange: (next: number | undefined) => void;
+}
+
+function NumberField({
+  id,
+  label,
+  value,
+  min = 0,
+  max = 9999,
+  onChange,
+}: NumberFieldProps) {
+  const [input, setInput] = React.useState(
+    value !== undefined ? String(value) : "",
+  );
+  React.useEffect(() => {
+    setInput(value !== undefined ? String(value) : "");
+  }, [value]);
+
+  const commit = React.useCallback(() => {
+    const trimmed = input.trim();
+    if (trimmed === "") {
+      if (value !== undefined) onChange(undefined);
+      return;
+    }
+    const parsed = Number.parseInt(trimmed, 10);
+    if (!Number.isFinite(parsed) || parsed < min) return;
+    if (parsed > max) {
+      onChange(max);
+      setInput(String(max));
+      return;
+    }
+    if (parsed !== value) onChange(parsed);
+  }, [input, value, onChange, min, max]);
+
+  return (
+    <div>
+      <Label htmlFor={id} className="text-[0.7rem] text-muted-foreground">
+        {label}
+      </Label>
+      <Input
+        id={id}
+        type="number"
+        inputMode="numeric"
+        min={min}
+        max={max}
+        value={input}
+        onChange={(e) => setInput(e.target.value)}
+        onBlur={commit}
+        onKeyDown={(e) => {
+          if (e.key === "Enter") commit();
+        }}
+        className="numeric mt-1 h-9 font-mono text-xs tabular-nums"
+      />
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SkillMinControl — select + slider (0..250) dla skillu reaktywnego
+// na filters.vocation (arch §2.1)
+// ─────────────────────────────────────────────────────────────────────
+
+interface SkillMinControlProps {
+  filters: BazaarFiltersUi;
+  update: (patch: Partial<BazaarFiltersUi>) => void;
+  skillOptions: ReadonlyArray<SkillFilterKey>;
+  t: ReturnType<typeof useTranslations>;
+}
+
+function SkillMinControl({
+  filters,
+  update,
+  skillOptions,
+  t,
+}: SkillMinControlProps) {
+  const firstSkill = skillOptions[0];
+  const selectedSkill: SkillFilterKey =
+    filters.skillType ?? firstSkill ?? "magic";
+  const selectedMin = filters.skillMin ?? 0;
+
+  const handleSkillChange = (next: string) => {
+    update({
+      skillType: next as SkillFilterKey,
+      // Reset min do 0 jeśli zmieniamy skill — stary min może nie mieć sensu.
+      skillMin: 0,
+    });
+  };
+
+  const handleMinChange = (next: number) => {
+    update({ skillMin: next });
+  };
+
+  return (
+    <div className="space-y-2">
+      {/* Skill selector (Select — natychmiastowy feedback, bez debounce) */}
+      <Select
+        value={selectedSkill}
+        onValueChange={handleSkillChange}
+      >
+        <SelectTrigger className="h-9">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          {skillOptions.map((skill) => (
+            <SelectItem key={skill} value={skill}>
+              {t(`skills.${skill}`)}
+            </SelectItem>
+          ))}
+        </SelectContent>
+      </Select>
+
+      {/* Slider 0..250 (skill minimum) */}
+      <div className="flex items-center gap-2">
+        <span className="font-mono text-xs tabular-nums text-muted-foreground">
+          ≥
+        </span>
+        <Slider
+          value={[selectedMin]}
+          min={0}
+          max={250}
+          step={1}
+          onValueChange={(values) => handleMinChange(values[0] ?? 0)}
+          aria-label={t("skillMin.min")}
+          className="flex-1"
+        />
+        <span className="numeric min-w-[2.5rem] text-right font-mono text-xs tabular-nums">
+          {selectedMin}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// SidebarChip — kompaktowy chip z × (desktop footer sidebara)
+// ─────────────────────────────────────────────────────────────────────
+
+interface SidebarChipProps {
   label: string;
   onRemove: () => void;
 }
 
-function ActiveChip({ label, onRemove }: ActiveChipProps) {
+function SidebarChip({ label, onRemove }: SidebarChipProps) {
   return (
     <Badge
       variant="secondary"
@@ -880,7 +1395,3 @@ function ActiveChip({ label, onRemove }: ActiveChipProps) {
     </Badge>
   );
 }
-
-// Icons unused marker — pomijamy ostrzeżenie o niewykorzystanym imporcie
-// (ChevronDown używany pośrednio przez Select/Sheet).
-void ChevronDown;
