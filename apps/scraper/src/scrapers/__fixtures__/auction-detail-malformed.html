@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <title>Character Auction Details - CORRUPTED</title>
+</head>
+<body>
+  <!-- Deliberately corrupted HTML for error-handling regression tests:
+       truncated tags, non-numeric / empty identity fields, invalid
+       vocation, broken nesting. The parser (T31) MUST NOT throw and
+       MUST report the failure through AuctionDetailResult.parseError
+       + warnings instead of crashing the scrape loop. -->
+
+  <div class="AuctionHeader">
+    <div class="CharacterInfo">
+      <p><b>Name:</b></p>
+      <p><b>Level:</b> oops</p>
+      <p><b>Vocation:</b> Unknown Class</p>
+      <p><b>Sex:</b></p>
+      <!-- missing World entirely; structure broken below -->
+  <div class="BidInfo"><p><b>Current bid</b> <b>12x</b></div>
+  <div class="DateInfo"><p><b>Auction Start:</b> 99.99.2026<span><b>Auction End:</b> 01.01.2026 00:00:00</p>
+  <div class="SkillsContainer"><p><span class="Skill">Magic Level</span>: <span>abc</span></div>
+  <img src="https://static.tibia.com/images/charactertrade/outfits/notanid.gif" class="AuctionOutfitImage">
+  <td><td><div class="Progression"><p>Imbuements: x/23</div><p>Quests 28/42
+  <!-- stray unclosed tags, duplicated attributes -->
+  <div class="UspSection" class="UspSection">
+    <img class="UspCategory" src="https://static.tibia.com/images/charactertrade/usp-category-13.png"
+  <p>Boss points: <!-- truncated value -->
+  </body>
+</html>

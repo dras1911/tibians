@@ -1,0 +1,149 @@
+// Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
+
+exports[`T33 — snapshot AuctionDetailResult (auction-detail-2173376) > serializowany wynik parsowania jest stabilny (JSON snapshot) 1`] = `
+"{
+  "auction": {
+    "id": "2173376n",
+    "name": "Migzen The Exalted",
+    "level": 619,
+    "vocation": "Monk",
+    "vocationPromoted": "Exalted Monk",
+    "sex": "M",
+    "worldId": 1,
+    "outfitId": 962,
+    "bid": 25501,
+    "bidType": "current",
+    "auctionStart": "2026-09-08T10:00:00.000Z",
+    "auctionEnd": "2026-09-08T22:00:00.000Z",
+    "status": "active",
+    "skillMagic": 113,
+    "skillClub": 25,
+    "skillFist": 15,
+    "skillSword": 120,
+    "skillAxe": 15,
+    "skillDistance": 90,
+    "skillShielding": 110,
+    "skillFishing": 20,
+    "charmPoints": 7611,
+    "charmPointsUnused": 0,
+    "minorCharmEchoes": 12,
+    "bossPoints": 2340,
+    "imbuementsUnlocked": 11,
+    "imbuementsTotal": 23,
+    "questsCompleted": 28,
+    "questsTotal": 42,
+    "achievementPoints": 5420,
+    "animusMasteries": 180,
+    "gemsLesser": 44,
+    "gemsRegular": 0,
+    "gemsGreater": 0,
+    "storeOutfitsCount": 3,
+    "storeMountsCount": 2,
+    "storeItemsCount": 15,
+    "hirelingsCount": 1,
+    "goldTotal": "500000n",
+    "tcInvested": 3900,
+    "hasSoulWar": true,
+    "hasPrimalOrdeal": false,
+    "hasWorldTransfer": true,
+    "hasPreySlot": false,
+    "hasCharmExpansion": false,
+    "hasWeeklyTaskExpansion": false,
+    "hasTwistOfFate": true,
+    "blessingsActive": 5,
+    "rawJson": {
+      "source": "tibia.com",
+      "htmlHash": "773e90b2d59c06b7"
+    },
+    "firstSeenAt": "2026-09-08T12:00:00.000Z",
+    "lastSeenAt": "2026-09-08T12:00:00.000Z",
+    "scrapedAt": "2026-09-08T12:00:00.000Z",
+    "pricePerLevel": 41.197092084006464,
+    "searchVector": "migzen the exalted"
+  },
+  "items": [
+    {
+      "auctionId": "2173376n",
+      "itemId": 24999,
+      "quantity": 3,
+      "tier": null
+    },
+    {
+      "auctionId": "2173376n",
+      "itemId": 2160,
+      "quantity": 1,
+      "tier": null
+    }
+  ],
+  "outfits": [
+    {
+      "auctionId": "2173376n",
+      "outfitId": 962,
+      "addons": 3
+    },
+    {
+      "auctionId": "2173376n",
+      "outfitId": 156,
+      "addons": 2
+    }
+  ],
+  "mounts": [
+    {
+      "auctionId": "2173376n",
+      "mountId": 586
+    },
+    {
+      "auctionId": "2173376n",
+      "mountId": 456
+    }
+  ],
+  "usps": [
+    {
+      "auctionId": "2173376n",
+      "category": 0,
+      "text": "120 Sword Fighting (Loyalty bonus not included)",
+      "sortOrder": 0
+    },
+    {
+      "auctionId": "2173376n",
+      "category": 12,
+      "text": "Soul War available",
+      "sortOrder": 1
+    },
+    {
+      "auctionId": "2173376n",
+      "category": 11,
+      "text": "World Transfer available",
+      "sortOrder": 2
+    },
+    {
+      "auctionId": "2173376n",
+      "category": 8,
+      "text": "Twist of Fate",
+      "sortOrder": 3
+    },
+    {
+      "auctionId": "2173376n",
+      "category": 13,
+      "text": "Boss points: 2340",
+      "sortOrder": 4
+    }
+  ],
+  "skillLoyalties": [
+    {
+      "auctionId": "2173376n",
+      "skill": "sword",
+      "baseValue": 120,
+      "loyaltyPct": 25
+    },
+    {
+      "auctionId": "2173376n",
+      "skill": "magic",
+      "baseValue": 113,
+      "loyaltyPct": 10
+    }
+  ],
+  "parseError": null,
+  "warnings": []
+}"
+`;
