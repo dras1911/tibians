@@ -199,7 +199,7 @@ export function PresetDropdown({ className }: PresetDropdownProps) {
                 <PresetRow
                   key={preset.id}
                   preset={preset}
-                  preview={formatPresetPreview(preset, t, tVocation, tRegions)}
+                  preview={formatPresetPreview(preset, tVocation, tRegions)}
                   t={t}
                   onApply={() => handleApply(preset.id)}
                   onDelete={null}
@@ -219,7 +219,7 @@ export function PresetDropdown({ className }: PresetDropdownProps) {
                 <PresetRow
                   key={preset.id}
                   preset={preset}
-                  preview={formatPresetPreview(preset, t, tVocation, tRegions)}
+                  preview={formatPresetPreview(preset, tVocation, tRegions)}
                   t={t}
                   onApply={() => handleApply(preset.id)}
                   onDelete={
@@ -448,7 +448,6 @@ function cleanActiveFilters(f: BazaarFiltersUi): BazaarPresetFilters {
  */
 export function formatPresetPreview(
   preset: BazaarPreset,
-  t: ReturnType<typeof useTranslations>,
   tVocation: ReturnType<typeof useTranslations>,
   tRegions: ReturnType<typeof useTranslations>,
 ): string {

@@ -57,3 +57,15 @@ export {
   type ReferenceItemOption,
   type RareItemComboboxProps,
 } from "./rare-item-combobox";
+// T45 — EmptyResults + sugestie server-side
+export {
+  EmptyResults,
+  type EmptyResultsProps,
+  type EmptyResultsSuggestion,
+} from "./empty-results";
+// T46 — Virtualizacja (>100 aukcji)
+export {
+  VirtualizedAuctionGrid,
+  VIRTUALIZE_THRESHOLD,
+  type VirtualizedAuctionGridProps,
+} from "./virtualized-grid";

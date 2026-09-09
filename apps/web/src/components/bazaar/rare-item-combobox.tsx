@@ -238,15 +238,13 @@ export function RareItemCombobox({
                         aria-hidden="true"
                         className="inline-flex h-7 w-7 shrink-0 items-center justify-center overflow-hidden rounded-sm border bg-muted text-[0.6rem] text-muted-foreground"
                       >
-                        {/* mini-obrazek jeśli imageUrl istnieje */}
+                        {/* mini-obrazek jeśli imageUrl istnieje (div z CSS background-image zamiast <img> — bez ESLint @next/next/no-img-element) */}
                         {item.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.imageUrl}
-                            alt=""
-                            width={20}
-                            height={20}
-                            className="h-full w-full object-contain"
+                          <div
+                            role="img"
+                            aria-label=""
+                            style={{ backgroundImage: `url(${item.imageUrl})` }}
+                            className="h-full w-full bg-contain bg-no-repeat bg-center"
                           />
                         ) : (
                           "?"

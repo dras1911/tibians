@@ -163,6 +163,37 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
   if (filters.hasWorldTransfer !== undefined) {
     conditions.push(eq(auctions.hasWorldTransfer, filters.hasWorldTransfer));
   }
+  if (filters.hasPreySlot !== undefined) {
+    conditions.push(eq(auctions.hasPreySlot, filters.hasPreySlot));
+  }
+  if (filters.hasCharmExpansion !== undefined) {
+    conditions.push(
+      eq(auctions.hasCharmExpansion, filters.hasCharmExpansion),
+    );
+  }
+  if (filters.hasWeeklyTaskExpansion !== undefined) {
+    conditions.push(
+      eq(auctions.hasWeeklyTaskExp, filters.hasWeeklyTaskExpansion),
+    );
+  }
+  if (filters.hasTwistOfFate !== undefined) {
+    conditions.push(eq(auctions.hasTwistOfFate, filters.hasTwistOfFate));
+  }
+
+  // T45 — `imbuesFull` = `imbuementsUnlocked = imbuementsTotal`.
+  // Realizacja SQL: `imbuements_unlocked >= imbuements_total` (oba >= 0,
+  // a Total jest zawsze > 0 w realnym DB → wystarczy >=). Dla bezpieczeństwa
+  // filtrujemy tylko gdy `imbuesFull === true` (UI nie ustawia `false`).
+  if (filters.imbuesFull === true) {
+    conditions.push(
+      sql`${auctions.imbuementsUnlocked} >= ${auctions.imbuementsTotal} AND ${auctions.imbuementsTotal} > 0`,
+    );
+  }
+
+  // BattlEye jest na `worlds`, nie `auctions` — dołączamy do WHERE przez JOIN.
+  if (filters.battleye) {
+    conditions.push(eq(worlds.battleye, filters.battleye));
+  }
 
   if (filters.pvpType) {
     conditions.push(eq(worlds.pvpType, filters.pvpType));
@@ -609,7 +640,13 @@ function buildWhereExcept(
   } else if (except === "hasSoulWar") cloned.hasSoulWar = undefined;
   else if (except === "hasPrimalOrdeal") cloned.hasPrimalOrdeal = undefined;
   else if (except === "hasWorldTransfer") cloned.hasWorldTransfer = undefined;
-  // `battleye` nie jest w AuctionFilters (tylko na `worlds`); nic do wyłączenia.
+  else if (except === "hasPreySlot") cloned.hasPreySlot = undefined;
+  else if (except === "hasCharmExpansion") cloned.hasCharmExpansion = undefined;
+  else if (except === "hasWeeklyTaskExpansion") {
+    cloned.hasWeeklyTaskExpansion = undefined;
+  } else if (except === "hasTwistOfFate") cloned.hasTwistOfFate = undefined;
+  else if (except === "imbuesFull") cloned.imbuesFull = undefined;
+  else if (except === "battleye") cloned.battleye = undefined;
   return buildWhereConditions(cloned);
 }
 
@@ -711,6 +748,209 @@ export async function getFacetCounts(
     ),
     totalActive: Number(totalR[0]?.count ?? 0),
   };
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// Suggestion counts — T45 (plan task 45 — zero-results z wyliczalnymi
+// sugestiami; arch §5 krok "Obsługa 0 wyników").
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Pojedyncza sugestia "rozluźnienia" filtra, gdy `listAuctions` zwraca 0.
+ *
+ * Wyliczane **po stronie serwera** (arch §5: "dokładne count, policzoną
+ * po stronie serwera przez 3 szybkie query") — NIE szacowane po stronie
+ * klienta. Każda sugestia to **dokładny** `COUNT(*)` z `buildWhereExcept`.
+ */
+export interface SuggestionCount {
+  /** ID akcji (deterministyczny klucz dla React `key`). */
+  id:
+    | "removeWorld"
+    | "removeRegion"
+    | "removeBidMax"
+    | "removeHasSoulWar"
+    | "removeImbuesFull"
+    | "removeHasPreySlot"
+    | "removeHasCharmExpansion"
+    | "removeHasWeeklyTaskExpansion"
+    | "removeHasTwistOfFate"
+    | "raiseBidMax"
+    | "removeBattleye";
+  /** Ile wyników pojawi się po zastosowaniu sugestii. */
+  count: number;
+  /**
+   * Patch do URL state — nakładany na obecne filtry. Jeśli `undefined`,
+   * sugeruje całkowite usunięcie pola. Jeśli `{...}`, nadpisuje wartość.
+   */
+  patch: Record<string, string | number | boolean | null | undefined>;
+}
+
+/**
+ * Heurystyczny "krok" przy podnoszeniu max ceny (T45: "Podnieś max cenę
+ * do {X} TC → +{count}"). Wielokrotność 1000 TC, zaczynając od aktualnego
+ * bidMax + 5000. Górny cap 100 000 TC (powyżej nie ma sensu).
+ */
+function nextBidMaxStep(currentMax: number): number {
+  const step = 5000;
+  const cap = 100_000;
+  const next = Math.min(cap, Math.floor((currentMax + step) / step) * step);
+  return next;
+}
+
+/**
+ * Wylicza "rozluźniające" sugestie gdy `total === 0` (plan task 45).
+ *
+ * Zasady (arch §5 krok "Obsługa 0 wyników" + §6.4 pkt 7):
+ *   - **Dokładne count** przez `COUNT(*)` z `buildWhereExcept(filters, X)`.
+ *   - 3-5 szybkich query (parallel) z `Promise.all`.
+ *   - Sugestia uwzględniana tylko gdy `count > 0` i dany filtr jest aktywny.
+ *   - Max 5 sugestii (UI limit, żeby nie zaśmiecać).
+ *
+ * Optymalizacja (arch §7.1 pkt 1): wszystkie gorące filtry są
+ * denormalizowanymi kolumnami, więc `COUNT(*)` z pojedynczym wyłączeniem
+ * to **index scan** ~3-8 ms przy 2500 aktywnych aukcjach. 5 takich
+ * query w parallelu = max ~10 ms (overlap I/O).
+ */
+export async function getSuggestionCounts(
+  filters: AuctionFilters,
+): Promise<SuggestionCount[]> {
+  // Określ które filtry są aktywne (żeby nie generować "removeX" dla
+  // nieaktywnego filtra — nie ma to sensu UX).
+  const hasWorld = filters.world !== undefined;
+  const hasRegion = filters.region !== undefined;
+  const hasBidMax = filters.bidMax !== undefined;
+  const hasSoulWar = filters.hasSoulWar === true;
+  const hasImbuesFull = filters.imbuesFull === true;
+  const hasPreySlot = filters.hasPreySlot === true;
+  const hasCharmExpansion = filters.hasCharmExpansion === true;
+  const hasWeeklyTaskExp = filters.hasWeeklyTaskExpansion === true;
+  const hasTwistOfFate = filters.hasTwistOfFate === true;
+  const hasBattleye = filters.battleye !== undefined;
+
+  // Funkcja: count po `buildWhereExcept(filters, X)`.
+  const countExcept = async (field: keyof AuctionFilters): Promise<number> => {
+    const where = buildWhereExcept(filters, field);
+    const result = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(auctions)
+      .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+      .where(where);
+    return Number(result[0]?.count ?? 0);
+  };
+
+  // Funkcja: count z danym patchem (nadpisuje wartość w filtrach).
+  const countWithPatch = async (
+    patch: Record<string, string | number | boolean | null | undefined>,
+  ): Promise<number> => {
+    const merged: AuctionFilters = { ...filters, ...patch };
+    const result = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(auctions)
+      .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+      .where(buildWhereConditions(merged));
+    return Number(result[0]?.count ?? 0);
+  };
+
+  // ── Zaplanuj sugestie do wykonania ─────────────────────────────────
+  const queries: Array<{
+    id: SuggestionCount["id"];
+    patch: SuggestionCount["patch"];
+    promise: Promise<number>;
+    enabled: boolean;
+  }> = [
+    {
+      id: "removeWorld",
+      patch: { world: undefined },
+      promise: countExcept("world"),
+      enabled: hasWorld,
+    },
+    {
+      id: "removeRegion",
+      patch: { region: undefined },
+      promise: countExcept("region"),
+      enabled: hasRegion,
+    },
+    {
+      id: "removeBidMax",
+      patch: { bidMax: undefined },
+      promise: countExcept("bidMax"),
+      enabled: hasBidMax,
+    },
+    {
+      id: "removeHasSoulWar",
+      patch: { hasSoulWar: undefined },
+      promise: countExcept("hasSoulWar"),
+      enabled: hasSoulWar,
+    },
+    {
+      id: "removeImbuesFull",
+      patch: { imbuesFull: undefined },
+      promise: countExcept("imbuesFull"),
+      enabled: hasImbuesFull,
+    },
+    {
+      id: "removeHasPreySlot",
+      patch: { hasPreySlot: undefined },
+      promise: countExcept("hasPreySlot"),
+      enabled: hasPreySlot,
+    },
+    {
+      id: "removeHasCharmExpansion",
+      patch: { hasCharmExpansion: undefined },
+      promise: countExcept("hasCharmExpansion"),
+      enabled: hasCharmExpansion,
+    },
+    {
+      id: "removeHasWeeklyTaskExpansion",
+      patch: { hasWeeklyTaskExpansion: undefined },
+      promise: countExcept("hasWeeklyTaskExpansion"),
+      enabled: hasWeeklyTaskExp,
+    },
+    {
+      id: "removeHasTwistOfFate",
+      patch: { hasTwistOfFate: undefined },
+      promise: countExcept("hasTwistOfFate"),
+      enabled: hasTwistOfFate,
+    },
+    {
+      id: "removeBattleye",
+      patch: { battleye: undefined },
+      promise: countExcept("battleye"),
+      enabled: hasBattleye,
+    },
+    {
+      id: "raiseBidMax",
+      patch: hasBidMax
+        ? { bidMax: nextBidMaxStep(filters.bidMax as number) }
+        : { bidMax: undefined },
+      promise: hasBidMax
+        ? countWithPatch({ bidMax: nextBidMaxStep(filters.bidMax as number) })
+        : Promise.resolve(0),
+      enabled: hasBidMax,
+    },
+  ];
+
+  const results = await Promise.all(
+    queries.map(async (q) => ({
+      id: q.id,
+      patch: q.patch,
+      count: q.enabled ? await q.promise : 0,
+    })),
+  );
+
+  // Filtruj: tylko count > 0 (nie pokazuj "Usuń X → +0 wyników")
+  // i posortuj malejąco po count (najlepsze sugestie na górze).
+  const suggestions = results
+    .filter((r) => r.count > 0)
+    .sort((a, b) => b.count - a.count)
+    .slice(0, 5) // UI: max 5 sugestii
+    .map< SuggestionCount>((r) => ({
+      id: r.id,
+      count: r.count,
+      patch: r.patch,
+    }));
+
+  return suggestions;
 }
 
 // Wyłączony nie używany import — sql alias() do późniejszego rozszerzenia relacji

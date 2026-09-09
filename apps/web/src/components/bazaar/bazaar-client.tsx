@@ -32,11 +32,10 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Filter, Inbox } from "lucide-react";
+import { Filter } from "lucide-react";
 import { useTranslations } from "next-intl";
 
 import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
 import { ToastProvider } from "@/components/ui/toast";
 import {
   Sheet,
@@ -45,10 +44,8 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Link } from "@/i18n/routing";
 
 import {
-  AuctionCard,
   AuctionTable,
   AuctionResultsToolbar,
   AuctionFiltersSidebar,
@@ -59,6 +56,11 @@ import {
 } from "./index";
 import { ActiveFiltersBar } from "./active-filters-bar";
 import { PresetDropdown } from "./preset-dropdown";
+import {
+  EmptyResults,
+  type EmptyResultsSuggestion,
+} from "./empty-results";
+import { VirtualizedAuctionGrid } from "./virtualized-grid";
 import { useBazaarFilters } from "@/lib/hooks/use-bazaar-filters";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -146,6 +148,12 @@ export interface BazaarClientProps {
   worldsByRegion: Record<"EU" | "NA" | "BR", string[]>;
   /** Tryb domyślny widoku (serwer decyduje na podstawie UA). */
   defaultView: BazaarView;
+  /**
+   * Sugestie rozluźnienia filtrów (T45) — wyliczane **server-side**
+   * przez `getSuggestionCounts()`. Puste gdy `total > 0` (arch §5:
+   * "nie pokazuj sugestii gdy count > 0").
+   */
+  suggestions?: EmptyResultsSuggestion[];
 }
 
 /**
@@ -174,6 +182,7 @@ function BazaarClientInner({
   facetCounts,
   worldsByRegion,
   defaultView,
+  suggestions = [],
 }: BazaarClientProps) {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -264,6 +273,36 @@ function BazaarClientInner({
     replaceUrl({ page: 1 });
   }, [reset, replaceUrl]);
 
+  /**
+   * T45 — handler dla kliknięcia sugestii w `<EmptyResults>`.
+   * Aplikuje patch (częściowy zestaw filtrów) do bieżącego stanu URL.
+   *
+   * Reguły:
+   *   - Patch nakładany jest na OBECNY `filters` (NIE pusty obiekt),
+   *     bo user mógł mieć kilka filtrów — chcemy tylko ROZLUŹNIĆ,
+   *     nie resetować wszystko.
+   *   - Klucze z `undefined`/`null`/`""` usuwają pole z URL (pusty
+   *     stan → `useBazaarFilters` je pomija w `buildQueryString`).
+   *   - Reset strony do 1 (tak jak `handleFilterChange`).
+   *
+   * Zwraca `void`; efektem jest nawigacja `router.replace()`.
+   */
+  const handleApplySuggestion = React.useCallback(
+    (suggestion: EmptyResultsSuggestion) => {
+      const next = { ...filters, ...suggestion.patch };
+      // Klucze z `undefined`/`null` → wyczyść.
+      for (const [key, value] of Object.entries(suggestion.patch)) {
+        if (value === undefined || value === null || value === "") {
+          delete (next as Record<string, unknown>)[key];
+        }
+      }
+      // `useBazaarFilters.setFilters` debounce'uje write do URL (300 ms).
+      setFilters(next);
+      replaceUrl({ page: 1 });
+    },
+    [filters, setFilters, replaceUrl],
+  );
+
   // ── Sidebar (desktop) + FAB trigger (mobile) ─────────────────────
   const sidebarContent = (
     <AuctionFiltersSidebar
@@ -340,18 +379,17 @@ function BazaarClientInner({
         {/* ── Content: list (cards / table) or empty state ──────── */}
         <div className="min-w-0 space-y-4">
           {total === 0 ? (
-            <EmptyState onReset={handleReset} />
+            <EmptyResults
+              suggestions={suggestions}
+              onApplySuggestion={handleApplySuggestion}
+              onReset={handleReset}
+            />
           ) : view === "cards" ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {auctions.map((a) => (
-                <AuctionCard
-                  key={a.id}
-                  auction={a}
-                  onCompareToggle={handleCompareToggle}
-                  isCompared={comparedIds.has(a.id)}
-                />
-              ))}
-            </div>
+            <VirtualizedAuctionGrid
+              auctions={auctions}
+              onCompareToggle={handleCompareToggle}
+              comparedIds={comparedIds}
+            />
           ) : (
             <AuctionTable
               rows={auctions}
@@ -446,36 +484,5 @@ function PaginationButton({ disabled, onClick, label }: PaginationButtonProps) {
     >
       {label}
     </Button>
-  );
-}
-
-interface EmptyStateProps {
-  onReset: () => void;
-}
-
-function EmptyState({ onReset }: EmptyStateProps) {
-  const t = useTranslations("Bazaar.list");
-  return (
-    <Card className="border-dashed bg-muted/30">
-      <CardContent className="flex flex-col items-center gap-4 py-12 text-center">
-        <Inbox className="h-10 w-10 text-muted-foreground/60" aria-hidden="true" />
-        <div className="space-y-2">
-          <h2 className="text-lg font-semibold tracking-tight text-foreground">
-            {t("emptyTitle")}
-          </h2>
-          <p className="mx-auto max-w-md text-sm text-muted-foreground">
-            {t("emptyDescription")}
-          </p>
-        </div>
-        <div className="flex flex-wrap items-center justify-center gap-2">
-          <Button onClick={onReset} size="sm" className="h-11">
-            {t("emptyCta")}
-          </Button>
-          <Button asChild variant="ghost" size="sm" className="h-11">
-            <Link href="/bazaar">Bazaar</Link>
-          </Button>
-        </div>
-      </CardContent>
-    </Card>
   );
 }

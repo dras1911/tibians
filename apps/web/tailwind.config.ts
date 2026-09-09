@@ -67,6 +67,9 @@ const config: Config = {
           DEFAULT: "var(--danger)",
           foreground: "var(--bg-base)",
         },
+        // ★ T45/T47 — `bg-danger/15` używane przez AuctionCountdownCell,
+        // AuctionCard i inne — musi być zarejestrowane w Tailwind.
+        danger: "var(--danger)",
         success: {
           DEFAULT: "var(--success)",
           foreground: "var(--bg-base)",

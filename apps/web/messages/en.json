@@ -294,6 +294,23 @@
             "next": "Next",
             "first": "First",
             "last": "Last"
+        },
+        "empty": {
+            "title": "No auctions match your filters",
+            "description": "Nothing matched this strict combination of filters. Try relaxing the rules below — the exact count on the right shows how many auctions would appear after each change.",
+            "suggestionsTitle": "Suggestions",
+            "countLabel": "{count, plural, =0 {0 results} one {# result} other {# results}}",
+            "removeWorld": "Remove the world filter",
+            "removeRegion": "Remove the region filter",
+            "removeBidMax": "Raise the max price (drop the cap)",
+            "raiseBidMax": "Raise max price to {bidMax} TC",
+            "removeSoulWar": "Drop the Soul War requirement",
+            "removeImbuesFull": "Drop the 23/23 imbuements requirement",
+            "removePreySlot": "Drop the Prey Slot requirement",
+            "removeCharmExpansion": "Drop the Charm Expansion requirement",
+            "removeWeeklyTaskExp": "Drop the Weekly Task Expansion requirement",
+            "removeTwistOfFate": "Drop the Twist of Fate requirement",
+            "removeBattleye": "Remove the BattlEye filter"
         }
     },
     "Calculators": {

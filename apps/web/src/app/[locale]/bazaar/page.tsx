@@ -29,7 +29,12 @@ import { getTranslations } from "next-intl/server";
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/breadcrumbs";
 import { BazaarClient, toAuctionSummaries } from "@/components/bazaar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { listAuctions, getFacetCounts, getWorldsByRegion } from "@/lib/server/auctions";
+import {
+  listAuctions,
+  getFacetCounts,
+  getWorldsByRegion,
+  getSuggestionCounts,
+} from "@/lib/server/auctions";
 import {
   auctionFiltersSchema,
   paginationSchema,
@@ -156,15 +161,24 @@ export default async function BazaarPage({
   // ── Równoległe zapytania do DB (T34 + T41) ────────────────────────
   // Arch §8.2: `next: { tags: ['auctions'] }` — revalidowane przez
   // /api/revalidate (T38 webhook) po każdym pełnym scrape.
-  const [requestHeaders, dbResults] = await Promise.all([
-    headers(),
-    Promise.all([
-      listAuctions(filters, pagination),
-      getFacetCounts(filters),
-      getWorldsByRegion(),
-    ]),
-  ]);
-  const [{ rows, total }, facetCounts, worldsByRegion] = dbResults;
+  // T45: dodatkowe `getSuggestionCounts()` wywoływane **warunkowo** —
+  //      tylko gdy `total === 0` (arch §5: "nie pokazuj sugestii gdy
+  //      count > 0"). Oszczędzamy ~5 query przy każdym normalnym renderze.
+  const listPromise = listAuctions(filters, pagination);
+  const facetPromise = getFacetCounts(filters);
+  const worldsPromise = getWorldsByRegion();
+
+  const [requestHeaders, listResult, facetCounts, worldsByRegion] =
+    await Promise.all([headers(), listPromise, facetPromise, worldsPromise]);
+
+  const { rows, total } = listResult;
+
+  // T45 — wylicz sugestie rozluźniające filtry **tylko** gdy 0 wyników.
+  // 3-5 szybkich query COUNT(*) z `buildWhereExcept` (parallel) = ~10ms.
+  const suggestions =
+    total === 0
+      ? await getSuggestionCounts(filters).catch(() => [])
+      : [];
 
   const totalPages = totalPagesOf(total, pagination.pageSize);
 
@@ -219,6 +233,7 @@ export default async function BazaarPage({
             facetCounts={facetCounts}
             worldsByRegion={worldsByRegion}
             defaultView={defaultView}
+            suggestions={suggestions}
           />
         </React.Suspense>
       </div>

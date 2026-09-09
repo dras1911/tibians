@@ -206,7 +206,7 @@ export function useFilterPresets(
       const newPreset: StoredPreset = {
         id: `c-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
         name: name.trim(),
-        description,
+        ...(description ? { description } : {}),
         filters,
         createdAt: new Date().toISOString(),
       };

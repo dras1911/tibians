@@ -62,10 +62,24 @@ function outfitImageUrl(outfitId: number | null): string | null {
  *  - `aria-live="off"` (arch §6.4 pkt 10)
  *  - `tabular-nums` (no jitter)
  *  - `< 5 min` → `animate-pulse` + danger color
+ *  - `< 5 min` → ikona 🔥 (T47)
  *  - `< 0` → "Zakończona" / "Ended"
+ *  - `prefers-reduced-motion: reduce` → wyłącz pulsowanie (arch §6.5)
  */
 function Countdown({ endsAt }: { endsAt: string }) {
   const t = useTranslations("Bazaar.card");
+
+  // `prefers-reduced-motion` (arch §6.5) — wyłączamy pulsowanie.
+  const [prefersReducedMotion, setPrefersReducedMotion] = React.useState(false);
+  React.useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mql = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setPrefersReducedMotion(mql.matches);
+    const onChange = () => setPrefersReducedMotion(mql.matches);
+    mql.addEventListener("change", onChange);
+    return () => mql.removeEventListener("change", onChange);
+  }, []);
+
   const endMs = React.useMemo(() => Date.parse(endsAt), [endsAt]);
 
   const computeRemaining = React.useCallback(
@@ -87,6 +101,7 @@ function Countdown({ endsAt }: { endsAt: string }) {
 
   const isEnded = remainingMs <= 0;
   const isUrgent = !isEnded && remainingMs < 5 * 60 * 1000;
+  const animatePulse = isUrgent && !prefersReducedMotion;
 
   // Formatuj "Xh Ym" / "Xm Ys" / "Ys" — locale-agnostic, locale czasu
   // nie ma znaczenia przy różnicy.
@@ -117,14 +132,21 @@ function Countdown({ endsAt }: { endsAt: string }) {
         isEnded
           ? "border-border bg-muted text-muted-foreground"
           : isUrgent
-            ? "border-danger/40 bg-danger/10 text-danger animate-pulse"
+            ? cn(
+                "border-danger/40 bg-danger/10 text-danger",
+                animatePulse && "animate-pulse",
+              )
             : "border-warning/40 bg-warning/10 text-warning-foreground",
       )}
       aria-live="off"
       aria-label={`${t("endingIn")} ${formatted}`}
       title={formatted}
     >
-      <Timer className="h-3.5 w-3.5" aria-hidden="true" />
+      {isUrgent ? (
+        <span aria-hidden="true" className="text-base leading-none">🔥</span>
+      ) : (
+        <Timer className="h-3.5 w-3.5" aria-hidden="true" />
+      )}
       <span>{formatted}</span>
     </div>
   );

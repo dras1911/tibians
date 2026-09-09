@@ -294,6 +294,23 @@
             "next": "Następna",
             "first": "Pierwsza",
             "last": "Ostatnia"
+        },
+        "empty": {
+            "title": "Brak aukcji dla wybranych filtrów",
+            "description": "Nic nie znaleźliśmy przy tak wąskim zestawie filtrów. Spróbuj rozluźnić warunki — dokładne liczby po prawej pokazują ile aukcji pojawi się po danej zmianie.",
+            "suggestionsTitle": "Sugestie",
+            "countLabel": "{count, plural, =0 {0 wyników} one {# wynik} few {# wyniki} many {# wyników} other {# wyniku}}",
+            "removeWorld": "Usuń filtr świata",
+            "removeRegion": "Usuń filtr regionu",
+            "removeBidMax": "Podnieś maksymalną cenę (usuń limit)",
+            "raiseBidMax": "Podnieś maksymalną cenę do {bidMax} TC",
+            "removeSoulWar": "Wyłącz wymóg Soul War",
+            "removeImbuesFull": "Wyłącz wymóg imbuementów 23/23",
+            "removePreySlot": "Wyłącz wymóg Prey Slot",
+            "removeCharmExpansion": "Wyłącz wymóg Charm Expansion",
+            "removeWeeklyTaskExp": "Wyłącz wymóg Weekly Task Expansion",
+            "removeTwistOfFate": "Wyłącz wymóg Twist of Fate",
+            "removeBattleye": "Wyłącz filtr BattlEye"
         }
     },
     "Calculators": {
