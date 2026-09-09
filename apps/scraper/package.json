@@ -25,6 +25,7 @@
     "ref:scrape": "node --import tsx/esm src/cli/ref-scrape.ts"
   },
   "dependencies": {
+    "@tibians/db": "workspace:^",
     "@tibians/shared": "workspace:^",
     "cheerio": "^1.2.0",
     "undici": "^8.10.2",

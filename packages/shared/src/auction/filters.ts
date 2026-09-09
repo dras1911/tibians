@@ -1,0 +1,279 @@
+/**
+ * @tibians/shared — filtry aukcji Bazaar i paginacja dla HTTP API (task 38).
+ *
+ * Pojedyncze źródło prawdy dla walidacji query params przychodzących do
+ * `/api/auctions`, `/api/auctions/[id]`, `/api/auctions/ending` oraz UI
+ * (Faza 8 — Bazaar sidebar). Wcześniej T28 dostarczył główne schemy
+ * encji, ale **filtry** dopiero tutaj lądują — są częścią kontraktu
+ * API dopiero od task 38 (HTTP endpoint dopiero wtedy powstaje).
+ *
+ * Decyzje projektowe (arch. §7.2 + §8.2 + task 38):
+ *   1. Wszystkie query params są opcjonalne — brak filtra == brak
+ *      ograniczenia (UI pozwala wybrać zero filtrów).
+ *   2. `z.coerce.number()` — Next.js 15 zwraca query params jako `string`
+ *      (URLSearchParams). Wymuszamy konwersję liczb.
+ *   3. `world` jako string (nazwa świata) — NIE `worldId`. UI pokazuje
+ *      nazwy ("Antica"), a nie FK; filtrujemy po `worlds.name`.
+ *      Zadanie UI/API: rozwiązanie nazwy → id po stronie DB.
+ *   4. `sortBy` ograniczone do `AuctionOrderColumnSchema` (gorące filtry)
+ *      — wydajność: tylko kolumny z partial indexes (arch §7.2).
+ *   5. `paginationSchema` jest osojbnym bytem (reużywalny w innych
+ *      endpointach, np. `/api/stats/history`).
+ *
+ * Walidacja po stronie TS (z.infer) = zero ręcznych interfejsów.
+ */
+import { z } from "zod";
+
+import {
+  AuctionOrderColumnSchema,
+  AuctionOrderDirectionSchema,
+  AuctionStatusSchema,
+  VocationSchema,
+} from "./enums.js";
+import { AuctionSkillKeySchema } from "./schema.js";
+
+// ───────────────────────────────────────────────────────────────────────
+// Filtry (arch. §7.2 + task 38 — query params /api/auctions)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Zakres poziomu (levelMin/levelMax) — wymuszamy integer,
+ * 8..2500 (zakres z gry, arch. §7.2).
+ */
+const LevelBoundSchema = z.coerce
+  .number()
+  .int("Level musi być liczbą całkowitą")
+  .min(8, "Minimalny level w Tibii to 8")
+  .max(2500, "Maksymalny level w Tibii to 2500");
+
+/**
+ * Zakres skilla — 0..250 (arch. §7.2 — w Tibii nie da się przekroczyć 250).
+ */
+const SkillBoundSchema = z.coerce
+  .number()
+  .int("Skill musi być liczbą całkowitą")
+  .min(0, "Skill nie może być ujemny")
+  .max(250, "Skill powyżej 250 jest niemożliwy w Tibii");
+
+/**
+ * Zakres oferty (bidMin/bidMax) — integer TC, ≥ 0.
+ */
+const BidBoundSchema = z.coerce
+  .number()
+  .int("Oferta musi być liczbą całkowitą")
+  .min(0, "Oferta nie może być ujemna");
+
+/**
+ * Schemat filtrów listy aukcji. Wszystkie pola opcjonalne.
+ *
+ * Mapowanie query params → pole (arch. §7.2):
+ *   world       → worlds.name (string)
+ *   vocation    → auctions.vocation_base (Vocation)
+ *   levelMin    → auctions.level >=
+ *   levelMax    → auctions.level <=
+ *   skillType   → auctions.skill_{skillType}
+ *   skillMin    → auctions.skill_{skillType} >=
+ *   skillMax    → auctions.skill_{skillType} <=
+ *   bidMin      → auctions.bid >=
+ *   bidMax      → auctions.bid <=
+ *   status      → auctions.status (default: 'active')
+ *   search      → searchVector @@ plainto_tsquery
+ *   hasSoulWar  → auctions.has_soul_war (bool)
+ *   hasPrimalOrdeal → auctions.has_primal_ordeal (bool)
+ *   pvpType     → worlds.pvp_type
+ *   region      → worlds.region
+ *   sortBy      → AuctionOrderColumn
+ *   sortDir     → asc|desc
+ */
+export const auctionFiltersSchema = z
+  .object({
+    /** Nazwa świata (rozwiązywana do worldId po stronie DB). */
+    world: z
+      .string()
+      .trim()
+      .min(1, "Nazwa świata nie może być pusta")
+      .max(30, "Nazwa świata jest za długa")
+      .optional(),
+
+    /** Bazowa klasa postaci (5 opcji). */
+    vocation: VocationSchema.optional(),
+
+    /** Zakres level. */
+    levelMin: LevelBoundSchema.optional(),
+    levelMax: LevelBoundSchema.optional(),
+
+    /** Skill — klucz + zakres (muszą występować razem). */
+    skillType: AuctionSkillKeySchema.optional(),
+    skillMin: SkillBoundSchema.optional(),
+    skillMax: SkillBoundSchema.optional(),
+
+    /** Zakres oferty. */
+    bidMin: BidBoundSchema.optional(),
+    bidMax: BidBoundSchema.optional(),
+
+    /** Status — domyślnie 'active'. */
+    status: AuctionStatusSchema.default("active"),
+
+    /** Full-text search po nazwie postaci (searchVector @@ plainto_tsquery). */
+    search: z
+      .string()
+      .trim()
+      .min(2, "Fraza wyszukiwania musi mieć co najmniej 2 znaki")
+      .max(50, "Fraza wyszukiwania jest za długa")
+      .optional(),
+
+    /** Boolean flagi „must-have". */
+    hasSoulWar: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    hasPrimalOrdeal: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    hasWorldTransfer: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+
+    /** Filtry dziedziczone z `worlds`. */
+    pvpType: z
+      .enum([
+        "Open PvP",
+        "Optional PvP",
+        "Hardcore PvP",
+        "Retro Open PvP",
+        "Retro Hardcore PvP",
+      ])
+      .optional(),
+    region: z.enum(["EU", "NA", "BR"]).optional(),
+
+    /** Sortowanie — domyślnie auctionEnd asc (pilność, arch §5). */
+    sortBy: AuctionOrderColumnSchema.default("auctionEnd"),
+    sortDir: AuctionOrderDirectionSchema.default("asc"),
+  })
+  .strict()
+  // ─────────────────────────────────────────────────────────────────
+  // Cross-validation refinements
+  // ─────────────────────────────────────────────────────────────────
+  /** levelMin ≤ levelMax. */
+  .refine(
+    (f) =>
+      f.levelMin == null ||
+      f.levelMax == null ||
+      f.levelMin <= f.levelMax,
+    {
+      message: "levelMin nie może być większy niż levelMax",
+      path: ["levelMin"],
+    },
+  )
+  /** skillMin ≤ skillMax. */
+  .refine(
+    (f) =>
+      f.skillMin == null ||
+      f.skillMax == null ||
+      f.skillMin <= f.skillMax,
+    {
+      message: "skillMin nie może być większy niż skillMax",
+      path: ["skillMin"],
+    },
+  )
+  /** bidMin ≤ bidMax. */
+  .refine(
+    (f) =>
+      f.bidMin == null ||
+      f.bidMax == null ||
+      f.bidMin <= f.bidMax,
+    {
+      message: "bidMin nie może być większy niż bidMax",
+      path: ["bidMin"],
+    },
+  )
+  /** Jeśli podano skillType, musi być podany też skillMin lub skillMax. */
+  .refine(
+    (f) =>
+      f.skillType === undefined ||
+      f.skillMin !== undefined ||
+      f.skillMax !== undefined,
+    {
+      message: "skillType wymaga podania skillMin lub skillMax",
+      path: ["skillType"],
+    },
+  );
+
+export type AuctionFilters = z.infer<typeof auctionFiltersSchema>;
+
+// ───────────────────────────────────────────────────────────────────────
+// Paginacja (arch. §7.3 — offset/limit)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Schemat paginacji — wydzielony jako osobny moduł, bo reużywany
+ * w innych endpointach (np. /api/stats/history, /api/auctions/...).
+ *
+ * Reguły:
+ *   - page >= 1 (1-indeksowana paginacja, wygodniejsza w UI)
+ *   - pageSize 1..100 (max 100 per request — zabezpieczenie przed DoS)
+ *   - pageSize domyślnie 25 (zgodne z arch §5 krok 4)
+ */
+export const paginationSchema = z
+  .object({
+    page: z.coerce
+      .number()
+      .int("Page musi być liczbą całkowitą")
+      .min(1, "Page musi wynosić co najmniej 1")
+      .default(1),
+    pageSize: z.coerce
+      .number()
+      .int("PageSize musi być liczbą całkowitą")
+      .min(1, "PageSize musi wynosić co najmniej 1")
+      .max(100, "PageSize nie może przekraczać 100 (ochrona DoS)")
+      .default(25),
+  })
+  .strict();
+
+export type Pagination = z.infer<typeof paginationSchema>;
+
+/**
+ * Pomocnik do wyliczania totalPages z paginacji.
+ * Zwraca co najmniej 1 (nawet dla pustej listy), żeby UI nie miał edge case.
+ */
+export function totalPagesOf(total: number, pageSize: number): number {
+  if (total <= 0) return 1;
+  return Math.max(1, Math.ceil(total / pageSize));
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// Query dla "Ending Soon" — mniejszy zakres (arch. §8.1: kończące się <1h)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Schemat parametrów `/api/auctions/ending` — godziny do końca aukcji.
+ * Arch. §8.1: domyślnie 1h (zakres z schedulera EndingSoonScheduler).
+ */
+export const endingSoonQuerySchema = z
+  .object({
+    withinHours: z.coerce
+      .number()
+      .positive("withinHours musi być dodatnie")
+      .max(24, "withinHours nie może przekraczać 24h")
+      .default(1),
+  })
+  .strict();
+
+export type EndingSoonQuery = z.infer<typeof endingSoonQuerySchema>;

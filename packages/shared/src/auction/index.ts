@@ -20,7 +20,7 @@
 // ──────────────────────────────────────────────────────────────────────────
 
 export {
-  // Główny schema aukcji (60+ kolumn)
+  // Schemat (Zod) — jedyne źródło prawdy (wartości runtime)
   AuctionSchema,
   // Relacje 1:N (arch. §7.2)
   AuctionSkillSchema,
@@ -36,6 +36,17 @@ export {
   // Stałe runtime
   AUCTION_SKILL_KEYS,
 } from "./schema.js";
+
+// Filtry i paginacja (task 38 — HTTP API kontrakt)
+export {
+  auctionFiltersSchema,
+  paginationSchema,
+  endingSoonQuerySchema,
+  totalPagesOf,
+  type AuctionFilters,
+  type Pagination,
+  type EndingSoonQuery,
+} from "./filters.js";
 
 export {
   // Enumeracje
