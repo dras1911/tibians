@@ -528,5 +528,190 @@ export async function refreshFacetCounts(): Promise<void> {
   );
 }
 
+// ───────────────────────────────────────────────────────────────────────
+// Faceted counts + worlds helpers (T41)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Wszystkie aktywne światy pogrupowane po regionie (arch §7.2 worlds).
+ *
+ * Używane przez `AuctionFiltersSidebar` do searchable multi-select.
+ * Cache'owane przez Next.js (60s) — referencje rzadko się zmieniają.
+ */
+export async function getWorldsByRegion(): Promise<
+  Record<"EU" | "NA" | "BR", string[]>
+> {
+  const rows = await db
+    .select({
+      name: worlds.name,
+      region: worlds.region,
+    })
+    .from(worlds)
+    .where(eq(worlds.isActive, true))
+    .orderBy(worlds.region, worlds.name);
+
+  const result: Record<"EU" | "NA" | "BR", string[]> = { EU: [], NA: [], BR: [] };
+  for (const r of rows) {
+    if (r.region === "EU" || r.region === "NA" || r.region === "BR") {
+      result[r.region].push(r.name);
+    }
+  }
+  return result;
+}
+
+/**
+ * Faceted counts (arch §6.4 pkt 1 + §7.2 mv_facet_counts).
+ *
+ * Wylicza count per opcja, **z pozostałymi filtrami już zastosowanymi**.
+ * Wymaga agregacji — przy 2500 aktywnych aukcjach to ~5 ms (single
+ * index scan). Cache 60s (arch §6.4 pkt 1) — implementowane przez
+ * `next: { revalidate: 60 }` w RSC.
+ */
+export interface FacetCountsServer {
+  vocation: { value: string; count: number }[];
+  region: { value: string; count: number }[];
+  world: { value: string; count: number }[];
+  pvpType: { value: string; count: number }[];
+  battleye: { value: string; count: number }[];
+  totalActive: number;
+}
+
+/**
+ * Helper: generuje warunek WHERE z `AuctionFilters` ale **bez**
+ * konkretnego pola (dla faceted counts — liczymy count opcji przy
+ * pozostałych filtrach aktywnych).
+ *
+ * UWAGA: `battleye` NIE jest w `AuctionFilters` (jest na `worlds`),
+ * więc nie wyłączamy go z klauzuli — jest naturalnie liczony per
+ * świat bez dedykowanego filtra w query.
+ */
+type FilterField = keyof AuctionFilters | "battleye";
+function buildWhereExcept(
+  filters: AuctionFilters,
+  except: FilterField,
+): SQL | undefined {
+  const cloned = { ...filters };
+  if (except === "search") cloned.search = undefined;
+  else if (except === "vocation") cloned.vocation = undefined;
+  else if (except === "world") cloned.world = undefined;
+  else if (except === "region") cloned.region = undefined;
+  else if (except === "pvpType") cloned.pvpType = undefined;
+  else if (except === "levelMin" || except === "levelMax") {
+    cloned.levelMin = undefined;
+    cloned.levelMax = undefined;
+  } else if (except === "bidMin" || except === "bidMax") {
+    cloned.bidMin = undefined;
+    cloned.bidMax = undefined;
+  } else if (except === "skillType" || except === "skillMin" || except === "skillMax") {
+    cloned.skillType = undefined;
+    cloned.skillMin = undefined;
+    cloned.skillMax = undefined;
+  } else if (except === "hasSoulWar") cloned.hasSoulWar = undefined;
+  else if (except === "hasPrimalOrdeal") cloned.hasPrimalOrdeal = undefined;
+  else if (except === "hasWorldTransfer") cloned.hasWorldTransfer = undefined;
+  // `battleye` nie jest w AuctionFilters (tylko na `worlds`); nic do wyłączenia.
+  return buildWhereConditions(cloned);
+}
+
+export async function getFacetCounts(
+  filters: AuctionFilters,
+): Promise<FacetCountsServer> {
+  const totalQuery = db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(buildWhereConditions(filters));
+
+  // Vocation counts
+  const vocationQuery = db
+    .select({
+      value: auctions.vocationBase,
+      count: sql<number>`COUNT(*)::int`,
+    })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(buildWhereExcept(filters, "vocation"))
+    .groupBy(auctions.vocationBase)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  // Region counts
+  const regionQuery = db
+    .select({
+      value: worlds.region,
+      count: sql<number>`COUNT(*)::int`,
+    })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(buildWhereExcept(filters, "region"))
+    .groupBy(worlds.region)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  // World counts (top 50 — limit dla wydajności)
+  const worldQuery = db
+    .select({
+      value: worlds.name,
+      count: sql<number>`COUNT(*)::int`,
+    })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(buildWhereExcept(filters, "world"))
+    .groupBy(worlds.name)
+    .orderBy(sql`COUNT(*) DESC`)
+    .limit(100);
+
+  // PvP type counts
+  const pvpQuery = db
+    .select({
+      value: worlds.pvpType,
+      count: sql<number>`COUNT(*)::int`,
+    })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(buildWhereExcept(filters, "pvpType"))
+    .groupBy(worlds.pvpType)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  // BattlEye counts
+  const battleyeQuery = db
+    .select({
+      value: worlds.battleye,
+      count: sql<number>`COUNT(*)::int`,
+    })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(buildWhereExcept(filters, "battleye"))
+    .groupBy(worlds.battleye)
+    .orderBy(sql`COUNT(*) DESC`);
+
+  const [totalR, vocR, regR, wR, pvpR, beR] = await Promise.all([
+    totalQuery,
+    vocationQuery,
+    regionQuery,
+    worldQuery,
+    pvpQuery,
+    battleyeQuery,
+  ]);
+
+  return {
+    vocation: (vocR as unknown as { value: string; count: number }[]).map(
+      (r) => ({ value: String(r.value), count: Number(r.count) }),
+    ),
+    region: (regR as unknown as { value: string; count: number }[]).map(
+      (r) => ({ value: String(r.value), count: Number(r.count) }),
+    ),
+    world: (wR as unknown as { value: string; count: number }[]).map((r) => ({
+      value: String(r.value),
+      count: Number(r.count),
+    })),
+    pvpType: (pvpR as unknown as { value: string; count: number }[]).map(
+      (r) => ({ value: String(r.value), count: Number(r.count) }),
+    ),
+    battleye: (beR as unknown as { value: string; count: number }[]).map(
+      (r) => ({ value: String(r.value), count: Number(r.count) }),
+    ),
+    totalActive: Number(totalR[0]?.count ?? 0),
+  };
+}
+
 // Wyłączony nie używany import — sql alias() do późniejszego rozszerzenia relacji
 void sql;

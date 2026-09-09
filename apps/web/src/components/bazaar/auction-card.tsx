@@ -1,0 +1,464 @@
+"use client";
+
+/**
+ * AuctionCard — karta pojedynczej aukcji Bazaar (plan T40, arch §5 krok 5).
+ *
+ * Widok preferowany na mobile (arch §5: "mobile: lista pełnoekranowa
+ * + grid kart na desktop"). Na desktopie to widok domyślny jeśli
+ * użytkownik nie wybrał tabeli (localStorage `tibians:bazaar:view`).
+ *
+ * Hierarchia informacji (arch §5 krok 5):
+ *   1. Outfit GIF + nazwa postaci (sticky na mobile)
+ *   2. Level + promoted vocation (badge)
+ *   3. Świat + region + PvP type
+ *   4. Aktualna oferta (Intl.NumberFormat)
+ *   5. Countdown tykający co 1 s (local `setInterval`, zero requestów)
+ *   6. Heurystyczne tagi (Soul War / Primal / 7/7 bliss / 23/23 imbues)
+ *   7. Akcje (Szczegóły / Dodaj do porównania / Open on Tibia.com)
+ *
+ * Zasady UI (arch §6.4 + §6.5):
+ *   - Wszystkie pola numeryczne z `tabular-nums` (klasa `.numeric`)
+ *   - Countdown `< 5 min` → pulse na czerwono (`animate-pulse`)
+ *   - Countdown `aria-live="off"` (nie czytać co sekundę — koszmar SR)
+ *   - Touch targets ≥ 44×44 px
+ *   - Sticky countdown na mobile (`sticky top-0`)
+ */
+
+import * as React from "react";
+import { useFormatter, useTranslations } from "next-intl";
+import { Check, ExternalLink, Gavel, Scale, Timer } from "lucide-react";
+
+import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Link } from "@/i18n/routing";
+import { cn } from "@/lib/utils";
+
+import type { AuctionSummary } from "./auction-summary";
+
+// ─────────────────────────────────────────────────────────────────────
+// URL outfitu TibiaWiki (arch §13 + T25) — fallback gdy DB nie ma
+// rekordu (referencje z task 32 scrape'owane co 24h).
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Buduje URL do statycznego assetu Tibia.com.
+ * Tibia hostuje outfit GIF'y pod `https://static.tibia.com/images/charactertrade/outfits/{id}_{addon}.gif`.
+ * My używamy id bez addona (0=base), bo outfitId to FK do outfits.id.
+ * Fallback: TibiaWiki CachedImages (gdy tibia.com nie zwróci 200).
+ */
+function outfitImageUrl(outfitId: number | null): string | null {
+  if (outfitId === null) return null;
+  return `https://static.tibia.com/images/charactertrade/outfits/${outfitId}_0.gif`;
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Countdown — lokalny tykający komponent (arch §8.2: zero requestów)
+// ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Pozostaje czasu do `auctionEnd` (ISO string).
+ *  - `aria-live="off"` (arch §6.4 pkt 10)
+ *  - `tabular-nums` (no jitter)
+ *  - `< 5 min` → `animate-pulse` + danger color
+ *  - `< 0` → "Zakończona" / "Ended"
+ */
+function Countdown({ endsAt }: { endsAt: string }) {
+  const t = useTranslations("Bazaar.card");
+  const endMs = React.useMemo(() => Date.parse(endsAt), [endsAt]);
+
+  const computeRemaining = React.useCallback(
+    (now: number) => Math.max(0, endMs - now),
+    [endMs],
+  );
+
+  const [remainingMs, setRemainingMs] = React.useState<number>(() =>
+    computeRemaining(Date.now()),
+  );
+
+  React.useEffect(() => {
+    setRemainingMs(computeRemaining(Date.now()));
+    const interval = setInterval(() => {
+      setRemainingMs(computeRemaining(Date.now()));
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [computeRemaining]);
+
+  const isEnded = remainingMs <= 0;
+  const isUrgent = !isEnded && remainingMs < 5 * 60 * 1000;
+
+  // Formatuj "Xh Ym" / "Xm Ys" / "Ys" — locale-agnostic, locale czasu
+  // nie ma znaczenia przy różnicy.
+  const parts = React.useMemo(() => {
+    const totalSec = Math.floor(remainingMs / 1000);
+    const days = Math.floor(totalSec / 86400);
+    const hours = Math.floor((totalSec % 86400) / 3600);
+    const minutes = Math.floor((totalSec % 3600) / 60);
+    const seconds = totalSec % 60;
+    return { days, hours, minutes, seconds };
+  }, [remainingMs]);
+
+  const formatted = (() => {
+    if (isEnded) return t("ended");
+    if (parts.days > 0) {
+      return `${parts.days}d ${parts.hours}h ${String(parts.minutes).padStart(2, "0")}m`;
+    }
+    if (parts.hours > 0) {
+      return `${parts.hours}h ${String(parts.minutes).padStart(2, "0")}m ${String(parts.seconds).padStart(2, "0")}s`;
+    }
+    return `${parts.minutes}m ${String(parts.seconds).padStart(2, "0")}s`;
+  })();
+
+  return (
+    <div
+      className={cn(
+        "numeric inline-flex items-center gap-1.5 rounded-md border px-2.5 py-1 text-sm font-semibold tabular-nums",
+        isEnded
+          ? "border-border bg-muted text-muted-foreground"
+          : isUrgent
+            ? "border-danger/40 bg-danger/10 text-danger animate-pulse"
+            : "border-warning/40 bg-warning/10 text-warning-foreground",
+      )}
+      aria-live="off"
+      aria-label={`${t("endingIn")} ${formatted}`}
+      title={formatted}
+    >
+      <Timer className="h-3.5 w-3.5" aria-hidden="true" />
+      <span>{formatted}</span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Heurystyczne tagi (arch §5 krok 5: "Dużo charmów, Soul War, ...")
+// ─────────────────────────────────────────────────────────────────────
+
+interface HeuristicTag {
+  key:
+    | "soulWar"
+    | "primalOrdeal"
+    | "bliss77"
+    | "imbueFull"
+    | "worldTransfer"
+    | "charmExpansion"
+    | "preySlot";
+  condition: boolean;
+}
+
+function deriveHeuristicTags(a: AuctionSummary): HeuristicTag[] {
+  return [
+    { key: "soulWar", condition: a.hasSoulWar },
+    { key: "primalOrdeal", condition: a.hasPrimalOrdeal },
+    { key: "bliss77", condition: a.blessingsActive >= 7 },
+    {
+      key: "imbueFull",
+      condition: a.imbuementsTotal > 0 && a.imbuementsUnlocked >= a.imbuementsTotal,
+    },
+    { key: "worldTransfer", condition: a.hasWorldTransfer },
+    { key: "charmExpansion", condition: a.hasCharmExpansion },
+    { key: "preySlot", condition: a.hasPreySlot },
+  ];
+}
+
+// ─────────────────────────────────────────────────────────────────────
+// Vocation token barwy (arch §6.1 — 5 klas, rozróżnialne dla daltonistów)
+// ─────────────────────────────────────────────────────────────────────
+
+const VOCATION_TONE: Record<string, string> = {
+  Knight: "bg-voc-knight/15 text-voc-knight border-voc-knight/40",
+  Paladin: "bg-voc-paladin/15 text-voc-paladin border-voc-paladin/40",
+  Druid: "bg-voc-druid/15 text-voc-druid border-voc-druid/40",
+  Sorcerer: "bg-voc-sorcerer/15 text-voc-sorcerer border-voc-sorcerer/40",
+  Monk: "bg-voc-monk/15 text-voc-monk border-voc-monk/40",
+};
+
+const REGION_TONE: Record<AuctionSummary["worldRegion"], string> = {
+  EU: "bg-region-eu/15 text-region-eu border-region-eu/40",
+  NA: "bg-region-na/15 text-region-na border-region-na/40",
+  BR: "bg-region-br/15 text-region-br border-region-br/40",
+};
+
+// ─────────────────────────────────────────────────────────────────────
+// AuctionCard
+// ─────────────────────────────────────────────────────────────────────
+
+export interface AuctionCardProps {
+  auction: AuctionSummary;
+  /** Wywoływane przez parent przy zaznaczeniu do porównania (T40). */
+  onCompareToggle?: (id: string, selected: boolean) => void;
+  /** Czy aktualnie zaznaczona (kontrolowany checkbox). */
+  isCompared?: boolean;
+  className?: string;
+}
+
+export function AuctionCard({
+  auction,
+  onCompareToggle,
+  isCompared = false,
+  className,
+}: AuctionCardProps) {
+  const t = useTranslations("Bazaar.card");
+  const format = useFormatter();
+
+  // Heurystyczne tagi (cache'owane per-render, czysta funkcja).
+  const tags = React.useMemo(() => deriveHeuristicTags(auction), [auction]);
+  const activeTags = tags.filter((tag) => tag.condition);
+
+  const vocationTone = VOCATION_TONE[auction.vocation] ?? VOCATION_TONE.Knight;
+  const regionTone = REGION_TONE[auction.worldRegion];
+
+  // Outfit GIF (lazy load — może być ciężki).
+  const outfitUrl = outfitImageUrl(auction.outfitId);
+
+  // Bid format z `Intl.NumberFormat` (arch §6.2 — locale-aware).
+  const bidLabel =
+    auction.bidType === "current" ? t("currentBid") : t("minimumBid");
+  const formattedBid = format.number(auction.bid, { useGrouping: true });
+
+  // Heuristic toggle handler (przekazywany z parenta).
+  const handleCompareChange = React.useCallback(
+    (next: boolean) => {
+      onCompareToggle?.(auction.id, next);
+    },
+    [auction.id, onCompareToggle],
+  );
+
+  return (
+    <Card
+      className={cn(
+        "relative flex flex-col gap-0 overflow-hidden border-border/60 p-0",
+        "transition-colors hover:border-border",
+        className,
+      )}
+    >
+      {/* ── Sticky header: outfit + name + countdown (mobile) ─────────── */}
+      <div
+        className={cn(
+          "flex items-start gap-3 border-b bg-muted/30 p-4",
+          "sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-muted/60",
+          "sm:static sm:bg-transparent sm:backdrop-blur-none",
+        )}
+      >
+        {outfitUrl ? (
+          <img
+            src={outfitUrl}
+            alt={t("outfitAlt", { name: auction.name })}
+            width={48}
+            height={48}
+            loading="lazy"
+            className="h-12 w-12 shrink-0 rounded-md border bg-background object-cover"
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md border border-dashed bg-background text-xs text-muted-foreground"
+          >
+            {t("noImage")}
+          </div>
+        )}
+
+        <div className="min-w-0 flex-1">
+          <h3 className="truncate text-base font-semibold leading-tight text-foreground">
+            <Link
+              href={`/bazaar/${auction.id}`}
+              className="rounded-sm transition-colors hover:text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
+            >
+              {auction.name}
+            </Link>
+          </h3>
+
+          <div className="mt-1 flex flex-wrap items-center gap-1.5">
+            <Badge
+              variant="outline"
+              className={cn("border font-medium", vocationTone)}
+            >
+              {auction.vocationPromoted}
+            </Badge>
+            <Badge variant="outline" className="font-mono tabular-nums">
+              <span className="font-semibold">{auction.level}</span>
+            </Badge>
+          </div>
+        </div>
+
+        <div className="flex shrink-0 flex-col items-end gap-1">
+          <Countdown endsAt={auction.auctionEnd} />
+        </div>
+      </div>
+
+      <CardContent className="space-y-3 p-4">
+        {/* ── World + region + PvP ──────────────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-1.5 text-sm">
+          <Badge
+            variant="outline"
+            className={cn("border", regionTone)}
+          >
+            {auction.world}
+          </Badge>
+          <Badge variant="secondary" className="text-xs">
+            {auction.worldPvpType}
+          </Badge>
+          <Badge
+            variant={
+              auction.worldBattleye === "protected" ? "success" : "outline"
+            }
+            className="text-xs"
+            title={auction.worldBattleye}
+          >
+            BE
+          </Badge>
+        </div>
+
+        {/* ── Skills grid (arch §5 krok 5: 8 skilli) ──────────────── */}
+        <div className="grid grid-cols-8 gap-1 text-center text-[0.7rem]">
+          {(
+            [
+              ["magic", auction.skillMagic],
+              ["club", auction.skillClub],
+              ["fist", auction.skillFist],
+              ["sword", auction.skillSword],
+              ["axe", auction.skillAxe],
+              ["distance", auction.skillDistance],
+              ["shielding", auction.skillShielding],
+              ["fishing", auction.skillFishing],
+            ] as const
+          ).map(([key, value]) => (
+            <div
+              key={key}
+              className="numeric rounded-sm border bg-background/60 px-1 py-1 font-mono tabular-nums"
+              data-skill={key}
+            >
+              <div className="text-[0.6rem] uppercase leading-none text-muted-foreground">
+                {key.slice(0, 3)}
+              </div>
+              <div className="mt-0.5 font-semibold leading-none">{value}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* ── Progression mini-line ────────────────────────────────── */}
+        <dl className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+          <div className="numeric tabular-nums">
+            <dt className="sr-only">Imbuements</dt>
+            <dd>
+              <span className="font-semibold text-foreground">
+                {auction.imbuementsUnlocked}/{auction.imbuementsTotal}
+              </span>{" "}
+              imbues
+            </dd>
+          </div>
+          <div className="numeric tabular-nums">
+            <dt className="sr-only">Charms</dt>
+            <dd>
+              <span className="font-semibold text-foreground">
+                {format.number(auction.charmPoints, { useGrouping: true })}
+              </span>{" "}
+              charms
+            </dd>
+          </div>
+          <div className="numeric tabular-nums">
+            <dt className="sr-only">Quests</dt>
+            <dd>
+              <span className="font-semibold text-foreground">
+                {auction.questsCompleted}/{auction.questsTotal}
+              </span>{" "}
+              quests
+            </dd>
+          </div>
+        </dl>
+
+        {/* ── Heurystyczne tagi ────────────────────────────────────── */}
+        {activeTags.length > 0 ? (
+          <div className="flex flex-wrap gap-1.5">
+            {activeTags.map((tag) => (
+              <Badge key={tag.key} variant="info" className="text-[0.65rem]">
+                {t(`tags.${tag.key}`)}
+              </Badge>
+            ))}
+          </div>
+        ) : null}
+
+        {/* ── Bid + estimated value ────────────────────────────────── */}
+        <div className="flex items-end justify-between gap-3 border-t pt-3">
+          <div>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">
+              {bidLabel}
+            </p>
+            <p className="numeric mt-0.5 font-mono text-2xl font-bold tabular-nums text-foreground">
+              {formattedBid}{" "}
+              <span className="text-xs font-medium text-muted-foreground">TC</span>
+            </p>
+          </div>
+          {auction.estimatedValue !== null ? (
+            <div className="text-right">
+              <p className="text-xs uppercase tracking-wider text-muted-foreground">
+                {t("estimatedValue")}
+              </p>
+              <p
+                className={cn(
+                  "numeric mt-0.5 font-mono text-base font-semibold tabular-nums",
+                  auction.estimatedValue > auction.bid
+                    ? "text-danger"
+                    : "text-success",
+                )}
+              >
+                {format.number(auction.estimatedValue, { useGrouping: true })}{" "}
+                <span className="text-xs font-medium text-muted-foreground">TC</span>
+              </p>
+            </div>
+          ) : null}
+        </div>
+
+        {/* ── Akcje (44×44 touch targets) ─────────────────────────── */}
+        <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button asChild size="sm" className="flex-1 sm:flex-none">
+            <Link href={`/bazaar/${auction.id}`}>
+              <Gavel className="h-4 w-4" aria-hidden="true" />
+              {t("details")}
+            </Link>
+          </Button>
+
+          <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
+            <a
+              href={`https://www.tibia.com/charactertrade/?auctionid=${auction.id}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              <ExternalLink className="h-4 w-4" aria-hidden="true" />
+              {t("openExternal")}
+            </a>
+          </Button>
+
+          <label
+            className={cn(
+              "ml-auto inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-medium",
+              "transition-colors hover:bg-accent hover:text-accent-foreground",
+              "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+              isCompared
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-input bg-background text-foreground",
+            )}
+          >
+            <Checkbox
+              checked={isCompared}
+              onCheckedChange={(value) =>
+                handleCompareChange(value === true)
+              }
+              aria-label={
+                isCompared ? t("unselectCompare") : t("compare")
+              }
+              className="h-4 w-4"
+            />
+            <Scale className="h-4 w-4" aria-hidden="true" />
+            <span className="hidden sm:inline">
+              {isCompared ? t("unselectCompare") : t("compare")}
+            </span>
+            {isCompared ? (
+              <Check className="h-4 w-4 text-success" aria-hidden="true" />
+            ) : null}
+          </label>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
