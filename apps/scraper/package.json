@@ -21,13 +21,18 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "scrap:auctions": "node --import tsx/esm src/cli/scrap-auctions.ts",
     "scrap:items": "node --import tsx/esm src/cli/scrap-items.ts",
-    "scrap:scheduler": "node --import tsx/esm src/cli/scheduler.ts"
+    "scrap:scheduler": "node --import tsx/esm src/cli/scheduler.ts",
+    "ref:scrape": "node --import tsx/esm src/cli/ref-scrape.ts"
   },
   "dependencies": {
-    "undici": "^8.10.2"
+    "@tibians/shared": "workspace:^",
+    "cheerio": "^1.2.0",
+    "undici": "^8.10.2",
+    "zod": "^3.23.8"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "domhandler": "^5.0.3",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"

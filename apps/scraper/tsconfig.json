@@ -2,7 +2,19 @@
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
     "outDir": "dist",
-    "rootDir": "src"
+    "rootDir": "..",
+    "baseUrl": "../..",
+    "paths": {
+      "@tibians/shared": ["packages/shared/src/index.ts"],
+      "@tibians/shared/auction": ["packages/shared/src/auction/index.ts"],
+      "@tibians/ui": ["packages/ui/src/index.ts"],
+      "@tibians/db": ["packages/db/src/index.ts"],
+      "@tibians/calc": ["packages/calc/src/index.ts"],
+      "@tibians/character-context": ["packages/character-context/src/index.ts"]
+    }
   },
-  "include": ["src"]
+  "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "references": [
+    { "path": "../../packages/shared" }
+  ]
 }
