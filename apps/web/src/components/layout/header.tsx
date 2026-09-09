@@ -91,12 +91,12 @@ export function Header() {
       ],
     },
     {
-      label: tCalc("stamina"),
+      label: tCalc("stamina.title"),
       items: [
         {
-          label: tCalc("stamina"),
+          label: tCalc("stamina.title"),
           href: "/calculators/stamina",
-          description: tCalc("stamina"),
+          description: tCalc("stamina.description"),
         },
       ],
     },

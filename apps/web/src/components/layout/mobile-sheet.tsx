@@ -170,7 +170,7 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
                     {tCalc("skillsTraining.stamina")}
                   </MobileLink>
                   <MobileLink href="/calculators/stamina" onSelect={() => onOpenChange(false)}>
-                    {tCalc("stamina")}
+                    {tCalc("stamina.title")}
                   </MobileLink>
                   <MobileLink href="/calculators/character-value" onSelect={() => onOpenChange(false)}>
                     {tCalc("valuation.characterValue")}

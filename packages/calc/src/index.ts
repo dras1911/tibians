@@ -123,6 +123,18 @@ export {
 export { trueSkill } from "./formulas/true-skill.js";
 
 // ──────────────────────────────────────────────────────────────────────────
+// Formulas — Stamina (T18, arch. §2.1, TibiaWiki Stamina)
+// ──────────────────────────────────────────────────────────────────────────
+
+export {
+  staminaRegen,
+  type StaminaConfig,
+  type StaminaResult,
+  type StaminaSegment,
+  type StaminaZone,
+} from "./formulas/stamina.js";
+
+// ──────────────────────────────────────────────────────────────────────────
 // Formulas — Experience (T15, TibiaWiki Experience_Table)
 // ──────────────────────────────────────────────────────────────────────────
 

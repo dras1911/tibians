@@ -155,7 +155,87 @@
       "trueSkill": "True Skill",
       "stamina": "Stamina"
     },
-    "stamina": "Stamina",
+    "trueSkill": {
+      "title": "True Skill ★",
+      "description": "Odwrócenie bonusu lojalności. Porównaj skille widoczne w grze z highscores.",
+      "infoTitle": "True Skill ★ — most do Bazaaru",
+      "infoBody": "Ten kalkulator jest mostem między kalkulatorami a Bazaar. Bazaar pokazuje skille BEZ bonusu lojalności, gra POKAZUJE Z bonusem.",
+      "infoLinkLabel": "Zobacz w Bazaar",
+      "fields": {
+        "displayedSkill": {
+          "label": "Skill wyświetlany w grze",
+          "help": "Wartość ze statusu postaci (z bonusem lojalności).",
+          "placeholder": "np. 100"
+        },
+        "loyaltyPct": {
+          "label": "Bonus lojalności",
+          "help": "360 punktów lojalności = 5%. Wybierz z listy {0,5,…,50}.",
+          "placeholder": "Wybierz procent"
+        }
+      },
+      "result": {
+        "baseLabel": "Bazowy skill (highscores / Bazaar)",
+        "loyaltyBonus": "Bonus lojalności",
+        "displayedSkill": "Skill wyświetlany"
+      },
+      "recommendations": {
+        "noLoyalty": "Bez lojalności — wyświetlane = bazowe ({value}).",
+        "bazaar": "Bazowy skill: {value}. W Bazaar zobaczysz {value} (bez bonusu {discount})."
+      },
+      "errors": {
+        "invalidSkill": "Wpisz liczbę całkowitą ≥ 0",
+        "invalidLoyalty": "Niedozwolona wartość bonusu"
+      }
+    },
+    "stamina": {
+      "title": "Stamina",
+      "description": "Czas regeneracji, efektywność premium vs free.",
+      "fields": {
+        "currentStamina": {
+          "label": "Aktualna stamina",
+          "help": "Wartość widoczna w oknie postaci (w godzinach).",
+          "placeholder": "np. 36"
+        },
+        "targetStamina": {
+          "label": "Docelowa stamina",
+          "help": "Maksymalna wartość dla tego konta: {max} h"
+        },
+        "isPremium": {
+          "label": "Status konta",
+          "help": "Premium = do 42 h + zielona strefa (Happy Hours). Free = do 40 h, bez zielonej strefy.",
+          "premium": "Premium",
+          "free": "Free",
+          "ariaLabel": "Przełącz status konta premium / free"
+        }
+      },
+      "result": {
+        "realTimeLabel": "Czas rzeczywisty (offline)",
+        "doneLabel": "Status",
+        "zones": "Strefy regeneracji",
+        "hoursGained": "Staminy do odrobienia",
+        "fromTo": "Z {from} h do {to} h (max {max} h)",
+        "max": "Maks. stamina",
+        "alreadyFull": "Pełna"
+      },
+      "recommendations": {
+        "premiumNormal": "Premium: {rate} min offline = 1 min staminy w strefie normalnej (0-39 h).",
+        "free": "Free: {rate} min offline = 1 min staminy (bez zielonej strefy).",
+        "withGreen": "Premium: {normalRate} min/h w strefie normalnej, {greenRate} min/h w zielonej strefie 39-42 h.",
+        "full": "Stamina już pełna ({value} h). Nic do regeneracji."
+      },
+      "zones": {
+        "normal": "{hours} h normalna",
+        "green": "{hours} h zielona"
+      },
+      "unit": {
+        "h": "h",
+        "min": "min"
+      },
+      "errors": {
+        "invalidCurrent": "Wpisz liczbę całkowitą 0-42",
+        "invalidTarget": "Maksymalna wartość dla tego konta to {max} h"
+      }
+    },
     "valuation": {
       "label": "Wycena postaci",
       "characterValue": "Character Value"
@@ -172,7 +252,172 @@
       "leech": "Leech",
       "expShare": "Exp Share"
     },
-    "wheelOfDestiny": "Wheel of Destiny"
+    "wheelOfDestiny": "Wheel of Destiny",
+    "exerciseWeapons": {
+      "title": "Exercise Weapons",
+      "description": "Oblicz ile broni exercise zużyjesz do konkretnego skilla (do skilla lub z broni). Z uwzględnieniem loyalty, double event, prywatnego dummiego i progu opłacalności TC.",
+      "tabs": {
+        "targetSkill": "Do skilla",
+        "targetWeapons": "Z broni"
+      },
+      "fields": {
+        "category": {
+          "label": "Para vocation / skill",
+          "help": "8 par z architektury §2.1 — wybierz kontekstową parę dla Twojej postaci."
+        },
+        "currentSkill": {
+          "label": "Obecny skill",
+          "help": "Bazowy skill (bez bonusu lojalności) — tak raportuje Bazaar.",
+          "placeholder": "np. 100"
+        },
+        "percentToNext": {
+          "label": "% do następnego poziomu",
+          "help": "Tibia pokazuje %, nie punkty. Wpisz 0 jeśli skill jest świeżo zdobyty.",
+          "placeholder": "0-100"
+        },
+        "targetSkill": {
+          "label": "Docelowy skill",
+          "help": "Skill, do którego chcesz dojść.",
+          "placeholder": "np. 110"
+        },
+        "numWeapons": {
+          "label": "Liczba broni",
+          "help": "Ile exercise weapons zamierzasz zużyć.",
+          "placeholder": "np. 100"
+        },
+        "weaponType": {
+          "label": "Typ broni",
+          "regular": "Regular",
+          "durable": "Durable",
+          "lasting": "Lasting"
+        },
+        "loyaltyPct": {
+          "label": "Bonus lojalności (%)",
+          "help": "Tibia: 5% co 360 punktów loyalty. Wyższy bonus = mniej broni potrzeba.",
+          "placeholder": "0-50"
+        },
+        "doubleEvent": {
+          "label": "Double event",
+          "help": "Podczas double event potrzeba 2× mniej broni do tego samego efektu."
+        },
+        "privateDummy": {
+          "label": "Prywatny dummy",
+          "help": "Demon / Ferumbras / Monk dummy: 10% szybszy trening."
+        },
+        "tcPriceThreshold": {
+          "label": "Próg ceny TC (gp)",
+          "help": "TibiaWiki: jeśli 1 TC kosztuje więcej niż 13 889 gp, kup za gold. Domyślnie: 13 889.",
+          "placeholder": "13889"
+        }
+      },
+      "skills": {
+        "knightMelee": "Knight — Melee (sword)",
+        "knightShielding": "Knight — Shielding",
+        "knightMagic": "Knight — Magic",
+        "paladinMagic": "Paladin — Magic",
+        "paladinDistance": "Paladin — Distance",
+        "mageMagic": "Druid / Sorcerer — Magic",
+        "monkMagic": "Monk — Magic",
+        "monkFist": "Monk — Fist"
+      },
+      "result": {
+        "title": "Wynik",
+        "weaponsNeeded": "Potrzebne bronie",
+        "regular": "Regular",
+        "durable": "Durable",
+        "lasting": "Lasting",
+        "costGp": "Koszt (gp)",
+        "costTc": "Koszt (TC)",
+        "newSkillLevel": "Nowy poziom skilla",
+        "skillGained": "Zysk skilla",
+        "primaryTargetSkill": "Potrzebna liczba broni",
+        "primaryTargetWeapons": "Zysk skilla"
+      },
+      "recommendations": {
+        "buyGoldShort": "Kup za gold",
+        "buyTcShort": "Kup za TC",
+        "equalShort": "Równoważne",
+        "buyGold": "Kup za gold — cena TC ({tcPrice} gp) przekracza próg {threshold} gp.",
+        "buyTc": "Kup za TC — cena TC ({tcPrice} gp) jest poniżej progu {threshold} gp.",
+        "equal": "Koszt identyczny dla obu metod (TC = {tcPrice} gp ≈ próg {threshold} gp)."
+      },
+      "errors": {
+        "invalidCurrent": "Wpisz liczbę całkowitą ≥ 0",
+        "invalidPercent": "Procent musi być w zakresie 0-100",
+        "invalidTarget": "Skill docelowy musi być wyższy niż obecny",
+        "invalidNum": "Liczba broni musi być liczbą całkowitą ≥ 0",
+        "invalidType": "Wybierz typ broni",
+        "invalidLoyalty": "Bonus lojalności musi być jednym z 0, 5, 10, …, 50",
+        "invalidThreshold": "Próg ceny TC musi być liczbą dodatnią"
+      }
+    },
+    "skills": {
+      "title": "Training / Skills",
+      "description": "Czas i koszt treningu od obecnego do docelowego skilla na dowolnej broni — z ostrzeżeniem o precyzji dla typów broni innych niż Regular.",
+      "fields": {
+        "category": {
+          "label": "Para vocation / skill",
+          "help": "8 par z architektury §2.1 — kontekstowy skill dla Twojej postaci."
+        },
+        "currentSkill": {
+          "label": "Obecny skill",
+          "help": "Bazowy skill (bez bonusu lojalności).",
+          "placeholder": "np. 100"
+        },
+        "targetSkill": {
+          "label": "Docelowy skill",
+          "help": "Skill, do którego chcesz dojść.",
+          "placeholder": "np. 110"
+        },
+        "percentToNext": {
+          "label": "% do następnego poziomu",
+          "help": "Tibia pokazuje %, nie punkty. 0 = świeżo zdobyty level.",
+          "placeholder": "0-100"
+        },
+        "weaponType": {
+          "label": "Typ broni",
+          "regular": "Regular",
+          "durable": "Durable",
+          "lasting": "Lasting",
+          "help": "Tylko 'Regular' daje precyzyjny czas. Inne typy są przybliżone (zakładają pełne zużycie broni)."
+        },
+        "offline": {
+          "label": "Trening offline",
+          "help": "Offline training zużywa staminę — ale czas pozostaje taki sam."
+        }
+      },
+      "skills": {
+        "knightMelee": "Knight — Melee (sword)",
+        "knightShielding": "Knight — Shielding",
+        "knightMagic": "Knight — Magic",
+        "paladinMagic": "Paladin — Magic",
+        "paladinDistance": "Paladin — Distance",
+        "mageMagic": "Druid / Sorcerer — Magic",
+        "monkMagic": "Monk — Magic",
+        "monkFist": "Monk — Fist"
+      },
+      "result": {
+        "title": "Wynik",
+        "time": "Czas treningu",
+        "costGp": "Koszt (gp)",
+        "costTc": "Koszt (TC)",
+        "hits": "Wymagane uderzenia"
+      },
+      "warnings": {
+        "approximate": "Tylko broń 'Regular' daje precyzyjny czas/koszt. Inne typy zakładają pełne zużycie broni — mogą przeszacować wynik."
+      },
+      "recommendations": {
+        "approximateShort": "Wynik przybliżony",
+        "approximate": "TibiaWiki: tylko broń 'Regular' daje precyzyjny czas. Wybrany typ zakłada pełne zużycie broni.",
+        "preciseShort": "Precyzyjny wynik",
+        "precise": "Broń 'Regular' — wynik zgodny z TibiaWiki Skills Calculator."
+      },
+      "errors": {
+        "invalidCurrent": "Wpisz liczbę całkowitą ≥ 0",
+        "invalidPercent": "Procent musi być w zakresie 0-100",
+        "invalidTarget": "Skill docelowy musi być wyższy niż obecny"
+      }
+    }
   },
   "Reference": {
     "title": "Referencje",

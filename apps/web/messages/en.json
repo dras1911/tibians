@@ -155,7 +155,87 @@
       "trueSkill": "True Skill",
       "stamina": "Stamina"
     },
-    "stamina": "Stamina",
+    "trueSkill": {
+      "title": "True Skill ★",
+      "description": "Reverse the loyalty bonus. Compare skills as shown in game with highscores.",
+      "infoTitle": "True Skill ★ — bridge to Bazaar",
+      "infoBody": "This calculator is the bridge between calculators and Bazaar. Bazaar shows skills WITHOUT loyalty bonus, the game shows them WITH the bonus.",
+      "infoLinkLabel": "Open Bazaar",
+      "fields": {
+        "displayedSkill": {
+          "label": "Skill shown in game",
+          "help": "Value from the character status (with loyalty bonus).",
+          "placeholder": "e.g. 100"
+        },
+        "loyaltyPct": {
+          "label": "Loyalty bonus",
+          "help": "360 loyalty points = 5%. Pick from {0,5,…,50}.",
+          "placeholder": "Pick percent"
+        }
+      },
+      "result": {
+        "baseLabel": "Base skill (highscores / Bazaar)",
+        "loyaltyBonus": "Loyalty bonus",
+        "displayedSkill": "Skill shown"
+      },
+      "recommendations": {
+        "noLoyalty": "No loyalty — displayed = base ({value}).",
+        "bazaar": "Base skill: {value}. Bazaar will show {value} (without the {discount} bonus)."
+      },
+      "errors": {
+        "invalidSkill": "Enter an integer ≥ 0",
+        "invalidLoyalty": "Invalid loyalty value"
+      }
+    },
+    "stamina": {
+      "title": "Stamina",
+      "description": "Regeneration time, premium vs free efficiency.",
+      "fields": {
+        "currentStamina": {
+          "label": "Current stamina",
+          "help": "Value from the character window (in hours).",
+          "placeholder": "e.g. 36"
+        },
+        "targetStamina": {
+          "label": "Target stamina",
+          "help": "Max value for this account: {max} h"
+        },
+        "isPremium": {
+          "label": "Account status",
+          "help": "Premium = up to 42 h + green zone (Happy Hours). Free = up to 40 h, no green zone.",
+          "premium": "Premium",
+          "free": "Free",
+          "ariaLabel": "Toggle premium / free account status"
+        }
+      },
+      "result": {
+        "realTimeLabel": "Real time (offline)",
+        "doneLabel": "Status",
+        "zones": "Regeneration zones",
+        "hoursGained": "Stamina to recover",
+        "fromTo": "From {from} h to {to} h (max {max} h)",
+        "max": "Max stamina",
+        "alreadyFull": "Full"
+      },
+      "recommendations": {
+        "premiumNormal": "Premium: {rate} min offline = 1 min stamina in normal zone (0-39 h).",
+        "free": "Free: {rate} min offline = 1 min stamina (no green zone).",
+        "withGreen": "Premium: {normalRate} min/h in normal zone, {greenRate} min/h in green zone 39-42 h.",
+        "full": "Stamina already full ({value} h). Nothing to regenerate."
+      },
+      "zones": {
+        "normal": "{hours} h normal",
+        "green": "{hours} h green"
+      },
+      "unit": {
+        "h": "h",
+        "min": "min"
+      },
+      "errors": {
+        "invalidCurrent": "Enter an integer 0-42",
+        "invalidTarget": "Maximum for this account is {max} h"
+      }
+    },
     "valuation": {
       "label": "Character valuation",
       "characterValue": "Character Value"
@@ -172,7 +252,172 @@
       "leech": "Leech",
       "expShare": "Exp Share"
     },
-    "wheelOfDestiny": "Wheel of Destiny"
+    "wheelOfDestiny": "Wheel of Destiny",
+    "exerciseWeapons": {
+      "title": "Exercise Weapons",
+      "description": "Calculate how many exercise weapons you need for a target skill (or skill from N weapons). Includes loyalty bonus, double event, private dummy and TC price threshold.",
+      "tabs": {
+        "targetSkill": "Target skill",
+        "targetWeapons": "From weapons"
+      },
+      "fields": {
+        "category": {
+          "label": "Vocation / skill pair",
+          "help": "One of 8 pairs from architecture §2.1 — pick the contextual pair for your character."
+        },
+        "currentSkill": {
+          "label": "Current skill",
+          "help": "Base skill (without loyalty bonus) — what Bazaar reports.",
+          "placeholder": "e.g. 100"
+        },
+        "percentToNext": {
+          "label": "% to next level",
+          "help": "Tibia shows %, not points. Enter 0 for a freshly gained level.",
+          "placeholder": "0-100"
+        },
+        "targetSkill": {
+          "label": "Target skill",
+          "help": "The skill level you want to reach.",
+          "placeholder": "e.g. 110"
+        },
+        "numWeapons": {
+          "label": "Number of weapons",
+          "help": "How many exercise weapons you intend to use.",
+          "placeholder": "e.g. 100"
+        },
+        "weaponType": {
+          "label": "Weapon type",
+          "regular": "Regular",
+          "durable": "Durable",
+          "lasting": "Lasting"
+        },
+        "loyaltyPct": {
+          "label": "Loyalty bonus (%)",
+          "help": "Tibia: +5% per 360 loyalty points. Higher bonus = fewer weapons needed.",
+          "placeholder": "0-50"
+        },
+        "doubleEvent": {
+          "label": "Double event",
+          "help": "During a double event you need 2× fewer weapons for the same effect."
+        },
+        "privateDummy": {
+          "label": "Private dummy",
+          "help": "Demon / Ferumbras / Monk dummy: 10% faster training."
+        },
+        "tcPriceThreshold": {
+          "label": "TC price threshold (gp)",
+          "help": "TibiaWiki: if 1 TC costs more than 13,889 gp, buy for gold. Default: 13,889.",
+          "placeholder": "13889"
+        }
+      },
+      "skills": {
+        "knightMelee": "Knight — Melee (sword)",
+        "knightShielding": "Knight — Shielding",
+        "knightMagic": "Knight — Magic",
+        "paladinMagic": "Paladin — Magic",
+        "paladinDistance": "Paladin — Distance",
+        "mageMagic": "Druid / Sorcerer — Magic",
+        "monkMagic": "Monk — Magic",
+        "monkFist": "Monk — Fist"
+      },
+      "result": {
+        "title": "Result",
+        "weaponsNeeded": "Weapons needed",
+        "regular": "Regular",
+        "durable": "Durable",
+        "lasting": "Lasting",
+        "costGp": "Cost (gp)",
+        "costTc": "Cost (TC)",
+        "newSkillLevel": "New skill level",
+        "skillGained": "Skill gained",
+        "primaryTargetSkill": "Weapons needed",
+        "primaryTargetWeapons": "Skill gained"
+      },
+      "recommendations": {
+        "buyGoldShort": "Buy for gold",
+        "buyTcShort": "Buy with TC",
+        "equalShort": "Equal",
+        "buyGold": "Buy for gold — TC price ({tcPrice} gp) exceeds the {threshold} gp threshold.",
+        "buyTc": "Buy with TC — TC price ({tcPrice} gp) is below the {threshold} gp threshold.",
+        "equal": "Both methods cost the same (TC = {tcPrice} gp ≈ {threshold} gp threshold)."
+      },
+      "errors": {
+        "invalidCurrent": "Enter an integer ≥ 0",
+        "invalidPercent": "Percent must be between 0 and 100",
+        "invalidTarget": "Target skill must be higher than current",
+        "invalidNum": "Number of weapons must be an integer ≥ 0",
+        "invalidType": "Choose a weapon type",
+        "invalidLoyalty": "Loyalty bonus must be one of 0, 5, 10, …, 50",
+        "invalidThreshold": "TC price threshold must be a positive number"
+      }
+    },
+    "skills": {
+      "title": "Training / Skills",
+      "description": "Time and cost to train from current to target skill on any weapon — with a precision warning for non-Regular weapon types.",
+      "fields": {
+        "category": {
+          "label": "Vocation / skill pair",
+          "help": "One of 8 pairs from architecture §2.1 — the contextual skill for your character."
+        },
+        "currentSkill": {
+          "label": "Current skill",
+          "help": "Base skill (without loyalty bonus).",
+          "placeholder": "e.g. 100"
+        },
+        "targetSkill": {
+          "label": "Target skill",
+          "help": "The skill level you want to reach.",
+          "placeholder": "e.g. 110"
+        },
+        "percentToNext": {
+          "label": "% to next level",
+          "help": "Tibia shows %, not points. 0 for a freshly gained level.",
+          "placeholder": "0-100"
+        },
+        "weaponType": {
+          "label": "Weapon type",
+          "regular": "Regular",
+          "durable": "Durable",
+          "lasting": "Lasting",
+          "help": "Only 'Regular' gives a precise time. Other types are approximate (assume full weapon usage)."
+        },
+        "offline": {
+          "label": "Offline training",
+          "help": "Offline training consumes stamina — but the time stays the same."
+        }
+      },
+      "skills": {
+        "knightMelee": "Knight — Melee (sword)",
+        "knightShielding": "Knight — Shielding",
+        "knightMagic": "Knight — Magic",
+        "paladinMagic": "Paladin — Magic",
+        "paladinDistance": "Paladin — Distance",
+        "mageMagic": "Druid / Sorcerer — Magic",
+        "monkMagic": "Monk — Magic",
+        "monkFist": "Monk — Fist"
+      },
+      "result": {
+        "title": "Result",
+        "time": "Training time",
+        "costGp": "Cost (gp)",
+        "costTc": "Cost (TC)",
+        "hits": "Hits required"
+      },
+      "warnings": {
+        "approximate": "Only 'Regular' weapons give a precise time/cost. Other types assume full weapon usage — they may overestimate the result."
+      },
+      "recommendations": {
+        "approximateShort": "Approximate result",
+        "approximate": "TibiaWiki: only 'Regular' weapons give a precise time. The chosen type assumes full weapon usage.",
+        "preciseShort": "Precise result",
+        "precise": "'Regular' weapon — result matches the TibiaWiki Skills Calculator."
+      },
+      "errors": {
+        "invalidCurrent": "Enter an integer ≥ 0",
+        "invalidPercent": "Percent must be between 0 and 100",
+        "invalidTarget": "Target skill must be higher than current"
+      }
+    }
   },
   "Reference": {
     "title": "Reference",
