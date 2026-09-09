@@ -1134,6 +1134,108 @@
             }
         }
     },
+    "Workspace": {
+        "title": "Workspace",
+        "description": "Analizuj postać: kalkulatory, scenariusze what-if i porównania — wszystko na jednym wspólnym snapshocie.",
+        "snapshotHeader": {
+            "untitledCharacter": "Nowa postać",
+            "level": "Level",
+            "world": "Świat",
+            "worldUnknown": "—",
+            "source": {
+                "manual": "Wpisane ręcznie",
+                "auction": "Aukcja #{id}",
+                "imported": "Import z tibia.com"
+            },
+            "actions": {
+                "save": "Zapisz",
+                "saved": "Zapisano",
+                "copyLink": "Kopiuj link",
+                "linkCopied": "Skopiowano!",
+                "whatIf": "Tryb what-if",
+                "editMode": "Tryb edycji"
+            },
+            "badges": {
+                "editMode": "Tryb edycji",
+                "noAuction": "Brak aukcji"
+            }
+        },
+        "panels": {
+            "skills": "Skills",
+            "training": "Training",
+            "stamina": "Stamina",
+            "value": "Value",
+            "items": "Items",
+            "progress": "Progress",
+            "comparison": "Comparison"
+        },
+        "empty": {
+            "title": "Wybierz postać, by zacząć analizę",
+            "description": "Otwórz aukcję z Bazaaru, wczaj zapisaną postać albo wprowadź dane ręcznie. Cały Workspace korzysta z tego samego snapshota — zmiana jednego pola przelicza wszystkie panele.",
+            "ctaBazaar": "Przeglądaj Bazaar",
+            "ctaMyCharacters": "Moje postacie",
+            "ctaSoon": "Kalkulator manualny (wkrótce)"
+        },
+        "panelsContent": {
+            "skills": {
+                "base": "Bazowy",
+                "loyalty": "+{pct}% loyalty",
+                "openCalculator": "Otwórz kalkulator"
+            },
+            "training": {
+                "timeToNext": "Czas do następnego poziomu",
+                "noTarget": "Ustaw cel w kalkulatorze Training",
+                "openExercise": "Otwórz Exercise Weapons",
+                "openTraining": "Otwórz Training"
+            },
+            "stamina": {
+                "current": "Aktualna stamina",
+                "regenRate": "Regeneracja",
+                "openCalculator": "Otwórz kalkulator Stamina"
+            },
+            "value": {
+                "estimated": "Szacowana wartość",
+                "confidence": "Pewność wyceny",
+                "dealBadge": "Okazja",
+                "fairBadge": "Fair price",
+                "premiumBadge": "Przepłata",
+                "viewBreakdown": "Zobacz pełen breakdown"
+            },
+            "items": {
+                "empty": "Brak przedmiotów w tym snapshocie.",
+                "manualHint": "Lista przedmiotów dostępna dla aukcji i importu.",
+                "category": {
+                    "weapons": "Bronie",
+                    "shields": "Tarcze",
+                    "armors": "Zbroje",
+                    "helmets": "Hełmy",
+                    "runes": "Rune",
+                    "potions": "Mikstury",
+                    "rings": "Pierścienie",
+                    "other": "Inne"
+                }
+            },
+            "progress": {
+                "charmPoints": "Charm points",
+                "bossPoints": "Boss points",
+                "quests": "Questy",
+                "imbuements": "Imbuementy",
+                "achievements": "Achievement points",
+                "ofTotal": "{done}/{total}"
+            },
+            "comparison": {
+                "title": "Porównanie postaci",
+                "description": "Dodaj drugą postać, by zobaczyć tabelę side-by-side z oznaczeniami przewagi.",
+                "cta": "Dodaj drugą postać do porównania",
+                "comingSoon": "Pełne porównanie dostarcza T27."
+            }
+        },
+        "errors": {
+            "loadFailed": "Nie udało się wczytać snapshota.",
+            "savedNotFound": "Nie znaleziono zapisanej postaci o id {id}.",
+            "auctionLoadPlaceholder": "Ładowanie z aukcji #{id} — pełna integracja z Bazarem dostępna w T37."
+        }
+    },
     "Reference": {
         "title": "Referencje",
         "items": "Przedmioty",
@@ -1163,5 +1265,112 @@
         "cipsoftDisclaimer": "Tibia is a registered trademark of CipSoft GmbH. Tibia and all products related to Tibia are copyright by CipSoft GmbH.",
         "notAffiliated": "Tibians nie jest powiązany z CipSoft GmbH.",
         "copyright": "© {year} Tibians — community hub dla graczy Tibii. Wszelkie prawa zastrzeżone."
+    },
+    "Workspace": {
+        "title": "Workspace",
+        "editor": {
+            "toggle": {
+                "label": "Tryb edycji",
+                "on": "Edytuj",
+                "off": "Podgląd",
+                "ariaLabel": "Przełącz tryb edycji snapshota",
+                "description": "Zmieniaj pola snapshota i obserwuj, jak reagują wszystkie panele kalkulatorów."
+            },
+            "header": {
+                "badge": "Tryb edycji — zmiany nie zapisane",
+                "dirtyBadge": "Niezapisane zmiany",
+                "cleanBadge": "Bez zmian",
+                "dirtyDescription": "Wszystkie panele reagują na zmiany. Zastosuj, aby zachować na stałe."
+            },
+            "apply": {
+                "label": "Zastosuj do snapshota",
+                "ariaLabel": "Zastosuj zmiany do snapshota (perma-zapis)",
+                "success": "Zapisano zmiany snapshota",
+                "noChanges": "Brak zmian do zapisania"
+            },
+            "revert": {
+                "label": "Cofnij",
+                "ariaLabel": "Cofnij wszystkie niezapisane zmiany snapshota",
+                "success": "Przywrócono oryginalny snapshot"
+            },
+            "undo": {
+                "label": "Cofnij ostatnią zmianę",
+                "redo": "Ponów ostatnią zmianę",
+                "ariaLabel": "Cofnij ostatnią zmianę (Ctrl+Z)",
+                "redoAriaLabel": "Ponów ostatnią zmianę (Ctrl+Shift+Z)"
+            },
+            "sections": {
+                "identity": "Tożsamość",
+                "skills": "Skille",
+                "progression": "Progression",
+                "assets": "Aktywa"
+            },
+            "fields": {
+                "level": {
+                    "label": "Level",
+                    "help": "Poziom postaci (8–2500)."
+                },
+                "vocation": {
+                    "label": "Vocation",
+                    "help": "Bazowa klasa postaci."
+                },
+                "sex": {
+                    "label": "Płeć",
+                    "help": "Płeć postaci.",
+                    "male": "Mężczyzna",
+                    "female": "Kobieta"
+                },
+                "world": {
+                    "label": "Świat (opcjonalny)",
+                    "help": "Nazwa świata Tibia (np. Jadebra). Opcjonalne.",
+                    "placeholder": "np. Jadebra",
+                    "unknown": "Inny / wpisz własny"
+                },
+                "skill": {
+                    "label": "{skill}",
+                    "help": "Bazowy skill (bez bonusu lojalności)."
+                },
+                "magicHelp": "Magic — zakres 0–300.",
+                "shieldingHelp": "Shielding — zakres 0–300.",
+                "charmPoints": {
+                    "label": "Charm points",
+                    "help": "Suma charm points (0–9000)."
+                },
+                "bossPoints": {
+                    "label": "Boss points",
+                    "help": "Suma boss points (0–100000)."
+                },
+                "questsCompleted": {
+                    "label": "Questy ukończone",
+                    "help": "Liczba ukończonych questów (0–42)."
+                },
+                "imbuementsUnlocked": {
+                    "label": "Imbuementy odblokowane",
+                    "help": "Liczba odblokowanych imbuementów (0–23)."
+                },
+                "goldTotal": {
+                    "label": "Złoto (bank + inventory + depot)",
+                    "help": "Łączne złoto postaci (gp)."
+                },
+                "storeOutfitsCount": {
+                    "label": "Store outfits",
+                    "help": "Liczba kupionych strojów."
+                },
+                "storeMountsCount": {
+                    "label": "Store mounts",
+                    "help": "Liczba kupionych mountów."
+                }
+            },
+            "errors": {
+                "levelRange": "Level musi być w zakresie 8–2500",
+                "skillRange": "{skill}: {min}–{max}",
+                "charmPointsRange": "Charm points: 0–9000",
+                "bossPointsRange": "Boss points: 0–100000",
+                "questsRange": "Questy: 0–{max}",
+                "imbuementsRange": "Imbuementy: 0–{max}",
+                "goldRange": "Złoto: ≥ 0",
+                "storeRange": "{label}: ≥ 0"
+            }
+        }
     }
 }

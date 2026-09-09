@@ -20,8 +20,18 @@
  *   Uwaga: litera 'z' jest zakodowana w nagłówku jako pierwszy
  *   znak payloadu PRZED konwersją do base64url, więc po dekodowaniu
  *   base64url od razu widzimy tryb.
+ *
+ * **Browser-safety (T25):** ten moduł jest importowany zarówno po
+ * stronie serwera (Next.js SSR) jak i klienta (komponenty Workspace
+ * poprzez `character-store`). `node:zlib` / `zlib` jest Node-only —
+ * Webpack odmawia budowania go do klienta ("UnhandledSchemeError").
+ *
+ * Rozwiązanie: `zlib` ładujemy leniwie przez `createRequire` dopiero
+ * gdy helper faktycznie jest wywoływany (ścieżka gzip). W przeglądarce
+ * `encodeSnapshot()` z małymi payloadami (< 1 KB) nigdy nie wybiera
+ * ścieżki gzip — więc `loadZlib()` nigdy się nie wykonuje w bundle'u
+ * klienckim, a Webpack nie próbuje analizować dynamicznego require.
  */
-import { gunzipSync, gzipSync } from "node:zlib";
 import { CharacterSnapshotSchema, type CharacterSnapshot } from "../schema.js";
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -207,19 +217,60 @@ function base64UrlToBytes(payload: string): Uint8Array {
 
 /** Kompresuje bajty gzipem. Zwraca nowy Uint8Array (gzipSync mutuje wejście). */
 function compressGzip(bytes: Uint8Array): Uint8Array {
-  return new Uint8Array(gzipSync(bytes));
+  return new Uint8Array(loadZlib().gzipSync(bytes));
 }
 
 /** Dekompresuje bajty gzipem. Rzuca na uszkodzony gzip. */
 function decompressGzip(bytes: Uint8Array): Uint8Array {
   try {
-    return new Uint8Array(gunzipSync(bytes));
+    return new Uint8Array(loadZlib().gunzipSync(bytes));
   } catch (cause) {
     throw new CorruptedSnapshotUrlError(
       "Nie udało się zdekompresować gzip",
       { cause },
     );
   }
+}
+
+/** Leniwy ładunek `zlib` (Node-only). Memoizujemy wynik. */
+let _zlib: {
+  gzipSync: (bytes: Uint8Array) => Uint8Array;
+  gunzipSync: (bytes: Uint8Array) => Uint8Array;
+} | null = null;
+
+function loadZlib(): {
+  gzipSync: (bytes: Uint8Array) => Uint8Array;
+  gunzipSync: (bytes: Uint8Array) => Uint8Array;
+} {
+  if (_zlib !== null) return _zlib;
+  // Ładujemy `zlib` leniwie — żeby moduł mógł być bezpiecznie
+  // importowany w przeglądarce (Webpack nie widzi statycznych
+  // referencji do `node:zlib`).
+  //
+  // Strategia odporna na środowisko:
+  //   1. Node 22.3+ → `process.getBuiltinModule("zlib")` (najszybsze,
+  //      bez żadnego require).
+  //   2. Starsze Node → ukryty `require` przez `new Function(...)`
+  //      (string "zlib" nie jest widoczny dla bundlera).
+  //   3. Brak Node → throw (ścieżka gzip nie jest wspierana w
+  //      przeglądarce; i tak nigdy nie jest wywoływana, bo encodeSnapshot
+  //      z małymi payloadami (< 1 KB) wybiera ścieżkę "plain").
+  if (typeof process !== "undefined" && typeof (process as { getBuiltinModule?: unknown }).getBuiltinModule === "function") {
+    _zlib = (process as { getBuiltinModule: (id: string) => unknown }).getBuiltinModule("zlib") as {
+      gzipSync: (bytes: Uint8Array) => Uint8Array;
+      gunzipSync: (bytes: Uint8Array) => Uint8Array;
+    };
+    return _zlib;
+  }
+  // Fallback dla starszych wersji Node i Vitest (ESM) — ukryty require.
+  const innerRequire = new Function(
+    "return require",
+  ) as () => NodeJS.Require;
+  _zlib = innerRequire()("zlib") as {
+    gzipSync: (bytes: Uint8Array) => Uint8Array;
+    gunzipSync: (bytes: Uint8Array) => Uint8Array;
+  };
+  return _zlib;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
