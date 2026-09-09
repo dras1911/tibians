@@ -574,6 +574,227 @@
         "invalidPercent": "Procent musi być w zakresie 0-100",
         "invalidTarget": "Skill docelowy musi być wyższy niż obecny"
       }
+    },
+    "imbuement": {
+      "title": "Koszt Imbuement",
+      "description": "Koszt slotów imbuement (basic/intricate/powerful) — TC + gp, per TibiaWiki.",
+      "fields": {
+        "imbuementType": {
+          "label": "Tier imbuement",
+          "help": "Basic = najtańszy slot (25 TC), Intricate = średni tier (bez slotu TC), Powerful = top tier (150 TC).",
+          "placeholder": "Wybierz tier"
+        },
+        "level": {
+          "label": "Level postaci",
+          "help": "Informacyjny — używany do oceny kontekstu gry.",
+          "placeholder": "np. 100"
+        },
+        "hours": {
+          "label": "Czas trwania (h)",
+          "help": "Czas trwania imbuementu w grze (TibiaWiki: 20h użycia).",
+          "placeholder": "np. 20"
+        }
+      },
+      "tiers": {
+        "basic": "Basic",
+        "intricate": "Intricate",
+        "powerful": "Powerful"
+      },
+      "result": {
+        "totalCostTc": "Całkowity koszt (TC)",
+        "slotCost": "Slot",
+        "fee": "Opłata (gp)",
+        "duration": "Czas trwania",
+        "tier": "Tier"
+      },
+      "recommendations": {
+        "basic": "Basic: slot {slot} TC + {fee} gp fee — najtańszy tier.",
+        "intricate": "Intricate: {fee} gp fee (używa Basic slot, bez dodatkowego TC).",
+        "powerful": "Powerful: slot {slot} TC + {fee} gp fee — top tier, pełna moc."
+      },
+      "errors": {
+        "invalidType": "Wybierz tier z listy",
+        "invalidLevel": "Wpisz level jako nieujemną liczbę całkowitą",
+        "invalidHours": "Wpisz czas trwania jako nieujemną liczbę całkowitą"
+      }
+    },
+    "blessings": {
+      "title": "Koszt Błogosławieństw",
+      "description": "Koszt błogosławieństw TibiaWiki R(L) — ochrona przed utratą XP przy śmierci.",
+      "fields": {
+        "currentLevel": {
+          "label": "Obecny level",
+          "help": "Twój aktualny level (integer ∈ [{min}, {max}]).",
+          "placeholder": "np. 100"
+        },
+        "targetLevel": {
+          "label": "Docelowy level",
+          "help": "Docelowy level (musi być > obecnego). Wartość informacyjna.",
+          "placeholder": "np. 101"
+        },
+        "currentBlessings": {
+          "label": "Aktualne błogosławieństwa",
+          "help": "Ile z 7 błogosławieństw już posiadasz (0 = żadne, 7 = pełna ochrona przed XP-loss).",
+          "placeholder": "5"
+        }
+      },
+      "result": {
+        "totalCostLabel": "Całkowity koszt",
+        "doneLabel": "Status",
+        "blessings": "Błogosławieństw do kupienia",
+        "costPerBl": "Koszt / błogosławieństwo",
+        "current": "Posiadane"
+      },
+      "recommendations": {
+        "alreadyFull": "Już masz 7/7 — pełna ochrona przed utratą XP.",
+        "fullProtection": "Pełna ochrona 7/7 — {count} × koszt per blessing z R(L).",
+        "partial": "Dokup {count} błogosławieństw, żeby zwiększyć ochronę przed XP-loss."
+      },
+      "errors": {
+        "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
+        "invalidTarget": "Docelowy level musi być > obecnego",
+        "invalidCurrent": "Ilość błogosławieństw musi być ∈ [0, {max}]",
+        "alreadyHigher": "Już masz wyższy poziom — wpisz większy targetLevel."
+      }
+    },
+    "weeklyTasks": {
+      "title": "Weekly Tasks",
+      "description": "Maksymalne nagrody XP za weekly task w zależności od poziomu i trudności.",
+      "fields": {
+        "level": {
+          "label": "Poziom postaci",
+          "help": "Twój aktualny poziom (integer ∈ [{min}, {max}]).",
+          "placeholder": "np. 200"
+        },
+        "difficulty": {
+          "label": "Trudność",
+          "help": "Beginner (od 1), Adept (od 30), Expert (od 150), Master (od 400). Cap XP rośnie z trudnością.",
+          "placeholder": "Wybierz trudność"
+        },
+        "taskType": {
+          "label": "Typ tasku",
+          "help": "Kill i delivery używają tej samej formuły XP (TibiaWiki BR).",
+          "placeholder": "Wybierz typ",
+          "kill": "Kill",
+          "delivery": "Delivery"
+        }
+      },
+      "difficulties": {
+        "beginner": "Beginner",
+        "adept": "Adept",
+        "expert": "Expert",
+        "master": "Master"
+      },
+      "result": {
+        "xpLabel": "Maksymalne XP za task",
+        "baseXp": "Bazowe XP (bez cap)",
+        "capXp": "Cap XP tej trudności",
+        "wasCapped": "Cap osiągnięty",
+        "difficulty": "Trudność",
+        "level": "Poziom",
+        "taskType": "Typ tasku",
+        "yes": "Tak",
+        "no": "Nie"
+      },
+      "recommendations": {
+        "noCap": "Bazowe XP {base} poniżej capa {cap} — trudność {difficulty} nie ogranicza nagrody.",
+        "capped": "Bazowe XP {base} przekracza cap {cap}. Otrzymasz {xp} XP (cap). Rozważ wyższą trudność.",
+        "levelTooLow": "Trudność {difficulty} wymaga poziomu >= {required}. Twoja postać ma {current} — wybierz niższą trudność.",
+        "masterUnlimited": "Master nie ma capa — otrzymujesz pełne bazowe XP.",
+        "unlockLevel": "Beginner (>=1), Adept (>=30), Expert (>=150), Master (>=400)."
+      },
+      "errors": {
+        "invalidLevel": "Wpisz poziom jako integer ∈ [{min}, {max}]",
+        "invalidDifficulty": "Wybierz prawidłową trudność",
+        "invalidTaskType": "Wybierz prawidłowy typ tasku",
+        "levelTooLow": "Trudność wymaga wyższego poziomu"
+      }
+    },
+    "charms": {
+      "title": "Charms Damage",
+      "description": "Obrażenia procentowe z charmów per vocation/skill — TibiaPal benchmark.",
+      "fields": {
+        "vocation": {
+          "label": "Vocation",
+          "help": "Twoja klasa postaci (wpływa na Overpower/Overflux).",
+          "placeholder": "Wybierz vocation"
+        },
+        "skill": {
+          "label": "Skill ataku",
+          "help": "Twój główny skill ataku (marginalna synergia z charmem).",
+          "placeholder": "Wybierz skill"
+        },
+        "charm": {
+          "label": "Charm",
+          "help": "Major charm (elemental: 5% HP potwora) lub Overpower/Overflux (self-scaling).",
+          "placeholder": "Wybierz charm"
+        },
+        "monsterType": {
+          "label": "Wrażliwość potwora",
+          "help": "weak (×1.2) / neutral (×1.0) / resistant (×0.5) / immune (×0). Nie dotyczy Overpower/Overflux.",
+          "placeholder": "Wybierz wrażliwość"
+        }
+      },
+      "vocations": {
+        "Knight": "Knight",
+        "Paladin": "Paladin",
+        "Druid": "Druid",
+        "Sorcerer": "Sorcerer",
+        "Monk": "Monk"
+      },
+      "skills": {
+        "sword": "Sword",
+        "axe": "Axe",
+        "club": "Club",
+        "distance": "Distance",
+        "magic": "Magic",
+        "shielding": "Shielding",
+        "fist": "Fist",
+        "none": "Brak (self-charm)"
+      },
+      "charms": {
+        "wound": "Wound (physical)",
+        "enflame": "Enflame (fire)",
+        "freeze": "Freeze (ice)",
+        "poison": "Poison (earth)",
+        "zap": "Zap (energy)",
+        "curse": "Curse (death)",
+        "divineWrath": "Divine Wrath (holy)",
+        "overpower": "Overpower (5% HP gracza)",
+        "overflux": "Overflux (2.5% MP gracza)"
+      },
+      "monsterTypes": {
+        "weak": "Słaby na element (×1.2)",
+        "neutral": "Neutralny (×1.0)",
+        "resistant": "Odporny (×0.5)",
+        "immune": "Immune (×0)"
+      },
+      "result": {
+        "damageLabel": "Obrażenia procentowe per proc",
+        "charm": "Charm",
+        "skill": "Skill",
+        "basePercent": "Bazowy %",
+        "sensitivityMultiplier": "Mnożnik wrażliwości",
+        "vocationModifier": "Mnożnik vocation",
+        "skillModifier": "Mnożnik skilla",
+        "immuneWarning": "Potwór jest immune — 0% obrażeń."
+      },
+      "recommendations": {
+        "goodDmg": "Dobra synergia — damage powyżej 6%.",
+        "weakAgainst": "Potwór słaby na wybrany element → damage wyższy niż bazowy.",
+        "resistant": "Potwór odporny na wybrany element → rozważ inny charm.",
+        "immune": "Potwór immune na ten element — Overpower/Overflux działają niezależnie.",
+        "knightOverpower": "Knight + Overpower → +30% damage vs Sorcerer (HP scaling).",
+        "mageOverflux": "Sorcerer/Druid + Overflux → +30% damage vs Knight (MP scaling).",
+        "magicSkillBonus": "Magic skill → +10% Overflux (mana-leech synergy).",
+        "meleeSkillBonus": "Sword/Axe/Club/Fist → +10% Overpower (physical synergy)."
+      },
+      "errors": {
+        "invalidVocation": "Wybierz prawidłową vocation",
+        "invalidSkill": "Wybierz prawidłowy skill",
+        "invalidCharm": "Wybierz prawidłowy charm",
+        "invalidMonsterType": "Wybierz prawidłową wrażliwość"
+      }
     }
   },
   "Reference": {

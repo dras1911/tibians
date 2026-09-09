@@ -174,3 +174,72 @@ export {
   type ExpShareResult,
   expShareSplit,
 } from "./formulas/exp-share.js";
+
+// ──────────────────────────────────────────────────────────────────────────
+// Formulas — Weekly Tasks (T21, TibiaWiki BR Weekly_Tasks ground truth)
+// ──────────────────────────────────────────────────────────────────────────
+
+export {
+  MIN_LEVEL as WEEKLY_TASK_MIN_LEVEL_BOUND,
+  MAX_LEVEL as WEEKLY_TASK_MAX_LEVEL,
+  WEEKLY_TASK_XP_PER_LEVEL,
+  WEEKLY_TASK_XP_CAP,
+  WEEKLY_TASK_DIFFICULTIES,
+  WEEKLY_TASK_TYPES,
+  WEEKLY_TASK_MIN_LEVEL,
+  type WeeklyTaskDifficulty,
+  type WeeklyTaskType,
+  type WeeklyTaskResult,
+  weeklyTaskReward,
+} from "./formulas/weekly-tasks.js";
+
+// ──────────────────────────────────────────────────────────────────────────
+// Formulas — Charms (T21, TibiaPal benchmark + TibiaWiki Major_Charms)
+// ──────────────────────────────────────────────────────────────────────────
+
+export {
+  CHARM_IDS,
+  CHARM_ELEMENTS,
+  CHARM_VOCATIONS,
+  CHARM_SKILLS,
+  MONSTER_SENSITIVITIES,
+  CHARM_BASE_PERCENT,
+  CHARM_ELEMENT_MAP,
+  SENSITIVITY_MULTIPLIER,
+  VOCATION_CHARM_MOD,
+  SKILL_CHARM_MOD,
+  SENSITIVITY_LABEL_KEY,
+  type CharmId,
+  type CharmElement,
+  type CharmVocation,
+  type CharmSkill,
+  type MonsterSensitivity,
+  type CharmDamageResult,
+  charmDamage,
+} from "./formulas/charms.js";
+
+// ──────────────────────────────────────────────────────────────────────────
+// Formulas — Imbuement (T20, TibiaWiki Imbuing, basic/intricate/powerful)
+// ──────────────────────────────────────────────────────────────────────────
+
+export {
+  imbuementCost,
+  type ImbuementConfig,
+  type ImbuementResult,
+  type ImbuementTier,
+} from "./formulas/imbuement.js";
+
+// ──────────────────────────────────────────────────────────────────────────
+// Formulas — Blessings (T20, TibiaWiki Blessings, R(L) piece-wise)
+// ──────────────────────────────────────────────────────────────────────────
+
+export {
+  blessingCost,
+  costPerBlessing,
+  isBlessingsConfigConsistent,
+  MAX_BLESSINGS,
+  MAX_BLESSING_LEVEL,
+  MIN_BLESSING_LEVEL,
+  type BlessingsConfig,
+  type BlessingsResult,
+} from "./formulas/blessings.js";
