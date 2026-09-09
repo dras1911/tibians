@@ -243,3 +243,22 @@ export {
   type BlessingsConfig,
   type BlessingsResult,
 } from "./formulas/blessings.js";
+
+// ───────────────────────────────────────────────────────────────────────
+// Formulas — Character Value (T22, arch §8.4 — killer feature)
+// ───────────────────────────────────────────────────────────────────────
+
+export {
+  estimateCharacterValue,
+  VALUATION_CONFIG_DEFAULT,
+  type ValuationConfig,
+  type CharacterValueResult,
+  type CharacterValueBreakdown,
+  type CharacterValueComponent,
+  type CharacterValueItem,
+  type CharacterValueSkillsComponent,
+  type CharacterValueFeaturesComponent,
+  type CharacterValueProgressionComponent,
+  type CharacterValueCosmeticsComponent,
+  type CharacterValueAssetsComponent,
+} from "./formulas/character-value.js";

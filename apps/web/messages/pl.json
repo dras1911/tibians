@@ -1,830 +1,1167 @@
 {
-  "Common": {
-    "appName": "Tibians",
-    "skipToContent": "Przejdź do treści",
-    "openMenu": "Otwórz menu",
-    "closeMenu": "Zamknij menu",
-    "loading": "Ładowanie…",
-    "privacyPolicy": "Polityka prywatności",
-    "language": "Język"
-  },
-  "Nav": {
-    "brand": "Tibians",
-    "bazaar": "Bazaar",
-    "calculators": "Kalkulatory",
-    "reference": "Referencje",
-    "bosses": "Bosses",
-    "blog": "Blog",
-    "home": "Strona główna",
-    "openMenuAria": "Otwórz menu nawigacji",
-    "closeMenuAria": "Zamknij menu nawigacji",
-    "themeToggle": {
-      "label": "Motyw",
-      "light": "Jasny",
-      "dark": "Ciemny",
-      "system": "System"
+    "Common": {
+        "appName": "Tibians",
+        "skipToContent": "Przejdź do treści",
+        "openMenu": "Otwórz menu",
+        "closeMenu": "Zamknij menu",
+        "loading": "Ładowanie…",
+        "privacyPolicy": "Polityka prywatności",
+        "language": "Język"
     },
-    "locale": {
-      "label": "Język",
-      "pl": "Polski",
-      "en": "English"
+    "Nav": {
+        "brand": "Tibians",
+        "bazaar": "Bazaar",
+        "calculators": "Kalkulatory",
+        "reference": "Referencje",
+        "bosses": "Bosses",
+        "blog": "Blog",
+        "home": "Strona główna",
+        "openMenuAria": "Otwórz menu nawigacji",
+        "closeMenuAria": "Zamknij menu nawigacji",
+        "themeToggle": {
+            "label": "Motyw",
+            "light": "Jasny",
+            "dark": "Ciemny",
+            "system": "System"
+        },
+        "locale": {
+            "label": "Język",
+            "pl": "Polski",
+            "en": "English"
+        },
+        "megaMenu": {
+            "openAria": "Otwórz menu {section}",
+            "closeAria": "Zamknij menu"
+        }
     },
-    "megaMenu": {
-      "openAria": "Otwórz menu {section}",
-      "closeAria": "Zamknij menu"
-    }
-  },
-  "Bazaar": {
-    "title": "Bazaar",
-    "all": "Wszystkie aukcje",
-    "endingSoon": "Kończące się",
-    "statistics": "Statystyki",
-    "compare": "Porównaj",
-    "history": "Historia"
-  },
-  "Calculators": {
-    "title": "Kalkulatory",
-    "index": {
-      "title": "Kalkulatory Tibii",
-      "subtitle": "14 darmowych narzędzi do planowania treningu, wyceny postaci i analizy wyników.",
-      "open": "Otwórz",
-      "comingSoon": "Wkrótce",
-      "categories": {
-        "skillsTraining": "Skills & Training",
-        "stamina": "Stamina",
-        "valuation": "Wycena postaci",
-        "imbuementCharms": "Imbuement & Charms",
-        "experience": "Experience",
-        "wheel": "Wheel & Planners"
-      },
-      "items": {
-        "exercise-weapons": {
-          "title": "Exercise Weapons",
-          "description": "Oblicz ile broni exercise zużyjesz do konkretnego skilla — z uwzględnieniem loyalty, double event i progu TC."
+    "Bazaar": {
+        "title": "Bazaar",
+        "all": "Wszystkie aukcje",
+        "endingSoon": "Kończące się",
+        "statistics": "Statystyki",
+        "compare": "Porównaj",
+        "history": "Historia"
+    },
+    "Calculators": {
+        "title": "Kalkulatory",
+        "index": {
+            "title": "Kalkulatory Tibii",
+            "subtitle": "14 darmowych narzędzi do planowania treningu, wyceny postaci i analizy wyników.",
+            "open": "Otwórz",
+            "comingSoon": "Wkrótce",
+            "categories": {
+                "skillsTraining": "Skills & Training",
+                "stamina": "Stamina",
+                "valuation": "Wycena postaci",
+                "imbuementCharms": "Imbuement & Charms",
+                "experience": "Experience",
+                "wheel": "Wheel & Planners"
+            },
+            "items": {
+                "exercise-weapons": {
+                    "title": "Exercise Weapons",
+                    "description": "Oblicz ile broni exercise zużyjesz do konkretnego skilla — z uwzględnieniem loyalty, double event i progu TC."
+                },
+                "skills": {
+                    "title": "Training / Skills",
+                    "description": "Czas i koszt treningu od aktualnego do docelowego skilla na dowolnej broni."
+                },
+                "true-skill": {
+                    "title": "True Skill",
+                    "description": "Przelicz wyświetlany skill z bonusem lojalności na bazowy — tak jak widzą go highscores i Bazaar."
+                },
+                "blessings": {
+                    "title": "Blessings",
+                    "description": "Koszt błogosławieństw i ochrona XP przed śmiercią na danym poziomie."
+                },
+                "stamina": {
+                    "title": "Stamina",
+                    "description": "Czas do pełnej staminy w trybie hunt i offline — z bonusami premium i okienkami regeneracji."
+                },
+                "character-value": {
+                    "title": "Character Value",
+                    "description": "Wycena postaci w TC: skill, features, progression, cosmetics i aktywa — z rozwijalnym breakdownem."
+                },
+                "imbuement": {
+                    "title": "Imbuement cost",
+                    "description": "Koszt tierów Basic / Powerful / Epic dla każdego imbuementu i źródła astral items."
+                },
+                "weekly-tasks": {
+                    "title": "Weekly Tasks",
+                    "description": "Maksymalne XP za zadanie tygodniowe w zależności od poziomu i trudności (Beginner/Adept/Expert/Master)."
+                },
+                "charms": {
+                    "title": "Charms Damage",
+                    "description": "Obrażenia i procentowy bonus z charmów dla danej profesji, skilla i typu potwora."
+                },
+                "experience": {
+                    "title": "Experience / Levelling",
+                    "description": "Całkowite XP do poziomu, delta do celu i czas przy zadanym XP/h."
+                },
+                "leech": {
+                    "title": "Leech",
+                    "description": "Procent leech z party z uwzględnieniem różnicy poziomów między graczami."
+                },
+                "exp-share": {
+                    "title": "Exp Share",
+                    "description": "Podział XP w party zgodnie z formułą Tibii uwzględniającą dystans leveli."
+                },
+                "planners-charms": {
+                    "title": "Charm Planner",
+                    "description": "Optymalny rozkład punktów charm dla Twojej profesji i buildu z linkiem do udostępnienia."
+                },
+                "planners-wheel": {
+                    "title": "Wheel of Destiny Planner",
+                    "description": "Build Wheel of Destiny dla każdej profesji — z opisem i rekomendacjami gemów."
+                }
+            }
         },
-        "skills": {
-          "title": "Training / Skills",
-          "description": "Czas i koszt treningu od aktualnego do docelowego skilla na dowolnej broni."
+        "layout": {
+            "backToIndex": "Wszystkie kalkulatory",
+            "formLabel": "Parametry",
+            "resultLabel": "Wynik",
+            "descriptionLabel": "Opis",
+            "openInWorkspace": "Otwórz w Workspace",
+            "calculatorNotFoundTitle": "Nie znaleziono kalkulatora",
+            "calculatorNotFoundDescription": "Ten kalkulator jeszcze nie istnieje lub jest w budowie.",
+            "calculatorNotFoundCta": "Wróć do listy kalkulatorów"
         },
-        "true-skill": {
-          "title": "True Skill",
-          "description": "Przelicz wyświetlany skill z bonusem lojalności na bazowy — tak jak widzą go highscores i Bazaar."
+        "resultDisplay": {
+            "primaryLabel": "Wynik",
+            "copyLink": "Kopiuj link",
+            "copyLinkCopied": "Skopiowano",
+            "copyLinkFailed": "Nie udało się skopiować",
+            "recommendationLabel": "Rekomendacja",
+            "recommendationPositive": "Opłaca się",
+            "recommendationNegative": "Nie opłaca się",
+            "recommendationNeutral": "Warto rozważyć",
+            "recommendationWarning": "Uwaga",
+            "recommendationInfo": "Wskazówka",
+            "recommendationSuccess": "Sukces",
+            "emptyTitle": "Brak wyniku",
+            "emptyDescription": "Wypełnij formularz, aby zobaczyć wynik.",
+            "primaryValueLabel": "Główna wartość",
+            "secondaryLabel": "Dodatkowe wartości"
         },
-        "blessings": {
-          "title": "Blessings",
-          "description": "Koszt błogosławieństw i ochrona XP przed śmiercią na danym poziomie."
+        "errors": {
+            "generic": "Coś poszło nie tak. Spróbuj ponownie.",
+            "invalidInput": "Nieprawidłowe dane wejściowe.",
+            "missingField": "Pole jest wymagane",
+            "calcFailed": "Nie udało się policzyć. Sprawdź dane."
+        },
+        "skillsTraining": {
+            "label": "Skills & Training",
+            "exerciseWeapons": "Exercise Weapons",
+            "trueSkill": "True Skill",
+            "stamina": "Stamina"
+        },
+        "trueSkill": {
+            "title": "True Skill ★",
+            "description": "Odwrócenie bonusu lojalności. Porównaj skille widoczne w grze z highscores.",
+            "infoTitle": "True Skill ★ — most do Bazaaru",
+            "infoBody": "Ten kalkulator jest mostem między kalkulatorami a Bazaar. Bazaar pokazuje skille BEZ bonusu lojalności, gra POKAZUJE Z bonusem.",
+            "infoLinkLabel": "Zobacz w Bazaar",
+            "fields": {
+                "displayedSkill": {
+                    "label": "Skill wyświetlany w grze",
+                    "help": "Wartość ze statusu postaci (z bonusem lojalności).",
+                    "placeholder": "np. 100"
+                },
+                "loyaltyPct": {
+                    "label": "Bonus lojalności",
+                    "help": "360 punktów lojalności = 5%. Wybierz z listy {0,5,…,50}.",
+                    "placeholder": "Wybierz procent"
+                }
+            },
+            "result": {
+                "baseLabel": "Bazowy skill (highscores / Bazaar)",
+                "loyaltyBonus": "Bonus lojalności",
+                "displayedSkill": "Skill wyświetlany"
+            },
+            "recommendations": {
+                "noLoyalty": "Bez lojalności — wyświetlane = bazowe ({value}).",
+                "bazaar": "Bazowy skill: {value}. W Bazaar zobaczysz {value} (bez bonusu {discount})."
+            },
+            "errors": {
+                "invalidSkill": "Wpisz liczbę całkowitą ≥ 0",
+                "invalidLoyalty": "Niedozwolona wartość bonusu"
+            }
         },
         "stamina": {
-          "title": "Stamina",
-          "description": "Czas do pełnej staminy w trybie hunt i offline — z bonusami premium i okienkami regeneracji."
+            "title": "Stamina",
+            "description": "Czas regeneracji, efektywność premium vs free.",
+            "fields": {
+                "currentStamina": {
+                    "label": "Aktualna stamina",
+                    "help": "Wartość widoczna w oknie postaci (w godzinach).",
+                    "placeholder": "np. 36"
+                },
+                "targetStamina": {
+                    "label": "Docelowa stamina",
+                    "help": "Maksymalna wartość dla tego konta: {max} h"
+                },
+                "isPremium": {
+                    "label": "Status konta",
+                    "help": "Premium = do 42 h + zielona strefa (Happy Hours). Free = do 40 h, bez zielonej strefy.",
+                    "premium": "Premium",
+                    "free": "Free",
+                    "ariaLabel": "Przełącz status konta premium / free"
+                }
+            },
+            "result": {
+                "realTimeLabel": "Czas rzeczywisty (offline)",
+                "doneLabel": "Status",
+                "zones": "Strefy regeneracji",
+                "hoursGained": "Staminy do odrobienia",
+                "fromTo": "Z {from} h do {to} h (max {max} h)",
+                "max": "Maks. stamina",
+                "alreadyFull": "Pełna"
+            },
+            "recommendations": {
+                "premiumNormal": "Premium: {rate} min offline = 1 min staminy w strefie normalnej (0-39 h).",
+                "free": "Free: {rate} min offline = 1 min staminy (bez zielonej strefy).",
+                "withGreen": "Premium: {normalRate} min/h w strefie normalnej, {greenRate} min/h w zielonej strefie 39-42 h.",
+                "full": "Stamina już pełna ({value} h). Nic do regeneracji."
+            },
+            "zones": {
+                "normal": "{hours} h normalna",
+                "green": "{hours} h zielona"
+            },
+            "unit": {
+                "h": "h",
+                "min": "min"
+            },
+            "errors": {
+                "invalidCurrent": "Wpisz liczbę całkowitą 0-42",
+                "invalidTarget": "Maksymalna wartość dla tego konta to {max} h"
+            }
         },
-        "character-value": {
-          "title": "Character Value",
-          "description": "Wycena postaci w TC: skill, features, progression, cosmetics i aktywa — z rozwijalnym breakdownem."
+        "valuation": {
+            "label": "Wycena postaci",
+            "characterValue": "Character Value"
         },
-        "imbuement": {
-          "title": "Imbuement cost",
-          "description": "Koszt tierów Basic / Powerful / Epic dla każdego imbuementu i źródła astral items."
-        },
-        "weekly-tasks": {
-          "title": "Weekly Tasks",
-          "description": "Maksymalne XP za zadanie tygodniowe w zależności od poziomu i trudności (Beginner/Adept/Expert/Master)."
-        },
-        "charms": {
-          "title": "Charms Damage",
-          "description": "Obrażenia i procentowy bonus z charmów dla danej profesji, skilla i typu potwora."
+        "imbuementCharms": {
+            "label": "Imbuement & Charms",
+            "imbuement": "Imbuement cost",
+            "weeklyTasks": "Weekly Tasks",
+            "charmsDamage": "Charms Damage"
         },
         "experience": {
-          "title": "Experience / Levelling",
-          "description": "Całkowite XP do poziomu, delta do celu i czas przy zadanym XP/h."
+            "title": "Experience / Levelling",
+            "description": "Czas potrzebny na awans z obecnego do docelowego levelu przy zadanym XP/h.",
+            "fields": {
+                "currentLevel": {
+                    "label": "Obecny level",
+                    "help": "Twój aktualny level (integer ∈ [0, 2500]).",
+                    "placeholder": "np. 100"
+                },
+                "targetLevel": {
+                    "label": "Docelowy level",
+                    "help": "Level, do którego chcesz dojść (musi być > obecnego).",
+                    "placeholder": "np. 101"
+                },
+                "xpPerHour": {
+                    "label": "Tempo XP/h",
+                    "help": "Twoje typowe tempo huntu w XP na godzinę (np. 250 000).",
+                    "placeholder": "np. 250000"
+                }
+            },
+            "result": {
+                "timeLabel": "Czas do celu",
+                "xpDelta": "XP do zdobycia",
+                "levelDelta": "Poziomów do zdobycia",
+                "xpPerHour": "Tempo XP/h"
+            },
+            "recommendations": {
+                "alreadyThere": "Jesteś już na docelowym levelu — nic do zdobycia.",
+                "underDay": "Mniej niż dzień — szybki level-up.",
+                "underWeek": "Mniej niż tydzień — standardowy level-up.",
+                "longTerm": "Długoterminowy grind — rozważ zmianę tempa lub celu."
+            },
+            "errors": {
+                "invalidCurrent": "Wpisz level jako integer ∈ [0, 2500]",
+                "invalidTarget": "Docelowy level musi być > obecnego (≤ 2500)",
+                "invalidRate": "Tempo XP/h musi być integerem > 0"
+            }
+        },
+        "expShare": {
+            "title": "Exp Share",
+            "description": "Podział XP w party zgodnie z formułą Tibii (równe + bonus za różne vocations).",
+            "labels": {
+                "totalXp": "Całkowite XP do podziału",
+                "totalXpHelp": "Suma XP do rozdysponowania między członków party.",
+                "totalXpPlaceholder": "np. 10000",
+                "playerLevel": "Twój level",
+                "playerLevelHelp": "Twój level (integer ∈ [{min}, {max}]).",
+                "playerLevelPlaceholder": "np. 100",
+                "playerVocation": "Twoja vocation",
+                "playerVocationHelp": "Twoja klasa postaci.",
+                "playerVocationPlaceholder": "Wybierz vocation",
+                "partyMembers": "Członkowie party",
+                "partyMembersHelp": "Dodaj do 4 członków (oprócz Ciebie). Tibia pozwala na max 5 osób w party.",
+                "partyMembersCount": "{count} / {max}",
+                "memberName": "Imię",
+                "memberNamePlaceholder": "np. Ally",
+                "memberNameAria": "Imię członka party {index}",
+                "memberLevel": "Level",
+                "memberLevelAria": "Level członka party {index}",
+                "memberVocation": "Vocation",
+                "memberVocationAria": "Vocation członka party {index}",
+                "removeMember": "Usuń {name}",
+                "addMember": "Dodaj członka party"
+            },
+            "vocations": {
+                "Knight": "Knight",
+                "Paladin": "Paladin",
+                "Druid": "Druid",
+                "Sorcerer": "Sorcerer",
+                "Monk": "Monk"
+            },
+            "result": {
+                "playerShareLabel": "Twój udział w XP",
+                "distinctVocations": "Różne vocations",
+                "vocationBonus": "Bonus za vocations",
+                "totalMembers": "Wszystkich w party",
+                "tableTitle": "Podział XP per członek",
+                "tableSubtitle": "{count} osób, prowadzący lvl {level} {vocation}",
+                "table": {
+                    "name": "Imię",
+                    "level": "Level",
+                    "vocation": "Vocation",
+                    "xpShare": "Udział XP",
+                    "you": "Ty",
+                    "soloNote": "Brak party — całe XP trafia do Ciebie."
+                }
+            },
+            "recommendations": {
+                "solo": "Solo — wszystkie XP dla Ciebie.",
+                "bonusLow": "1 vocation w party → +{bonus}% bonus (bazowy Tibia).",
+                "bonusOk": "{count} różne vocations → +{bonus}% bonus za vocations.",
+                "bonusMax": "5 różnych vocations → +{bonus}% bonus za vocations (max)."
+            },
+            "errors": {
+                "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
+                "invalidName": "Imię wymagane (max 20 znaków)",
+                "invalidTotalXp": "Wpisz XP jako nieujemną liczbę (max 10¹²)",
+                "illegalPartyRange": "Różnica leveli w party przekracza Tibia legal range (ratio > 1.5).",
+                "duplicateNames": "Imiona członków party muszą być unikalne."
+            }
         },
         "leech": {
-          "title": "Leech",
-          "description": "Procent leech z party z uwzględnieniem różnicy poziomów między graczami."
+            "title": "Leech",
+            "description": "Procent leech z party z uwzględnieniem różnicy leveli (CipSoft + community reduction).",
+            "labels": {
+                "characterLevel": "Twój level",
+                "characterLevelHelp": "Twój level (integer ∈ [{min}, {max}]).",
+                "characterLevelPlaceholder": "np. 100",
+                "characterVocation": "Twoja vocation",
+                "characterVocationHelp": "Twoja klasa postaci.",
+                "characterVocationPlaceholder": "Wybierz vocation",
+                "reductionPerLevel": "Redukcja per level różnicy",
+                "reductionPerLevelHelp": "Community convention: ile % udziału traci się za każdy poziom różnicy (domyślnie 0.05 = 5%).",
+                "reductionPerLevelPlaceholder": "np. 0.05",
+                "partyMembers": "Członkowie party (carriers)",
+                "partyMembersHelp": "Dodaj do 4 postaci wyższych levelem, od których leechujesz XP.",
+                "partyMembersCount": "{count} / {max}",
+                "memberName": "Imię",
+                "memberNamePlaceholder": "np. Carrier",
+                "memberNameAria": "Imię członka party {index}",
+                "memberLevel": "Level",
+                "memberLevelAria": "Level członka party {index}",
+                "memberVocation": "Vocation",
+                "memberVocationAria": "Vocation członka party {index}",
+                "removeMember": "Usuń {name}",
+                "addMember": "Dodaj członka party"
+            },
+            "vocations": {
+                "Knight": "Knight",
+                "Paladin": "Paladin",
+                "Druid": "Druid",
+                "Sorcerer": "Sorcerer",
+                "Monk": "Monk"
+            },
+            "result": {
+                "maxLeechLabel": "Maksymalny leech share",
+                "partySize": "Rozmiar party",
+                "characterLevel": "Twój level",
+                "avgLeech": "Średni leech share",
+                "tableTitle": "Per-member leech share",
+                "tableSubtitle": "{count} członków party",
+                "legal": "Legal",
+                "illegal": "Illegal"
+            },
+            "recommendations": {
+                "solo": "Brak party — solo, wszystkie XP dla Ciebie.",
+                "illegal": "Różnica leveli przekracza Tibia legal range — leech = 0%.",
+                "equal": "Tibia equal split (50/50) — pełen leech bez redukcji.",
+                "ok": "Leech share w normalnym zakresie — opłaca się huntować w tej konfiguracji.",
+                "low": "Niski leech share — rozważ zmianę konfiguracji party."
+            },
+            "errors": {
+                "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
+                "invalidName": "Imię wymagane (max 20 znaków)",
+                "invalidReduction": "Redukcja musi być ∈ [0, 1]"
+            }
         },
-        "exp-share": {
-          "title": "Exp Share",
-          "description": "Podział XP w party zgodnie z formułą Tibii uwzględniającą dystans leveli."
+        "wheelOfDestiny": "Wheel of Destiny",
+        "exerciseWeapons": {
+            "title": "Exercise Weapons",
+            "description": "Oblicz ile broni exercise zużyjesz do konkretnego skilla (do skilla lub z broni). Z uwzględnieniem loyalty, double event, prywatnego dummiego i progu opłacalności TC.",
+            "tabs": {
+                "targetSkill": "Do skilla",
+                "targetWeapons": "Z broni"
+            },
+            "fields": {
+                "category": {
+                    "label": "Para vocation / skill",
+                    "help": "8 par z architektury §2.1 — wybierz kontekstową parę dla Twojej postaci."
+                },
+                "currentSkill": {
+                    "label": "Obecny skill",
+                    "help": "Bazowy skill (bez bonusu lojalności) — tak raportuje Bazaar.",
+                    "placeholder": "np. 100"
+                },
+                "percentToNext": {
+                    "label": "% do następnego poziomu",
+                    "help": "Tibia pokazuje %, nie punkty. Wpisz 0 jeśli skill jest świeżo zdobyty.",
+                    "placeholder": "0-100"
+                },
+                "targetSkill": {
+                    "label": "Docelowy skill",
+                    "help": "Skill, do którego chcesz dojść.",
+                    "placeholder": "np. 110"
+                },
+                "numWeapons": {
+                    "label": "Liczba broni",
+                    "help": "Ile exercise weapons zamierzasz zużyć.",
+                    "placeholder": "np. 100"
+                },
+                "weaponType": {
+                    "label": "Typ broni",
+                    "regular": "Regular",
+                    "durable": "Durable",
+                    "lasting": "Lasting"
+                },
+                "loyaltyPct": {
+                    "label": "Bonus lojalności (%)",
+                    "help": "Tibia: 5% co 360 punktów loyalty. Wyższy bonus = mniej broni potrzeba.",
+                    "placeholder": "0-50"
+                },
+                "doubleEvent": {
+                    "label": "Double event",
+                    "help": "Podczas double event potrzeba 2× mniej broni do tego samego efektu."
+                },
+                "privateDummy": {
+                    "label": "Prywatny dummy",
+                    "help": "Demon / Ferumbras / Monk dummy: 10% szybszy trening."
+                },
+                "tcPriceThreshold": {
+                    "label": "Próg ceny TC (gp)",
+                    "help": "TibiaWiki: jeśli 1 TC kosztuje więcej niż 13 889 gp, kup za gold. Domyślnie: 13 889.",
+                    "placeholder": "13889"
+                }
+            },
+            "skills": {
+                "knightMelee": "Knight — Melee (sword)",
+                "knightShielding": "Knight — Shielding",
+                "knightMagic": "Knight — Magic",
+                "paladinMagic": "Paladin — Magic",
+                "paladinDistance": "Paladin — Distance",
+                "mageMagic": "Druid / Sorcerer — Magic",
+                "monkMagic": "Monk — Magic",
+                "monkFist": "Monk — Fist"
+            },
+            "result": {
+                "title": "Wynik",
+                "weaponsNeeded": "Potrzebne bronie",
+                "regular": "Regular",
+                "durable": "Durable",
+                "lasting": "Lasting",
+                "costGp": "Koszt (gp)",
+                "costTc": "Koszt (TC)",
+                "newSkillLevel": "Nowy poziom skilla",
+                "skillGained": "Zysk skilla",
+                "primaryTargetSkill": "Potrzebna liczba broni",
+                "primaryTargetWeapons": "Zysk skilla"
+            },
+            "recommendations": {
+                "buyGoldShort": "Kup za gold",
+                "buyTcShort": "Kup za TC",
+                "equalShort": "Równoważne",
+                "buyGold": "Kup za gold — cena TC ({tcPrice} gp) przekracza próg {threshold} gp.",
+                "buyTc": "Kup za TC — cena TC ({tcPrice} gp) jest poniżej progu {threshold} gp.",
+                "equal": "Koszt identyczny dla obu metod (TC = {tcPrice} gp ≈ próg {threshold} gp)."
+            },
+            "errors": {
+                "invalidCurrent": "Wpisz liczbę całkowitą ≥ 0",
+                "invalidPercent": "Procent musi być w zakresie 0-100",
+                "invalidTarget": "Skill docelowy musi być wyższy niż obecny",
+                "invalidNum": "Liczba broni musi być liczbą całkowitą ≥ 0",
+                "invalidType": "Wybierz typ broni",
+                "invalidLoyalty": "Bonus lojalności musi być jednym z 0, 5, 10, …, 50",
+                "invalidThreshold": "Próg ceny TC musi być liczbą dodatnią"
+            }
         },
-        "planners-charms": {
-          "title": "Charm Planner",
-          "description": "Optymalny rozkład punktów charm dla Twojej profesji i buildu z linkiem do udostępnienia."
+        "skills": {
+            "title": "Training / Skills",
+            "description": "Czas i koszt treningu od obecnego do docelowego skilla na dowolnej broni — z ostrzeżeniem o precyzji dla typów broni innych niż Regular.",
+            "fields": {
+                "category": {
+                    "label": "Para vocation / skill",
+                    "help": "8 par z architektury §2.1 — kontekstowy skill dla Twojej postaci."
+                },
+                "currentSkill": {
+                    "label": "Obecny skill",
+                    "help": "Bazowy skill (bez bonusu lojalności).",
+                    "placeholder": "np. 100"
+                },
+                "targetSkill": {
+                    "label": "Docelowy skill",
+                    "help": "Skill, do którego chcesz dojść.",
+                    "placeholder": "np. 110"
+                },
+                "percentToNext": {
+                    "label": "% do następnego poziomu",
+                    "help": "Tibia pokazuje %, nie punkty. 0 = świeżo zdobyty level.",
+                    "placeholder": "0-100"
+                },
+                "weaponType": {
+                    "label": "Typ broni",
+                    "regular": "Regular",
+                    "durable": "Durable",
+                    "lasting": "Lasting",
+                    "help": "Tylko 'Regular' daje precyzyjny czas. Inne typy są przybliżone (zakładają pełne zużycie broni)."
+                },
+                "offline": {
+                    "label": "Trening offline",
+                    "help": "Offline training zużywa staminę — ale czas pozostaje taki sam."
+                }
+            },
+            "skills": {
+                "knightMelee": "Knight — Melee (sword)",
+                "knightShielding": "Knight — Shielding",
+                "knightMagic": "Knight — Magic",
+                "paladinMagic": "Paladin — Magic",
+                "paladinDistance": "Paladin — Distance",
+                "mageMagic": "Druid / Sorcerer — Magic",
+                "monkMagic": "Monk — Magic",
+                "monkFist": "Monk — Fist"
+            },
+            "result": {
+                "title": "Wynik",
+                "time": "Czas treningu",
+                "costGp": "Koszt (gp)",
+                "costTc": "Koszt (TC)",
+                "hits": "Wymagane uderzenia"
+            },
+            "warnings": {
+                "approximate": "Tylko broń 'Regular' daje precyzyjny czas/koszt. Inne typy zakładają pełne zużycie broni — mogą przeszacować wynik."
+            },
+            "recommendations": {
+                "approximateShort": "Wynik przybliżony",
+                "approximate": "TibiaWiki: tylko broń 'Regular' daje precyzyjny czas. Wybrany typ zakłada pełne zużycie broni.",
+                "preciseShort": "Precyzyjny wynik",
+                "precise": "Broń 'Regular' — wynik zgodny z TibiaWiki Skills Calculator."
+            },
+            "errors": {
+                "invalidCurrent": "Wpisz liczbę całkowitą ≥ 0",
+                "invalidPercent": "Procent musi być w zakresie 0-100",
+                "invalidTarget": "Skill docelowy musi być wyższy niż obecny"
+            }
         },
-        "planners-wheel": {
-          "title": "Wheel of Destiny Planner",
-          "description": "Build Wheel of Destiny dla każdej profesji — z opisem i rekomendacjami gemów."
+        "imbuement": {
+            "title": "Koszt Imbuement",
+            "description": "Koszt slotów imbuement (basic/intricate/powerful) — TC + gp, per TibiaWiki.",
+            "fields": {
+                "imbuementType": {
+                    "label": "Tier imbuement",
+                    "help": "Basic = najtańszy slot (25 TC), Intricate = średni tier (bez slotu TC), Powerful = top tier (150 TC).",
+                    "placeholder": "Wybierz tier"
+                },
+                "level": {
+                    "label": "Level postaci",
+                    "help": "Informacyjny — używany do oceny kontekstu gry.",
+                    "placeholder": "np. 100"
+                },
+                "hours": {
+                    "label": "Czas trwania (h)",
+                    "help": "Czas trwania imbuementu w grze (TibiaWiki: 20h użycia).",
+                    "placeholder": "np. 20"
+                }
+            },
+            "tiers": {
+                "basic": "Basic",
+                "intricate": "Intricate",
+                "powerful": "Powerful"
+            },
+            "result": {
+                "totalCostTc": "Całkowity koszt (TC)",
+                "slotCost": "Slot",
+                "fee": "Opłata (gp)",
+                "duration": "Czas trwania",
+                "tier": "Tier"
+            },
+            "recommendations": {
+                "basic": "Basic: slot {slot} TC + {fee} gp fee — najtańszy tier.",
+                "intricate": "Intricate: {fee} gp fee (używa Basic slot, bez dodatkowego TC).",
+                "powerful": "Powerful: slot {slot} TC + {fee} gp fee — top tier, pełna moc."
+            },
+            "errors": {
+                "invalidType": "Wybierz tier z listy",
+                "invalidLevel": "Wpisz level jako nieujemną liczbę całkowitą",
+                "invalidHours": "Wpisz czas trwania jako nieujemną liczbę całkowitą"
+            }
+        },
+        "blessings": {
+            "title": "Koszt Błogosławieństw",
+            "description": "Koszt błogosławieństw TibiaWiki R(L) — ochrona przed utratą XP przy śmierci.",
+            "fields": {
+                "currentLevel": {
+                    "label": "Obecny level",
+                    "help": "Twój aktualny level (integer ∈ [{min}, {max}]).",
+                    "placeholder": "np. 100"
+                },
+                "targetLevel": {
+                    "label": "Docelowy level",
+                    "help": "Docelowy level (musi być > obecnego). Wartość informacyjna.",
+                    "placeholder": "np. 101"
+                },
+                "currentBlessings": {
+                    "label": "Aktualne błogosławieństwa",
+                    "help": "Ile z 7 błogosławieństw już posiadasz (0 = żadne, 7 = pełna ochrona przed XP-loss).",
+                    "placeholder": "5"
+                }
+            },
+            "result": {
+                "totalCostLabel": "Całkowity koszt",
+                "doneLabel": "Status",
+                "blessings": "Błogosławieństw do kupienia",
+                "costPerBl": "Koszt / błogosławieństwo",
+                "current": "Posiadane"
+            },
+            "recommendations": {
+                "alreadyFull": "Już masz 7/7 — pełna ochrona przed utratą XP.",
+                "fullProtection": "Pełna ochrona 7/7 — {count} × koszt per blessing z R(L).",
+                "partial": "Dokup {count} błogosławieństw, żeby zwiększyć ochronę przed XP-loss."
+            },
+            "errors": {
+                "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
+                "invalidTarget": "Docelowy level musi być > obecnego",
+                "invalidCurrent": "Ilość błogosławieństw musi być ∈ [0, {max}]",
+                "alreadyHigher": "Już masz wyższy poziom — wpisz większy targetLevel."
+            }
+        },
+        "weeklyTasks": {
+            "title": "Weekly Tasks",
+            "description": "Maksymalne nagrody XP za weekly task w zależności od poziomu i trudności.",
+            "fields": {
+                "level": {
+                    "label": "Poziom postaci",
+                    "help": "Twój aktualny poziom (integer ∈ [{min}, {max}]).",
+                    "placeholder": "np. 200"
+                },
+                "difficulty": {
+                    "label": "Trudność",
+                    "help": "Beginner (od 1), Adept (od 30), Expert (od 150), Master (od 400). Cap XP rośnie z trudnością.",
+                    "placeholder": "Wybierz trudność"
+                },
+                "taskType": {
+                    "label": "Typ tasku",
+                    "help": "Kill i delivery używają tej samej formuły XP (TibiaWiki BR).",
+                    "placeholder": "Wybierz typ",
+                    "kill": "Kill",
+                    "delivery": "Delivery"
+                }
+            },
+            "difficulties": {
+                "beginner": "Beginner",
+                "adept": "Adept",
+                "expert": "Expert",
+                "master": "Master"
+            },
+            "result": {
+                "xpLabel": "Maksymalne XP za task",
+                "baseXp": "Bazowe XP (bez cap)",
+                "capXp": "Cap XP tej trudności",
+                "wasCapped": "Cap osiągnięty",
+                "difficulty": "Trudność",
+                "level": "Poziom",
+                "taskType": "Typ tasku",
+                "yes": "Tak",
+                "no": "Nie"
+            },
+            "recommendations": {
+                "noCap": "Bazowe XP {base} poniżej capa {cap} — trudność {difficulty} nie ogranicza nagrody.",
+                "capped": "Bazowe XP {base} przekracza cap {cap}. Otrzymasz {xp} XP (cap). Rozważ wyższą trudność.",
+                "levelTooLow": "Trudność {difficulty} wymaga poziomu >= {required}. Twoja postać ma {current} — wybierz niższą trudność.",
+                "masterUnlimited": "Master nie ma capa — otrzymujesz pełne bazowe XP.",
+                "unlockLevel": "Beginner (>=1), Adept (>=30), Expert (>=150), Master (>=400)."
+            },
+            "errors": {
+                "invalidLevel": "Wpisz poziom jako integer ∈ [{min}, {max}]",
+                "invalidDifficulty": "Wybierz prawidłową trudność",
+                "invalidTaskType": "Wybierz prawidłowy typ tasku",
+                "levelTooLow": "Trudność wymaga wyższego poziomu"
+            }
+        },
+        "charms": {
+            "title": "Charms Damage",
+            "description": "Obrażenia procentowe z charmów per vocation/skill — TibiaPal benchmark.",
+            "fields": {
+                "vocation": {
+                    "label": "Vocation",
+                    "help": "Twoja klasa postaci (wpływa na Overpower/Overflux).",
+                    "placeholder": "Wybierz vocation"
+                },
+                "skill": {
+                    "label": "Skill ataku",
+                    "help": "Twój główny skill ataku (marginalna synergia z charmem).",
+                    "placeholder": "Wybierz skill"
+                },
+                "charm": {
+                    "label": "Charm",
+                    "help": "Major charm (elemental: 5% HP potwora) lub Overpower/Overflux (self-scaling).",
+                    "placeholder": "Wybierz charm"
+                },
+                "monsterType": {
+                    "label": "Wrażliwość potwora",
+                    "help": "weak (×1.2) / neutral (×1.0) / resistant (×0.5) / immune (×0). Nie dotyczy Overpower/Overflux.",
+                    "placeholder": "Wybierz wrażliwość"
+                }
+            },
+            "vocations": {
+                "Knight": "Knight",
+                "Paladin": "Paladin",
+                "Druid": "Druid",
+                "Sorcerer": "Sorcerer",
+                "Monk": "Monk"
+            },
+            "skills": {
+                "sword": "Sword",
+                "axe": "Axe",
+                "club": "Club",
+                "distance": "Distance",
+                "magic": "Magic",
+                "shielding": "Shielding",
+                "fist": "Fist",
+                "none": "Brak (self-charm)"
+            },
+            "charms": {
+                "wound": "Wound (physical)",
+                "enflame": "Enflame (fire)",
+                "freeze": "Freeze (ice)",
+                "poison": "Poison (earth)",
+                "zap": "Zap (energy)",
+                "curse": "Curse (death)",
+                "divineWrath": "Divine Wrath (holy)",
+                "overpower": "Overpower (5% HP gracza)",
+                "overflux": "Overflux (2.5% MP gracza)"
+            },
+            "monsterTypes": {
+                "weak": "Słaby na element (×1.2)",
+                "neutral": "Neutralny (×1.0)",
+                "resistant": "Odporny (×0.5)",
+                "immune": "Immune (×0)"
+            },
+            "result": {
+                "damageLabel": "Obrażenia procentowe per proc",
+                "charm": "Charm",
+                "skill": "Skill",
+                "basePercent": "Bazowy %",
+                "sensitivityMultiplier": "Mnożnik wrażliwości",
+                "vocationModifier": "Mnożnik vocation",
+                "skillModifier": "Mnożnik skilla",
+                "immuneWarning": "Potwór jest immune — 0% obrażeń."
+            },
+            "recommendations": {
+                "goodDmg": "Dobra synergia — damage powyżej 6%.",
+                "weakAgainst": "Potwór słaby na wybrany element → damage wyższy niż bazowy.",
+                "resistant": "Potwór odporny na wybrany element → rozważ inny charm.",
+                "immune": "Potwór immune na ten element — Overpower/Overflux działają niezależnie.",
+                "knightOverpower": "Knight + Overpower → +30% damage vs Sorcerer (HP scaling).",
+                "mageOverflux": "Sorcerer/Druid + Overflux → +30% damage vs Knight (MP scaling).",
+                "magicSkillBonus": "Magic skill → +10% Overflux (mana-leech synergy).",
+                "meleeSkillBonus": "Sword/Axe/Club/Fist → +10% Overpower (physical synergy)."
+            },
+            "errors": {
+                "invalidVocation": "Wybierz prawidłową vocation",
+                "invalidSkill": "Wybierz prawidłowy skill",
+                "invalidCharm": "Wybierz prawidłowy charm",
+                "invalidMonsterType": "Wybierz prawidłową wrażliwość"
+            }
+        },
+        "plannersCharms": {
+            "title": "Charm Planner",
+            "description": "Planuj rozdział punktów charm (max {maxPoints}) dla optymalnych obrażeń i leech — z rekomendacjami per vocation.",
+            "fields": {
+                "vocation": {
+                    "label": "Vocation",
+                    "help": "Twoja klasa postaci (wpływa na rekomendacje top-3 charmów).",
+                    "placeholder": "Wybierz vocation"
+                },
+                "maxPoints": {
+                    "label": "Cap punktów charm",
+                    "help": "Maks. łączna pula punktów do rozdysponowania (domyślnie {default}, z T16 `charm.max_points`)."
+                }
+            },
+            "charms": {
+                "vampirism": "Vampirism",
+                "void": "Void",
+                "strike": "Strike",
+                "scorch": "Scorch",
+                "venom": "Venom",
+                "frost": "Frost",
+                "electrify": "Electrify",
+                "swiftness": "Swiftness",
+                "featherweight": "Featherweight",
+                "vibrancy": "Vibrancy",
+                "lichShroud": "Lich Shroud",
+                "snakeSkin": "Snake Skin",
+                "dragonHide": "Dragon Hide",
+                "quaraScale": "Quara Scale",
+                "cloudFabric": "Cloud Fabric",
+                "demonPresence": "Demon Presence",
+                "precision": "Precision",
+                "epiphany": "Epiphany",
+                "reap": "Reap",
+                "chop": "Chop",
+                "slash": "Slash",
+                "bash": "Bash",
+                "blockade": "Blockade"
+            },
+            "categories": {
+                "leech": "Leech",
+                "combat": "Combat amp",
+                "movement": "Movement",
+                "protection": "Protection",
+                "precision": "Precision",
+                "offensive": "Offensive",
+                "none": "Inne"
+            },
+            "recommendations": {
+                "recommendedFor": "Polecane dla {vocation}",
+                "noRecommendations": "Brak rekomendacji dla tej vocation — wybierz inną.",
+                "optimal": "Optymalny przydział",
+                "pointsUsed": "{used} / {max} pkt użytych",
+                "overCap": "Przekroczono cap! {over} pkt ponad limit.",
+                "pointsRemaining": "Pozostało {remaining} pkt do rozdysponowania.",
+                "pointsRemainingLabel": "Pozostało",
+                "ready": "Build gotowy do udostępnienia — skopiuj link lub eksportuj.",
+                "empty": "Przydziel chociaż jeden punkt, aby zobaczyć sugestie."
+            },
+            "errors": {
+                "invalidVocation": "Wybierz prawidłową vocation",
+                "pointsOverCap": "Suma punktów ({used}) przekracza cap ({max})"
+            }
+        },
+        "plannersWheel": {
+            "title": "Wheel of Destiny Planner",
+            "description": "Planuj rozdział punktów Wheel of Destiny (max {maxPoints}) dla Twojej vocation — z 5 curatowanymi presetami i eksportem Markdown.",
+            "fields": {
+                "vocation": {
+                    "label": "Vocation",
+                    "help": "Twoja klasa postaci (zmienia preset i rekomendowane proporcje).",
+                    "placeholder": "Wybierz vocation"
+                },
+                "level": {
+                    "label": "Level postaci",
+                    "help": "Twój aktualny poziom (wpływa na dostępny budżet Wheel — max ~1000 pkt przy 200+).",
+                    "placeholder": "np. 300"
+                },
+                "preset": {
+                    "label": "Curated preset",
+                    "help": "Wybierz jeden z 5 curatowanych buildów (TibiaPal Wheel Builds) lub zacznij od pustego rozkładu.",
+                    "placeholder": "Wybierz preset",
+                    "none": "Pusty build (zacznij od zera)",
+                    "custom": "Własny rozkład"
+                },
+                "offensive": {
+                    "label": "Offensive",
+                    "help": "Punkty w ofensywnych node'ach Wheel (damage / crit). 0-{max} pkt."
+                },
+                "defensive": {
+                    "label": "Defensive",
+                    "help": "Punkty w defensywnych node'ach Wheel (HP / shielding). 0-{max} pkt."
+                },
+                "support": {
+                    "label": "Support",
+                    "help": "Punkty w support node'ach Wheel (healing / leech / utility). 0-{max} pkt."
+                },
+                "maxPoints": {
+                    "label": "Budżet Wheel",
+                    "help": "Całkowity budżet Wheel of Destiny (domyślnie {default})."
+                }
+            },
+            "presets": {
+                "knightTank": "Knight — Tank",
+                "paladinBalanced": "Paladin — Balanced",
+                "druidSupport": "Druid — Support",
+                "sorcererDamage": "Sorcerer — Damage",
+                "monkHybrid": "Monk — Hybrid"
+            },
+            "presetsDesc": {
+                "knightTankDesc": "Maksymalna przeżywalność: dużo defensive + leech. Dla team play i PvE solo na bossach.",
+                "paladinBalancedDesc": "Równy rozkład offensive/defensive/support. Najbardziej uniwersalny build do exp hunt.",
+                "druidSupportDesc": "Maksymalny support (heal party, buffs). Druid jako healer/ex-buffer.",
+                "sorcererDamageDesc": "Maksymalne obrażenia (AoE spells). Exp hunt na słabych potworach.",
+                "monkHybridDesc": "Balanced melee+fist z leech. Dobry do samodzielnego huntu i PvP."
+            },
+            "recommendations": {
+                "loadPreset": "Załadowano preset {preset}",
+                "offensiveHint": "Knights i Sorcerers priorytetyzują offensive. Monk balansuje z defensive.",
+                "defensiveHint": "Knights priorytetyzują defensive. Sorcerers inwestują tu minimum.",
+                "supportHint": "Druids i Paladins dominują support. Knights tu inwestują minimum.",
+                "totalUsed": "Rozdysponowane {used} / {max} pkt",
+                "remaining": "Pozostało {remaining} pkt",
+                "overBudget": "Przekroczono budżet o {over} pkt!",
+                "valid": "Build w budżecie — gotowy do udostępnienia.",
+                "empty": "Przydziel chociaż 1 pkt w jedną z kategorii, aby zobaczyć podsumowanie."
+            },
+            "actions": {
+                "copyLink": "Kopiuj link",
+                "copyLinkCopied": "Skopiowano link",
+                "copyMarkdown": "Kopiuj jako Markdown",
+                "copyMarkdownCopied": "Skopiowano Markdown",
+                "copyFailed": "Nie udało się skopiować"
+            },
+            "errors": {
+                "invalidVocation": "Wybierz prawidłową vocation",
+                "invalidLevel": "Level musi być integerem ∈ [8, 2500]",
+                "overBudget": "Suma ({used}) przekracza budżet ({max})"
+            }
+        },
+        "premium": {
+            "badgeLabel": "Premium",
+            "tooltip": "Pełny breakdown z wagami per komponent — dla kont Premium (wkrótce)."
+        },
+        "characterValue": {
+            "title": "Character Value ★",
+            "description": "Oszacuj wartość swojej postaci w Tibia Coins. ★ Killer feature — transparentny algorytm z pełnym breakdownem.",
+            "submit": "Oblicz wartość",
+            "identity": {
+                "sectionLabel": "Tożsamość postaci",
+                "name": {
+                    "label": "Nazwa postaci",
+                    "placeholder": "np. Migzen"
+                },
+                "level": {
+                    "label": "Level postaci",
+                    "help": "Level z Tibia (integer ∈ [8, 2500]).",
+                    "placeholder": "np. 619"
+                },
+                "vocation": {
+                    "label": "Vocation (bazowa)",
+                    "help": "5 bazowych klas: Knight, Paladin, Druid, Sorcerer, Monk."
+                },
+                "sex": {
+                    "label": "Płeć"
+                },
+                "world": {
+                    "label": "World (opcjonalny)",
+                    "help": "Nazwa świata (np. Jadebra). Opcjonalne dla postaci prywatnych.",
+                    "placeholder": "np. Jadebra"
+                }
+            },
+            "skills": {
+                "sectionLabel": "Skille (8)",
+                "help": "Bazowy skill (bez bonusu lojalności). Liczymy tylko powyżej 100 i tylko skille relewantne dla vocation."
+            },
+            "progression": {
+                "sectionLabel": "Progression",
+                "charmPoints": {
+                    "label": "Charm points",
+                    "help": "Suma charm points (≥ 7000 dostaje bonus wagowy).",
+                    "placeholder": "7611"
+                },
+                "charmPointsUnused": {
+                    "label": "Unused charm points",
+                    "placeholder": "0"
+                },
+                "minorCharmEchoes": {
+                    "label": "Minor Charm Echoes",
+                    "placeholder": "0"
+                },
+                "bossPoints": {
+                    "label": "Boss points",
+                    "placeholder": "2340"
+                },
+                "questsCompleted": {
+                    "label": "Questy ukończone",
+                    "placeholder": "28"
+                },
+                "questsTotal": {
+                    "label": "Questy razem",
+                    "placeholder": "42"
+                },
+                "imbuementsUnlocked": {
+                    "label": "Imbuementy odblokowane",
+                    "placeholder": "11"
+                },
+                "imbuementsTotal": {
+                    "label": "Imbuementy razem",
+                    "placeholder": "23"
+                },
+                "achievementPoints": {
+                    "label": "Achievement points",
+                    "placeholder": "1000"
+                },
+                "animusMasteries": {
+                    "label": "Animus Masteries",
+                    "placeholder": "180"
+                }
+            },
+            "assets": {
+                "sectionLabel": "Aktywa",
+                "goldTotal": {
+                    "label": "Złoto (bank + inventory + depot)",
+                    "help": "Całkowite złoto postaci. Przeliczane na TC po 13 900 gp = 1 TC.",
+                    "placeholder": "200000"
+                },
+                "tcInvested": {
+                    "label": "TC zainwestowane (opcjonalne)",
+                    "help": "Tibia Coins wydane na tę postać. W UI widoczne tylko dla Premium.",
+                    "placeholder": "3900"
+                },
+                "storeOutfits": {
+                    "label": "Store outfits",
+                    "placeholder": "3"
+                },
+                "storeMounts": {
+                    "label": "Store mounts",
+                    "placeholder": "2"
+                },
+                "storeItems": {
+                    "label": "Store items",
+                    "placeholder": "5"
+                },
+                "hirelings": {
+                    "label": "Hirelings",
+                    "placeholder": "0"
+                },
+                "gemsLesser": {
+                    "label": "Gems (lesser)",
+                    "placeholder": "44"
+                },
+                "gemsRegular": {
+                    "label": "Gems (regular)",
+                    "placeholder": "0"
+                },
+                "gemsGreater": {
+                    "label": "Gems (greater)",
+                    "placeholder": "0"
+                }
+            },
+            "flags": {
+                "sectionLabel": "Flagi (questy / sloty)",
+                "soulWar": "Soul War (ukończony)",
+                "primalOrdeal": "Primal Ordeal (ukończony)",
+                "worldTransfer": "World Transfer dostępny",
+                "preySlot": "Prey Slot (dodatkowy)",
+                "charmExpansion": "Charm Expansion",
+                "weeklyTaskExpansion": "Weekly Task Expansion",
+                "twistOfFate": "Twist of Fate",
+                "blessingsActive": {
+                    "label": "Aktywne błogosławieństwa (0–7)",
+                    "help": "5 = Spirits of Five; 7 = pełna ochrona + Twist of Fate."
+                }
+            },
+            "market": {
+                "sectionLabel": "Rynek (opcjonalne)",
+                "marketBid": {
+                    "label": "Aktualna oferta rynkowa (TC)",
+                    "help": "Jeśli wpiszesz ofertę, zobaczysz wskaźnik okazji (delta % vs nasza wycena).",
+                    "placeholder": "25501"
+                }
+            },
+            "result": {
+                "estimatedLabel": "Szacowana wartość",
+                "confidenceLabel": "Pewność wyceny",
+                "marketLabel": "Twoja oferta rynkowa",
+                "deltaLabel": "Różnica vs wycena",
+                "breakdownTitle": "Breakdown wyceny (premium)",
+                "breakdownDescription": "Każdy komponent z wagą — transparentność algorytmu buduje zaufanie."
+            },
+            "breakdown": {
+                "level": "Bazowa wartość (level × stawka × vocation)",
+                "skills": "Skille (powyżej 100, relewantne dla vocation)",
+                "features": "Features (Soul War, Primal Ordeal, World Transfer, blessings, ...)",
+                "progression": "Progression (charms, boss points, quests, imbuements, animus, achievements)",
+                "cosmetics": "Cosmetics (store outfits/mounts/items, gems)",
+                "assets": "Assets (gold, tc_invested)",
+                "perSkill": "Per skill",
+                "itemsList": "Pozycje"
+            },
+            "recommendations": {
+                "ok": "Szacowana wartość: {value} TC",
+                "okWithBid": "Szacowana wartość: {value} TC. Twoja oferta rynkowa: {bid} TC.",
+                "underpriced": "Cena rynkowa ({bid} TC) jest niższa od wyceny ({value} TC) — okazja ({delta}%).",
+                "overpriced": "Cena rynkowa ({bid} TC) jest wyższa od wyceny ({value} TC) — przepłacasz ({delta}%).",
+                "fairPrice": "Cena rynkowa zbliżona do wyceny ({delta}%) — fair price.",
+                "confidenceLow": "Pewność wyceny niska — uzupełnij dane postaci (przedmioty, TC zainwestowane).",
+                "confidenceHigh": "Pewność wyceny wysoka — pełny detal aukcyjny."
+            },
+            "errors": {
+                "invalidLevel": "Level musi być integerem ∈ [8, 2500]",
+                "invalidName": "Wpisz nazwę postaci",
+                "invalidVocation": "Wybierz prawidłową vocation",
+                "invalidSkill": "Skill musi być integerem ≥ 0",
+                "invalidQuests": "Questy ukończone ≤ questy razem",
+                "invalidImbuements": "Imbuementy odblokowane ≤ imbuementy razem",
+                "invalidBlessings": "Błogosławieństwa ∈ [0, 7]",
+                "invalidGold": "Złoto musi być ≥ 0",
+                "invalidTcInvested": "TC zainwestowane musi być ≥ 0"
+            },
+            "skillKeys": {
+                "magic": "Magic",
+                "club": "Club",
+                "fist": "Fist",
+                "sword": "Sword",
+                "axe": "Axe",
+                "distance": "Distance",
+                "shielding": "Shielding",
+                "fishing": "Fishing"
+            },
+            "vocations": {
+                "Knight": "Knight",
+                "Paladin": "Paladin",
+                "Druid": "Druid",
+                "Sorcerer": "Sorcerer",
+                "Monk": "Monk"
+            },
+            "sexes": {
+                "M": "Mężczyzna",
+                "F": "Kobieta"
+            }
         }
-      }
     },
-    "layout": {
-      "backToIndex": "Wszystkie kalkulatory",
-      "formLabel": "Parametry",
-      "resultLabel": "Wynik",
-      "descriptionLabel": "Opis",
-      "openInWorkspace": "Otwórz w Workspace",
-      "calculatorNotFoundTitle": "Nie znaleziono kalkulatora",
-      "calculatorNotFoundDescription": "Ten kalkulator jeszcze nie istnieje lub jest w budowie.",
-      "calculatorNotFoundCta": "Wróć do listy kalkulatorów"
+    "Reference": {
+        "title": "Referencje",
+        "items": "Przedmioty",
+        "imbuements": "Imbuements",
+        "worlds": "Światy",
+        "outfits": "Outfits",
+        "mounts": "Mounts"
     },
-    "resultDisplay": {
-      "primaryLabel": "Wynik",
-      "copyLink": "Kopiuj link",
-      "copyLinkCopied": "Skopiowano",
-      "copyLinkFailed": "Nie udało się skopiować",
-      "recommendationLabel": "Rekomendacja",
-      "recommendationPositive": "Opłaca się",
-      "recommendationNegative": "Nie opłaca się",
-      "recommendationNeutral": "Warto rozważyć",
-      "recommendationWarning": "Uwaga",
-      "recommendationInfo": "Wskazówka",
-      "recommendationSuccess": "Sukces",
-      "emptyTitle": "Brak wyniku",
-      "emptyDescription": "Wypełnij formularz, aby zobaczyć wynik.",
-      "primaryValueLabel": "Główna wartość",
-      "secondaryLabel": "Dodatkowe wartości"
+    "Breadcrumb": {
+        "aria": "Okruszki nawigacji",
+        "home": "Strona główna",
+        "calculators": "Kalkulatory"
     },
-    "errors": {
-      "generic": "Coś poszło nie tak. Spróbuj ponownie.",
-      "invalidInput": "Nieprawidłowe dane wejściowe.",
-      "missingField": "Pole jest wymagane",
-      "calcFailed": "Nie udało się policzyć. Sprawdź dane."
-    },
-    "skillsTraining": {
-      "label": "Skills & Training",
-      "exerciseWeapons": "Exercise Weapons",
-      "trueSkill": "True Skill",
-      "stamina": "Stamina"
-    },
-    "trueSkill": {
-      "title": "True Skill ★",
-      "description": "Odwrócenie bonusu lojalności. Porównaj skille widoczne w grze z highscores.",
-      "infoTitle": "True Skill ★ — most do Bazaaru",
-      "infoBody": "Ten kalkulator jest mostem między kalkulatorami a Bazaar. Bazaar pokazuje skille BEZ bonusu lojalności, gra POKAZUJE Z bonusem.",
-      "infoLinkLabel": "Zobacz w Bazaar",
-      "fields": {
-        "displayedSkill": {
-          "label": "Skill wyświetlany w grze",
-          "help": "Wartość ze statusu postaci (z bonusem lojalności).",
-          "placeholder": "np. 100"
+    "Footer": {
+        "tagline": "Kalkulatory, wycena postaci i analiza Char Bazaar dla graczy Tibii.",
+        "sections": {
+            "product": "Produkt",
+            "legal": "Prawne"
         },
-        "loyaltyPct": {
-          "label": "Bonus lojalności",
-          "help": "360 punktów lojalności = 5%. Wybierz z listy {0,5,…,50}.",
-          "placeholder": "Wybierz procent"
-        }
-      },
-      "result": {
-        "baseLabel": "Bazowy skill (highscores / Bazaar)",
-        "loyaltyBonus": "Bonus lojalności",
-        "displayedSkill": "Skill wyświetlany"
-      },
-      "recommendations": {
-        "noLoyalty": "Bez lojalności — wyświetlane = bazowe ({value}).",
-        "bazaar": "Bazowy skill: {value}. W Bazaar zobaczysz {value} (bez bonusu {discount})."
-      },
-      "errors": {
-        "invalidSkill": "Wpisz liczbę całkowitą ≥ 0",
-        "invalidLoyalty": "Niedozwolona wartość bonusu"
-      }
-    },
-    "stamina": {
-      "title": "Stamina",
-      "description": "Czas regeneracji, efektywność premium vs free.",
-      "fields": {
-        "currentStamina": {
-          "label": "Aktualna stamina",
-          "help": "Wartość widoczna w oknie postaci (w godzinach).",
-          "placeholder": "np. 36"
+        "links": {
+            "bazaar": "Bazaar",
+            "calculators": "Kalkulatory",
+            "reference": "Referencje",
+            "bosses": "Bosses",
+            "blog": "Blog"
         },
-        "targetStamina": {
-          "label": "Docelowa stamina",
-          "help": "Maksymalna wartość dla tego konta: {max} h"
-        },
-        "isPremium": {
-          "label": "Status konta",
-          "help": "Premium = do 42 h + zielona strefa (Happy Hours). Free = do 40 h, bez zielonej strefy.",
-          "premium": "Premium",
-          "free": "Free",
-          "ariaLabel": "Przełącz status konta premium / free"
-        }
-      },
-      "result": {
-        "realTimeLabel": "Czas rzeczywisty (offline)",
-        "doneLabel": "Status",
-        "zones": "Strefy regeneracji",
-        "hoursGained": "Staminy do odrobienia",
-        "fromTo": "Z {from} h do {to} h (max {max} h)",
-        "max": "Maks. stamina",
-        "alreadyFull": "Pełna"
-      },
-      "recommendations": {
-        "premiumNormal": "Premium: {rate} min offline = 1 min staminy w strefie normalnej (0-39 h).",
-        "free": "Free: {rate} min offline = 1 min staminy (bez zielonej strefy).",
-        "withGreen": "Premium: {normalRate} min/h w strefie normalnej, {greenRate} min/h w zielonej strefie 39-42 h.",
-        "full": "Stamina już pełna ({value} h). Nic do regeneracji."
-      },
-      "zones": {
-        "normal": "{hours} h normalna",
-        "green": "{hours} h zielona"
-      },
-      "unit": {
-        "h": "h",
-        "min": "min"
-      },
-      "errors": {
-        "invalidCurrent": "Wpisz liczbę całkowitą 0-42",
-        "invalidTarget": "Maksymalna wartość dla tego konta to {max} h"
-      }
-    },
-    "valuation": {
-      "label": "Wycena postaci",
-      "characterValue": "Character Value"
-    },
-    "imbuementCharms": {
-      "label": "Imbuement & Charms",
-      "imbuement": "Imbuement cost",
-      "weeklyTasks": "Weekly Tasks",
-      "charmsDamage": "Charms Damage"
-    },
-    "experience": {
-      "label": "Experience",
-      "xp": "Experience / Levelling",
-      "leech": "Leech",
-      "expShare": "Exp Share"
-    },
-    "expShare": {
-      "title": "Exp Share",
-      "description": "Podział XP w party zgodnie z formułą Tibii (równe + bonus za różne vocations).",
-      "labels": {
-        "totalXp": "Całkowite XP do podziału",
-        "totalXpHelp": "Suma XP do rozdysponowania między członków party.",
-        "totalXpPlaceholder": "np. 10000",
-        "playerLevel": "Twój level",
-        "playerLevelHelp": "Twój level (integer ∈ [{min}, {max}]).",
-        "playerLevelPlaceholder": "np. 100",
-        "playerVocation": "Twoja vocation",
-        "playerVocationHelp": "Twoja klasa postaci.",
-        "playerVocationPlaceholder": "Wybierz vocation",
-        "partyMembers": "Członkowie party",
-        "partyMembersHelp": "Dodaj do 4 członków (oprócz Ciebie). Tibia pozwala na max 5 osób w party.",
-        "partyMembersCount": "{count} / {max}",
-        "memberName": "Imię",
-        "memberNamePlaceholder": "np. Ally",
-        "memberNameAria": "Imię członka party {index}",
-        "memberLevel": "Level",
-        "memberLevelAria": "Level członka party {index}",
-        "memberVocation": "Vocation",
-        "memberVocationAria": "Vocation członka party {index}",
-        "removeMember": "Usuń {name}",
-        "addMember": "Dodaj członka party"
-      },
-      "vocations": {
-        "Knight": "Knight",
-        "Paladin": "Paladin",
-        "Druid": "Druid",
-        "Sorcerer": "Sorcerer",
-        "Monk": "Monk"
-      },
-      "result": {
-        "playerShareLabel": "Twój udział w XP",
-        "distinctVocations": "Różne vocations",
-        "vocationBonus": "Bonus za vocations",
-        "totalMembers": "Wszystkich w party",
-        "tableTitle": "Podział XP per członek",
-        "tableSubtitle": "{count} osób, prowadzący lvl {level} {vocation}",
-        "table": {
-          "name": "Imię",
-          "level": "Level",
-          "vocation": "Vocation",
-          "xpShare": "Udział XP",
-          "you": "Ty",
-          "soloNote": "Brak party — całe XP trafia do Ciebie."
-        }
-      },
-      "recommendations": {
-        "solo": "Solo — wszystkie XP dla Ciebie.",
-        "bonusLow": "1 vocation w party → +{bonus}% bonus (bazowy Tibia).",
-        "bonusOk": "{count} różne vocations → +{bonus}% bonus za vocations.",
-        "bonusMax": "5 różnych vocations → +{bonus}% bonus za vocations (max)."
-      },
-      "errors": {
-        "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
-        "invalidName": "Imię wymagane (max 20 znaków)",
-        "invalidTotalXp": "Wpisz XP jako nieujemną liczbę (max 10¹²)",
-        "illegalPartyRange": "Różnica leveli w party przekracza Tibia legal range (ratio > 1.5).",
-        "duplicateNames": "Imiona członków party muszą być unikalne."
-      }
-    },
-    "leech": {
-      "title": "Leech",
-      "description": "Procent leech z party z uwzględnieniem różnicy leveli (CipSoft + community reduction).",
-      "labels": {
-        "characterLevel": "Twój level",
-        "characterLevelHelp": "Twój level (integer ∈ [{min}, {max}]).",
-        "characterLevelPlaceholder": "np. 100",
-        "characterVocation": "Twoja vocation",
-        "characterVocationHelp": "Twoja klasa postaci.",
-        "characterVocationPlaceholder": "Wybierz vocation",
-        "reductionPerLevel": "Redukcja per level różnicy",
-        "reductionPerLevelHelp": "Community convention: ile % udziału traci się za każdy poziom różnicy (domyślnie 0.05 = 5%).",
-        "reductionPerLevelPlaceholder": "np. 0.05",
-        "partyMembers": "Członkowie party (carriers)",
-        "partyMembersHelp": "Dodaj do 4 postaci wyższych levelem, od których leechujesz XP.",
-        "partyMembersCount": "{count} / {max}",
-        "memberName": "Imię",
-        "memberNamePlaceholder": "np. Carrier",
-        "memberNameAria": "Imię członka party {index}",
-        "memberLevel": "Level",
-        "memberLevelAria": "Level członka party {index}",
-        "memberVocation": "Vocation",
-        "memberVocationAria": "Vocation członka party {index}",
-        "removeMember": "Usuń {name}",
-        "addMember": "Dodaj członka party"
-      },
-      "vocations": {
-        "Knight": "Knight",
-        "Paladin": "Paladin",
-        "Druid": "Druid",
-        "Sorcerer": "Sorcerer",
-        "Monk": "Monk"
-      },
-      "result": {
-        "maxLeechLabel": "Maksymalny leech share",
-        "partySize": "Rozmiar party",
-        "characterLevel": "Twój level",
-        "avgLeech": "Średni leech share",
-        "tableTitle": "Per-member leech share",
-        "tableSubtitle": "{count} członków party",
-        "legal": "Legal",
-        "illegal": "Illegal"
-      },
-      "recommendations": {
-        "solo": "Brak party — solo, wszystkie XP dla Ciebie.",
-        "illegal": "Różnica leveli przekracza Tibia legal range — leech = 0%.",
-        "equal": "Tibia equal split (50/50) — pełen leech bez redukcji.",
-        "ok": "Leech share w normalnym zakresie — opłaca się huntować w tej konfiguracji.",
-        "low": "Niski leech share — rozważ zmianę konfiguracji party."
-      },
-      "errors": {
-        "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
-        "invalidName": "Imię wymagane (max 20 znaków)",
-        "invalidReduction": "Redukcja musi być ∈ [0, 1]"
-      }
-    },
-    "experience": {
-      "title": "Experience / Levelling",
-      "description": "Czas potrzebny na awans z obecnego do docelowego levelu przy zadanym XP/h.",
-      "fields": {
-        "currentLevel": {
-          "label": "Obecny level",
-          "help": "Twój aktualny level (integer ∈ [0, 2500]).",
-          "placeholder": "np. 100"
-        },
-        "targetLevel": {
-          "label": "Docelowy level",
-          "help": "Level, do którego chcesz dojść (musi być > obecnego).",
-          "placeholder": "np. 101"
-        },
-        "xpPerHour": {
-          "label": "Tempo XP/h",
-          "help": "Twoje typowe tempo huntu w XP na godzinę (np. 250 000).",
-          "placeholder": "np. 250000"
-        }
-      },
-      "result": {
-        "timeLabel": "Czas do celu",
-        "xpDelta": "XP do zdobycia",
-        "levelDelta": "Poziomów do zdobycia",
-        "xpPerHour": "Tempo XP/h"
-      },
-      "recommendations": {
-        "alreadyThere": "Jesteś już na docelowym levelu — nic do zdobycia.",
-        "underDay": "Mniej niż dzień — szybki level-up.",
-        "underWeek": "Mniej niż tydzień — standardowy level-up.",
-        "longTerm": "Długoterminowy grind — rozważ zmianę tempa lub celu."
-      },
-      "errors": {
-        "invalidCurrent": "Wpisz level jako integer ∈ [0, 2500]",
-        "invalidTarget": "Docelowy level musi być > obecnego (≤ 2500)",
-        "invalidRate": "Tempo XP/h musi być integerem > 0"
-      }
-    },
-    "wheelOfDestiny": "Wheel of Destiny",
-    "exerciseWeapons": {
-      "title": "Exercise Weapons",
-      "description": "Oblicz ile broni exercise zużyjesz do konkretnego skilla (do skilla lub z broni). Z uwzględnieniem loyalty, double event, prywatnego dummiego i progu opłacalności TC.",
-      "tabs": {
-        "targetSkill": "Do skilla",
-        "targetWeapons": "Z broni"
-      },
-      "fields": {
-        "category": {
-          "label": "Para vocation / skill",
-          "help": "8 par z architektury §2.1 — wybierz kontekstową parę dla Twojej postaci."
-        },
-        "currentSkill": {
-          "label": "Obecny skill",
-          "help": "Bazowy skill (bez bonusu lojalności) — tak raportuje Bazaar.",
-          "placeholder": "np. 100"
-        },
-        "percentToNext": {
-          "label": "% do następnego poziomu",
-          "help": "Tibia pokazuje %, nie punkty. Wpisz 0 jeśli skill jest świeżo zdobyty.",
-          "placeholder": "0-100"
-        },
-        "targetSkill": {
-          "label": "Docelowy skill",
-          "help": "Skill, do którego chcesz dojść.",
-          "placeholder": "np. 110"
-        },
-        "numWeapons": {
-          "label": "Liczba broni",
-          "help": "Ile exercise weapons zamierzasz zużyć.",
-          "placeholder": "np. 100"
-        },
-        "weaponType": {
-          "label": "Typ broni",
-          "regular": "Regular",
-          "durable": "Durable",
-          "lasting": "Lasting"
-        },
-        "loyaltyPct": {
-          "label": "Bonus lojalności (%)",
-          "help": "Tibia: 5% co 360 punktów loyalty. Wyższy bonus = mniej broni potrzeba.",
-          "placeholder": "0-50"
-        },
-        "doubleEvent": {
-          "label": "Double event",
-          "help": "Podczas double event potrzeba 2× mniej broni do tego samego efektu."
-        },
-        "privateDummy": {
-          "label": "Prywatny dummy",
-          "help": "Demon / Ferumbras / Monk dummy: 10% szybszy trening."
-        },
-        "tcPriceThreshold": {
-          "label": "Próg ceny TC (gp)",
-          "help": "TibiaWiki: jeśli 1 TC kosztuje więcej niż 13 889 gp, kup za gold. Domyślnie: 13 889.",
-          "placeholder": "13889"
-        }
-      },
-      "skills": {
-        "knightMelee": "Knight — Melee (sword)",
-        "knightShielding": "Knight — Shielding",
-        "knightMagic": "Knight — Magic",
-        "paladinMagic": "Paladin — Magic",
-        "paladinDistance": "Paladin — Distance",
-        "mageMagic": "Druid / Sorcerer — Magic",
-        "monkMagic": "Monk — Magic",
-        "monkFist": "Monk — Fist"
-      },
-      "result": {
-        "title": "Wynik",
-        "weaponsNeeded": "Potrzebne bronie",
-        "regular": "Regular",
-        "durable": "Durable",
-        "lasting": "Lasting",
-        "costGp": "Koszt (gp)",
-        "costTc": "Koszt (TC)",
-        "newSkillLevel": "Nowy poziom skilla",
-        "skillGained": "Zysk skilla",
-        "primaryTargetSkill": "Potrzebna liczba broni",
-        "primaryTargetWeapons": "Zysk skilla"
-      },
-      "recommendations": {
-        "buyGoldShort": "Kup za gold",
-        "buyTcShort": "Kup za TC",
-        "equalShort": "Równoważne",
-        "buyGold": "Kup za gold — cena TC ({tcPrice} gp) przekracza próg {threshold} gp.",
-        "buyTc": "Kup za TC — cena TC ({tcPrice} gp) jest poniżej progu {threshold} gp.",
-        "equal": "Koszt identyczny dla obu metod (TC = {tcPrice} gp ≈ próg {threshold} gp)."
-      },
-      "errors": {
-        "invalidCurrent": "Wpisz liczbę całkowitą ≥ 0",
-        "invalidPercent": "Procent musi być w zakresie 0-100",
-        "invalidTarget": "Skill docelowy musi być wyższy niż obecny",
-        "invalidNum": "Liczba broni musi być liczbą całkowitą ≥ 0",
-        "invalidType": "Wybierz typ broni",
-        "invalidLoyalty": "Bonus lojalności musi być jednym z 0, 5, 10, …, 50",
-        "invalidThreshold": "Próg ceny TC musi być liczbą dodatnią"
-      }
-    },
-    "skills": {
-      "title": "Training / Skills",
-      "description": "Czas i koszt treningu od obecnego do docelowego skilla na dowolnej broni — z ostrzeżeniem o precyzji dla typów broni innych niż Regular.",
-      "fields": {
-        "category": {
-          "label": "Para vocation / skill",
-          "help": "8 par z architektury §2.1 — kontekstowy skill dla Twojej postaci."
-        },
-        "currentSkill": {
-          "label": "Obecny skill",
-          "help": "Bazowy skill (bez bonusu lojalności).",
-          "placeholder": "np. 100"
-        },
-        "targetSkill": {
-          "label": "Docelowy skill",
-          "help": "Skill, do którego chcesz dojść.",
-          "placeholder": "np. 110"
-        },
-        "percentToNext": {
-          "label": "% do następnego poziomu",
-          "help": "Tibia pokazuje %, nie punkty. 0 = świeżo zdobyty level.",
-          "placeholder": "0-100"
-        },
-        "weaponType": {
-          "label": "Typ broni",
-          "regular": "Regular",
-          "durable": "Durable",
-          "lasting": "Lasting",
-          "help": "Tylko 'Regular' daje precyzyjny czas. Inne typy są przybliżone (zakładają pełne zużycie broni)."
-        },
-        "offline": {
-          "label": "Trening offline",
-          "help": "Offline training zużywa staminę — ale czas pozostaje taki sam."
-        }
-      },
-      "skills": {
-        "knightMelee": "Knight — Melee (sword)",
-        "knightShielding": "Knight — Shielding",
-        "knightMagic": "Knight — Magic",
-        "paladinMagic": "Paladin — Magic",
-        "paladinDistance": "Paladin — Distance",
-        "mageMagic": "Druid / Sorcerer — Magic",
-        "monkMagic": "Monk — Magic",
-        "monkFist": "Monk — Fist"
-      },
-      "result": {
-        "title": "Wynik",
-        "time": "Czas treningu",
-        "costGp": "Koszt (gp)",
-        "costTc": "Koszt (TC)",
-        "hits": "Wymagane uderzenia"
-      },
-      "warnings": {
-        "approximate": "Tylko broń 'Regular' daje precyzyjny czas/koszt. Inne typy zakładają pełne zużycie broni — mogą przeszacować wynik."
-      },
-      "recommendations": {
-        "approximateShort": "Wynik przybliżony",
-        "approximate": "TibiaWiki: tylko broń 'Regular' daje precyzyjny czas. Wybrany typ zakłada pełne zużycie broni.",
-        "preciseShort": "Precyzyjny wynik",
-        "precise": "Broń 'Regular' — wynik zgodny z TibiaWiki Skills Calculator."
-      },
-      "errors": {
-        "invalidCurrent": "Wpisz liczbę całkowitą ≥ 0",
-        "invalidPercent": "Procent musi być w zakresie 0-100",
-        "invalidTarget": "Skill docelowy musi być wyższy niż obecny"
-      }
-    },
-    "imbuement": {
-      "title": "Koszt Imbuement",
-      "description": "Koszt slotów imbuement (basic/intricate/powerful) — TC + gp, per TibiaWiki.",
-      "fields": {
-        "imbuementType": {
-          "label": "Tier imbuement",
-          "help": "Basic = najtańszy slot (25 TC), Intricate = średni tier (bez slotu TC), Powerful = top tier (150 TC).",
-          "placeholder": "Wybierz tier"
-        },
-        "level": {
-          "label": "Level postaci",
-          "help": "Informacyjny — używany do oceny kontekstu gry.",
-          "placeholder": "np. 100"
-        },
-        "hours": {
-          "label": "Czas trwania (h)",
-          "help": "Czas trwania imbuementu w grze (TibiaWiki: 20h użycia).",
-          "placeholder": "np. 20"
-        }
-      },
-      "tiers": {
-        "basic": "Basic",
-        "intricate": "Intricate",
-        "powerful": "Powerful"
-      },
-      "result": {
-        "totalCostTc": "Całkowity koszt (TC)",
-        "slotCost": "Slot",
-        "fee": "Opłata (gp)",
-        "duration": "Czas trwania",
-        "tier": "Tier"
-      },
-      "recommendations": {
-        "basic": "Basic: slot {slot} TC + {fee} gp fee — najtańszy tier.",
-        "intricate": "Intricate: {fee} gp fee (używa Basic slot, bez dodatkowego TC).",
-        "powerful": "Powerful: slot {slot} TC + {fee} gp fee — top tier, pełna moc."
-      },
-      "errors": {
-        "invalidType": "Wybierz tier z listy",
-        "invalidLevel": "Wpisz level jako nieujemną liczbę całkowitą",
-        "invalidHours": "Wpisz czas trwania jako nieujemną liczbę całkowitą"
-      }
-    },
-    "blessings": {
-      "title": "Koszt Błogosławieństw",
-      "description": "Koszt błogosławieństw TibiaWiki R(L) — ochrona przed utratą XP przy śmierci.",
-      "fields": {
-        "currentLevel": {
-          "label": "Obecny level",
-          "help": "Twój aktualny level (integer ∈ [{min}, {max}]).",
-          "placeholder": "np. 100"
-        },
-        "targetLevel": {
-          "label": "Docelowy level",
-          "help": "Docelowy level (musi być > obecnego). Wartość informacyjna.",
-          "placeholder": "np. 101"
-        },
-        "currentBlessings": {
-          "label": "Aktualne błogosławieństwa",
-          "help": "Ile z 7 błogosławieństw już posiadasz (0 = żadne, 7 = pełna ochrona przed XP-loss).",
-          "placeholder": "5"
-        }
-      },
-      "result": {
-        "totalCostLabel": "Całkowity koszt",
-        "doneLabel": "Status",
-        "blessings": "Błogosławieństw do kupienia",
-        "costPerBl": "Koszt / błogosławieństwo",
-        "current": "Posiadane"
-      },
-      "recommendations": {
-        "alreadyFull": "Już masz 7/7 — pełna ochrona przed utratą XP.",
-        "fullProtection": "Pełna ochrona 7/7 — {count} × koszt per blessing z R(L).",
-        "partial": "Dokup {count} błogosławieństw, żeby zwiększyć ochronę przed XP-loss."
-      },
-      "errors": {
-        "invalidLevel": "Level musi być integerem ∈ [{min}, {max}]",
-        "invalidTarget": "Docelowy level musi być > obecnego",
-        "invalidCurrent": "Ilość błogosławieństw musi być ∈ [0, {max}]",
-        "alreadyHigher": "Już masz wyższy poziom — wpisz większy targetLevel."
-      }
-    },
-    "weeklyTasks": {
-      "title": "Weekly Tasks",
-      "description": "Maksymalne nagrody XP za weekly task w zależności od poziomu i trudności.",
-      "fields": {
-        "level": {
-          "label": "Poziom postaci",
-          "help": "Twój aktualny poziom (integer ∈ [{min}, {max}]).",
-          "placeholder": "np. 200"
-        },
-        "difficulty": {
-          "label": "Trudność",
-          "help": "Beginner (od 1), Adept (od 30), Expert (od 150), Master (od 400). Cap XP rośnie z trudnością.",
-          "placeholder": "Wybierz trudność"
-        },
-        "taskType": {
-          "label": "Typ tasku",
-          "help": "Kill i delivery używają tej samej formuły XP (TibiaWiki BR).",
-          "placeholder": "Wybierz typ",
-          "kill": "Kill",
-          "delivery": "Delivery"
-        }
-      },
-      "difficulties": {
-        "beginner": "Beginner",
-        "adept": "Adept",
-        "expert": "Expert",
-        "master": "Master"
-      },
-      "result": {
-        "xpLabel": "Maksymalne XP za task",
-        "baseXp": "Bazowe XP (bez cap)",
-        "capXp": "Cap XP tej trudności",
-        "wasCapped": "Cap osiągnięty",
-        "difficulty": "Trudność",
-        "level": "Poziom",
-        "taskType": "Typ tasku",
-        "yes": "Tak",
-        "no": "Nie"
-      },
-      "recommendations": {
-        "noCap": "Bazowe XP {base} poniżej capa {cap} — trudność {difficulty} nie ogranicza nagrody.",
-        "capped": "Bazowe XP {base} przekracza cap {cap}. Otrzymasz {xp} XP (cap). Rozważ wyższą trudność.",
-        "levelTooLow": "Trudność {difficulty} wymaga poziomu >= {required}. Twoja postać ma {current} — wybierz niższą trudność.",
-        "masterUnlimited": "Master nie ma capa — otrzymujesz pełne bazowe XP.",
-        "unlockLevel": "Beginner (>=1), Adept (>=30), Expert (>=150), Master (>=400)."
-      },
-      "errors": {
-        "invalidLevel": "Wpisz poziom jako integer ∈ [{min}, {max}]",
-        "invalidDifficulty": "Wybierz prawidłową trudność",
-        "invalidTaskType": "Wybierz prawidłowy typ tasku",
-        "levelTooLow": "Trudność wymaga wyższego poziomu"
-      }
-    },
-    "charms": {
-      "title": "Charms Damage",
-      "description": "Obrażenia procentowe z charmów per vocation/skill — TibiaPal benchmark.",
-      "fields": {
-        "vocation": {
-          "label": "Vocation",
-          "help": "Twoja klasa postaci (wpływa na Overpower/Overflux).",
-          "placeholder": "Wybierz vocation"
-        },
-        "skill": {
-          "label": "Skill ataku",
-          "help": "Twój główny skill ataku (marginalna synergia z charmem).",
-          "placeholder": "Wybierz skill"
-        },
-        "charm": {
-          "label": "Charm",
-          "help": "Major charm (elemental: 5% HP potwora) lub Overpower/Overflux (self-scaling).",
-          "placeholder": "Wybierz charm"
-        },
-        "monsterType": {
-          "label": "Wrażliwość potwora",
-          "help": "weak (×1.2) / neutral (×1.0) / resistant (×0.5) / immune (×0). Nie dotyczy Overpower/Overflux.",
-          "placeholder": "Wybierz wrażliwość"
-        }
-      },
-      "vocations": {
-        "Knight": "Knight",
-        "Paladin": "Paladin",
-        "Druid": "Druid",
-        "Sorcerer": "Sorcerer",
-        "Monk": "Monk"
-      },
-      "skills": {
-        "sword": "Sword",
-        "axe": "Axe",
-        "club": "Club",
-        "distance": "Distance",
-        "magic": "Magic",
-        "shielding": "Shielding",
-        "fist": "Fist",
-        "none": "Brak (self-charm)"
-      },
-      "charms": {
-        "wound": "Wound (physical)",
-        "enflame": "Enflame (fire)",
-        "freeze": "Freeze (ice)",
-        "poison": "Poison (earth)",
-        "zap": "Zap (energy)",
-        "curse": "Curse (death)",
-        "divineWrath": "Divine Wrath (holy)",
-        "overpower": "Overpower (5% HP gracza)",
-        "overflux": "Overflux (2.5% MP gracza)"
-      },
-      "monsterTypes": {
-        "weak": "Słaby na element (×1.2)",
-        "neutral": "Neutralny (×1.0)",
-        "resistant": "Odporny (×0.5)",
-        "immune": "Immune (×0)"
-      },
-      "result": {
-        "damageLabel": "Obrażenia procentowe per proc",
-        "charm": "Charm",
-        "skill": "Skill",
-        "basePercent": "Bazowy %",
-        "sensitivityMultiplier": "Mnożnik wrażliwości",
-        "vocationModifier": "Mnożnik vocation",
-        "skillModifier": "Mnożnik skilla",
-        "immuneWarning": "Potwór jest immune — 0% obrażeń."
-      },
-      "recommendations": {
-        "goodDmg": "Dobra synergia — damage powyżej 6%.",
-        "weakAgainst": "Potwór słaby na wybrany element → damage wyższy niż bazowy.",
-        "resistant": "Potwór odporny na wybrany element → rozważ inny charm.",
-        "immune": "Potwór immune na ten element — Overpower/Overflux działają niezależnie.",
-        "knightOverpower": "Knight + Overpower → +30% damage vs Sorcerer (HP scaling).",
-        "mageOverflux": "Sorcerer/Druid + Overflux → +30% damage vs Knight (MP scaling).",
-        "magicSkillBonus": "Magic skill → +10% Overflux (mana-leech synergy).",
-        "meleeSkillBonus": "Sword/Axe/Club/Fist → +10% Overpower (physical synergy)."
-      },
-      "errors": {
-        "invalidVocation": "Wybierz prawidłową vocation",
-        "invalidSkill": "Wybierz prawidłowy skill",
-        "invalidCharm": "Wybierz prawidłowy charm",
-        "invalidMonsterType": "Wybierz prawidłową wrażliwość"
-      }
+        "cipsoftDisclaimer": "Tibia is a registered trademark of CipSoft GmbH. Tibia and all products related to Tibia are copyright by CipSoft GmbH.",
+        "notAffiliated": "Tibians nie jest powiązany z CipSoft GmbH.",
+        "copyright": "© {year} Tibians — community hub dla graczy Tibii. Wszelkie prawa zastrzeżone."
     }
-  },
-  "Reference": {
-    "title": "Referencje",
-    "items": "Przedmioty",
-    "imbuements": "Imbuements",
-    "worlds": "Światy",
-    "outfits": "Outfits",
-    "mounts": "Mounts"
-  },
-  "Breadcrumb": {
-    "aria": "Okruszki nawigacji",
-    "home": "Strona główna",
-    "calculators": "Kalkulatory"
-  },
-  "Footer": {
-    "tagline": "Kalkulatory, wycena postaci i analiza Char Bazaar dla graczy Tibii.",
-    "sections": {
-      "product": "Produkt",
-      "legal": "Prawne"
-    },
-    "links": {
-      "bazaar": "Bazaar",
-      "calculators": "Kalkulatory",
-      "reference": "Referencje",
-      "bosses": "Bosses",
-      "blog": "Blog"
-    },
-    "cipsoftDisclaimer": "Tibia is a registered trademark of CipSoft GmbH. Tibia and all products related to Tibia are copyright by CipSoft GmbH.",
-    "notAffiliated": "Tibians nie jest powiązany z CipSoft GmbH.",
-    "copyright": "© {year} Tibians — community hub dla graczy Tibii. Wszelkie prawa zastrzeżone."
-  }
 }
