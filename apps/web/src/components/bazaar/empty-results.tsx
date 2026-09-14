@@ -43,6 +43,8 @@ export interface EmptyResultsSuggestion {
     | "removeRegion"
     | "removeBidMax"
     | "removeHasSoulWar"
+    | "removeHasPrimalOrdeal"
+    | "removeHasWorldTransfer"
     | "removeImbuesFull"
     | "removeHasPreySlot"
     | "removeHasCharmExpansion"
@@ -93,6 +95,10 @@ function describeSuggestion(
     }
     case "removeHasSoulWar":
       return { labelKey: "removeSoulWar", values: {} };
+    case "removeHasPrimalOrdeal":
+      return { labelKey: "removePrimalOrdeal", values: {} };
+    case "removeHasWorldTransfer":
+      return { labelKey: "removeWorldTransfer", values: {} };
     case "removeImbuesFull":
       return { labelKey: "removeImbuesFull", values: {} };
     case "removeHasPreySlot":

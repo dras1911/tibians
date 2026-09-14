@@ -58,6 +58,12 @@ import {
 export const revalidate = 300;
 export const dynamic = "force-dynamic";
 
+/**
+ * Klucze query params obsługiwane przez `paginationSchema` — NIE powinny
+ * trafiać do `auctionFiltersSchema.parse` (oba schematy są `.strict()`).
+ */
+const PAGINATION_KEYS = new Set<string>(["page", "pageSize"]);
+
 export async function GET(request: NextRequest): Promise<Response> {
   // 1. Rate limit
   const ip = getClientIp(request);
@@ -86,17 +92,26 @@ export async function GET(request: NextRequest): Promise<Response> {
   }
 
   // 2. Parsowanie + walidacja query params
+  // Oba schematy są `.strict()` — NIE wolno podawać pagination keys
+  // do filtra ani odwrotnie. Rozdzielamy query params na dwa zbiory.
   const { searchParams } = new URL(request.url);
-  const rawParams: Record<string, string> = {};
+  const filterParams: Record<string, string> = {};
+  const paginationParams: Record<string, string> = {};
+  for (const key of PAGINATION_KEYS) {
+    const value = searchParams.get(key);
+    if (value !== null) paginationParams[key] = value;
+  }
   searchParams.forEach((value, key) => {
-    rawParams[key] = value;
+    if (!PAGINATION_KEYS.has(key)) {
+      filterParams[key] = value;
+    }
   });
 
   let filters;
   let pagination;
   try {
-    filters = auctionFiltersSchema.parse(rawParams);
-    pagination = paginationSchema.parse(rawParams);
+    filters = auctionFiltersSchema.parse(filterParams);
+    pagination = paginationSchema.parse(paginationParams);
   } catch (error) {
     if (error instanceof ZodError) {
       return jsonResponse(

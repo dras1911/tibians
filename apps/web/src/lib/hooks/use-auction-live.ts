@@ -378,15 +378,18 @@ export class AuctionLiveController {
         }
         this.es = null;
       }
-      if (this.pollHandle === null) {
-        this.startPolling();
-      }
+      // ZAWSZE triggeruj polling — nawet jeśli pollHandle już istnieje.
+      // Bez tego reconnect po błędzie polling nie uruchomiłby natychmiastowej
+      // ponownej próby (czekałby do następnego interwału, np. 30 s).
+      this.startPolling();
     };
   }
 
   private startPolling(): void {
-    if (this.pollHandle !== null) return;
-
+    // Zawsze uruchamiamy `fetchOnce` natychmiast (natychmiastowa ponowna
+    // próba po SSE error). Interval ustawiamy tylko raz — kolejne wywołania
+    // `startPolling` tylko triggerują kolejny `fetchOnce`, bez mnożenia
+    // timerów.
     this.setState({ status: "polling" });
 
     const fetchOnce = async (): Promise<void> => {
@@ -415,9 +418,11 @@ export class AuctionLiveController {
     };
 
     void fetchOnce();
-    this.pollHandle = this.scheduler.setInterval(() => {
-      void fetchOnce();
-    }, this.pollIntervalMs);
+    if (this.pollHandle === null) {
+      this.pollHandle = this.scheduler.setInterval(() => {
+        void fetchOnce();
+      }, this.pollIntervalMs);
+    }
   }
 
   private scheduleReconnect(): void {

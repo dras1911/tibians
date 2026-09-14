@@ -253,15 +253,17 @@ describe("getSuggestionCounts — wiele filtrów", () => {
     const result = await getSuggestionCounts(filters);
     // 6 query, wszystkie > 0, sortowane malejąco:
     // 200 > 25 > 15 > 12 > 8 > 4
+    // API stosuje cap=5 (UI limit, żeby nie zaśmiecać — patrz
+    // `apps/web/src/lib/server/auctions.ts` getSuggestionCounts).
+    // Najmniejsza sugestia (removeHasSoulWar=4) jest więc obcinana.
     expect(result.map((s) => s.id)).toEqual([
       "removeRegion",
       "raiseBidMax",
       "removeWorld",
       "removeImbuesFull",
       "removeBidMax",
-      "removeHasSoulWar",
     ]);
-    expect(result.map((s) => s.count)).toEqual([200, 25, 15, 12, 8, 4]);
+    expect(result.map((s) => s.count)).toEqual([200, 25, 15, 12, 8]);
   });
 
   it("raiseBidMax następuje co 5000 TC", async () => {

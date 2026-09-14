@@ -1225,6 +1225,8 @@ export interface SuggestionCount {
     | "removeRegion"
     | "removeBidMax"
     | "removeHasSoulWar"
+    | "removeHasPrimalOrdeal"
+    | "removeHasWorldTransfer"
     | "removeImbuesFull"
     | "removeHasPreySlot"
     | "removeHasCharmExpansion"
@@ -1276,6 +1278,8 @@ export async function getSuggestionCounts(
   const hasRegion = filters.region !== undefined;
   const hasBidMax = filters.bidMax !== undefined;
   const hasSoulWar = filters.hasSoulWar === true;
+  const hasPrimalOrdeal = filters.hasPrimalOrdeal === true;
+  const hasWorldTransfer = filters.hasWorldTransfer === true;
   const hasImbuesFull = filters.imbuesFull === true;
   const hasPreySlot = filters.hasPreySlot === true;
   const hasCharmExpansion = filters.hasCharmExpansion === true;
@@ -1308,70 +1312,86 @@ export async function getSuggestionCounts(
   };
 
   // ── Zaplanuj sugestie do wykonania ─────────────────────────────────
+  // Uwaga: `promise` to TERAZ thunk () => Promise<number>, nie Promise.
+  // Dzięki temu disabled filtry NIE uruchamiają COUNT(*) do DB (oszczędność
+  // round-tripów) i mocki testowe nie zużywają slotów dla wyłączonych
+  // sugestii.
   const queries: Array<{
     id: SuggestionCount["id"];
     patch: SuggestionCount["patch"];
-    promise: Promise<number>;
+    promise: () => Promise<number>;
     enabled: boolean;
   }> = [
     {
       id: "removeWorld",
       patch: { world: undefined },
-      promise: countExcept("world"),
+      promise: () => countExcept("world"),
       enabled: hasWorld,
     },
     {
       id: "removeRegion",
       patch: { region: undefined },
-      promise: countExcept("region"),
+      promise: () => countExcept("region"),
       enabled: hasRegion,
     },
     {
       id: "removeBidMax",
       patch: { bidMax: undefined },
-      promise: countExcept("bidMax"),
+      promise: () => countExcept("bidMax"),
       enabled: hasBidMax,
     },
     {
       id: "removeHasSoulWar",
       patch: { hasSoulWar: undefined },
-      promise: countExcept("hasSoulWar"),
+      promise: () => countExcept("hasSoulWar"),
       enabled: hasSoulWar,
+    },
+    {
+      id: "removeHasPrimalOrdeal",
+      patch: { hasPrimalOrdeal: undefined },
+      promise: () => countExcept("hasPrimalOrdeal"),
+      enabled: hasPrimalOrdeal,
+    },
+    {
+      id: "removeHasWorldTransfer",
+      patch: { hasWorldTransfer: undefined },
+      promise: () => countExcept("hasWorldTransfer"),
+      enabled: hasWorldTransfer,
     },
     {
       id: "removeImbuesFull",
       patch: { imbuesFull: undefined },
-      promise: countExcept("imbuesFull"),
+      promise: () => countExcept("imbuesFull"),
       enabled: hasImbuesFull,
     },
     {
       id: "removeHasPreySlot",
       patch: { hasPreySlot: undefined },
-      promise: countExcept("hasPreySlot"),
+      promise: () => countExcept("hasPreySlot"),
       enabled: hasPreySlot,
     },
     {
       id: "removeHasCharmExpansion",
       patch: { hasCharmExpansion: undefined },
-      promise: countExcept("hasCharmExpansion"),
+      promise: () => countExcept("hasCharmExpansion"),
       enabled: hasCharmExpansion,
     },
     {
       id: "removeHasWeeklyTaskExpansion",
       patch: { hasWeeklyTaskExpansion: undefined },
-      promise: countExcept("hasWeeklyTaskExpansion"),
+      promise: () => countExcept("hasWeeklyTaskExpansion"),
       enabled: hasWeeklyTaskExp,
     },
     {
       id: "removeHasTwistOfFate",
       patch: { hasTwistOfFate: undefined },
-      promise: countExcept("hasTwistOfFate"),
+      promise: () => countExcept("hasTwistOfFate"),
       enabled: hasTwistOfFate,
     },
     {
       id: "removeBattleye",
       patch: { battleye: undefined },
-      promise: countExcept("battleye"),
+      promise: () => countExcept("battleye"),
       enabled: hasBattleye,
     },
     {
@@ -1379,9 +1399,12 @@ export async function getSuggestionCounts(
       patch: hasBidMax
         ? { bidMax: nextBidMaxStep(filters.bidMax as number) }
         : { bidMax: undefined },
-      promise: hasBidMax
-        ? countWithPatch({ bidMax: nextBidMaxStep(filters.bidMax as number) })
-        : Promise.resolve(0),
+      promise: () =>
+        hasBidMax
+          ? countWithPatch({
+              bidMax: nextBidMaxStep(filters.bidMax as number),
+            })
+          : Promise.resolve(0),
       enabled: hasBidMax,
     },
   ];
@@ -1390,7 +1413,7 @@ export async function getSuggestionCounts(
     queries.map(async (q) => ({
       id: q.id,
       patch: q.patch,
-      count: q.enabled ? await q.promise : 0,
+      count: q.enabled ? await q.promise() : 0,
     })),
   );
 

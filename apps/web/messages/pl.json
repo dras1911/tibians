@@ -368,6 +368,8 @@
             "removeBidMax": "Podnieś maksymalną cenę (usuń limit)",
             "raiseBidMax": "Podnieś maksymalną cenę do {bidMax} TC",
             "removeSoulWar": "Wyłącz wymóg Soul War",
+            "removePrimalOrdeal": "Wyłącz wymóg Primal Ordeal",
+            "removeWorldTransfer": "Wyłącz wymóg World Transfer",
             "removeImbuesFull": "Wyłącz wymóg imbuementów 23/23",
             "removePreySlot": "Wyłącz wymóg Prey Slot",
             "removeCharmExpansion": "Wyłącz wymóg Charm Expansion",

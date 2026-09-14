@@ -180,8 +180,10 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   // 5. REFRESH MATERIALIZED VIEW CONCURRENTLY (arch §7.2 + §8.1)
+  // Używamy `new URL(request.url)` zamiast `request.nextUrl` — działa
+  // zarówno z NextRequest (prod) jak i plain Request (testy jednostkowe).
   const explicitRefresh =
-    request.nextUrl.searchParams.get("refreshMv") === "true";
+    new URL(request.url).searchParams.get("refreshMv") === "true";
   const tagsIncludeAuctions = body.tags?.includes("auctions") ?? false;
   const shouldRefreshMv = explicitRefresh || tagsIncludeAuctions;
 

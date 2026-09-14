@@ -368,6 +368,8 @@
             "removeBidMax": "Raise the max price (drop the cap)",
             "raiseBidMax": "Raise max price to {bidMax} TC",
             "removeSoulWar": "Drop the Soul War requirement",
+            "removePrimalOrdeal": "Drop the Primal Ordeal requirement",
+            "removeWorldTransfer": "Drop the World Transfer requirement",
             "removeImbuesFull": "Drop the 23/23 imbuements requirement",
             "removePreySlot": "Drop the Prey Slot requirement",
             "removeCharmExpansion": "Drop the Charm Expansion requirement",
