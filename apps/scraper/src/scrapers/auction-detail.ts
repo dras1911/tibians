@@ -1068,7 +1068,7 @@ function extractResources(
   // Gold regex: szukamy "<num> gold" w tej samej linii. Aby uniknąć
   // łapania cyfr z poprzednich linii (skill values), używamy `[^\S\n]*`
   // zamiast `\s*` między cyfrą a słowem "gold".
-  const goldRaw = extractSingle(/(\d[\d ,]*)[^\S\n]*gold/i);
+  const goldRaw = extractSingle(/(\d[\d\u00A0,]*)[^\S\n]*gold/i);
   const tcRaw = extractSingle(/(\d+)\s*transferabl/i); // "transferable coins"
 
   if (gemsMatch == null) warnings.push("resources.gems: not parsed");
