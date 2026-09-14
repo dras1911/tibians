@@ -386,7 +386,7 @@ export declare const schema: {
         };
         dialect: "pg";
     }>;
-    readonly scrapeRunTypeEnum: import("drizzle-orm/pg-core").PgEnum<["full", "ending_soon", "detail", "history", "reference"]>;
+    readonly scrapeRunTypeEnum: import("drizzle-orm/pg-core").PgEnum<["full", "ending_soon", "detail", "history", "reference", "calibration"]>;
     readonly scrapeRunStatusEnum: import("drizzle-orm/pg-core").PgEnum<["running", "success", "partial", "failed"]>;
     readonly scrapeErrorTypeEnum: import("drizzle-orm/pg-core").PgEnum<["timeout", "rate_limit", "parse", "http_4xx", "http_5xx", "db", "other"]>;
     readonly scrapeRuns: import("drizzle-orm/pg-core").PgTableWithColumns<{
@@ -415,14 +415,14 @@ export declare const schema: {
                 tableName: "scrape_runs";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "full" | "ending_soon" | "detail" | "history" | "reference";
+                data: "full" | "ending_soon" | "detail" | "history" | "reference" | "calibration";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;
                 isPrimaryKey: false;
                 isAutoincrement: false;
                 hasRuntimeDefault: false;
-                enumValues: ["full", "ending_soon", "detail", "history", "reference"];
+                enumValues: ["full", "ending_soon", "detail", "history", "reference", "calibration"];
                 baseColumn: never;
                 identity: undefined;
                 generated: undefined;
@@ -770,7 +770,7 @@ export declare const schema: {
                 tableName: "valuation_rules";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "base" | "skill" | "cosmetic" | "progression" | "feature" | "item" | "asset";
+                data: "base" | "feature" | "skill" | "item" | "cosmetic" | "progression" | "asset";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;
@@ -1472,7 +1472,7 @@ export declare const schema: {
                 tableName: "auction_usps";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "store" | "other" | "skill" | "achievement" | "boss" | "gold" | "blessing" | "cosmetic" | "imbuement" | "charm" | "world_transfer" | "rare_item" | "progression";
+                data: "store" | "other" | "skill" | "cosmetic" | "progression" | "gold" | "achievement" | "blessing" | "imbuement" | "charm" | "world_transfer" | "rare_item" | "boss";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;
@@ -1673,7 +1673,7 @@ export declare const schema: {
                 tableName: "imbuements";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "damage" | "protection" | "support" | "skill";
+                data: "skill" | "damage" | "protection" | "support";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;
@@ -1870,7 +1870,7 @@ export declare const schema: {
                 tableName: "auctions";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "current" | "minimum";
+                data: "minimum" | "current";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;
@@ -3345,7 +3345,7 @@ export declare const schema: {
                 tableName: "imbuements";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "damage" | "protection" | "support" | "skill";
+                data: "skill" | "damage" | "protection" | "support";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;
@@ -3437,7 +3437,7 @@ export declare const schema: {
                 tableName: "quests";
                 dataType: "string";
                 columnType: "PgEnumColumn";
-                data: "other" | "access" | "achievement" | "boss" | "hunt" | "exploration";
+                data: "other" | "achievement" | "boss" | "access" | "hunt" | "exploration";
                 driverParam: string;
                 notNull: true;
                 hasDefault: false;

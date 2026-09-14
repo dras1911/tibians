@@ -139,3 +139,21 @@ export type {
   RunMetrics,
   ScrapeRunType,
 } from "./scheduler.js";
+
+// Re-eksport calibration (T57 — arch §8.4 pętla feedbacku valuation_history vs final_price).
+export {
+  runCalibration,
+  DEFAULT_CALIBRATION_WINDOW_HOURS,
+  DEFAULT_WORST_CASES_LIMIT,
+  computeErrorPct,
+  mean,
+  median,
+} from "./calibration.js";
+export type {
+  CalibrationDb,
+  CalibrationOptions,
+  CalibrationSample,
+  CalibrationResult,
+  CalibrationReport,
+  VocationCalibrationStats,
+} from "./calibration.js";

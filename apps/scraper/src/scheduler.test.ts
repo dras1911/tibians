@@ -165,6 +165,8 @@ interface MockDb extends SchedulerDb {
     upsertOutfits: number;
     upsertMounts: number;
     recordScrapeError: number;
+    fetchCalibrationSamples: number;
+    recordCalibrationRun: number;
   };
 }
 
@@ -181,6 +183,8 @@ function makeMockDb(overrides: Partial<SchedulerDb> = {}): MockDb {
     upsertOutfits: 0,
     upsertMounts: 0,
     recordScrapeError: 0,
+    fetchCalibrationSamples: 0,
+    recordCalibrationRun: 0,
   };
   let runCounter = 0n;
 
@@ -275,6 +279,23 @@ function makeMockDb(overrides: Partial<SchedulerDb> = {}): MockDb {
     async recordScrapeError(input) {
       calls.recordScrapeError += 1;
       return (overrides.recordScrapeError ?? (async () => undefined))(input);
+    },
+    // ── Calibration (T57) — domyślnie: 0 próbek, no-op persist. ─────
+    async fetchCalibrationSamples(opts) {
+      calls.fetchCalibrationSamples += 1;
+      const fallback = (): Awaited<
+        ReturnType<SchedulerDb["fetchCalibrationSamples"]>
+      > => [];
+      return (
+        overrides.fetchCalibrationSamples ??
+        (async () => fallback())
+      )({ windowHours: opts.windowHours });
+    },
+    async recordCalibrationRun(input) {
+      calls.recordCalibrationRun += 1;
+      return (
+        overrides.recordCalibrationRun ?? (async () => undefined)
+      )(input);
     },
     async end() {
       // no-op
@@ -442,6 +463,37 @@ describe("createScheduler — EndingSoon loop (30 s)", () => {
 });
 
 describe("createScheduler — Reference loop (24 h)", () => {
+  it("Reference: po scrape wywołuje runCalibration (T57 — pętla feedbacku valuation_history vs final_price)", async () => {
+    // T57: kalibracja wyceny — po każdym Reference loop scheduler wywołuje
+    // `runCalibration(db)`, która:
+    //   1. fetchCalibrationSamples({ windowHours: 168 })
+    //   2. recordCalibrationRun({ report })
+    //
+    // Testujemy WIRING (nie logikę kalibracji — ta jest w calibration.test.ts).
+    const db = makeMockDb();
+    const originalFetch = globalThis.fetch;
+    globalThis.fetch = vi.fn().mockRejectedValue(new Error("forced network failure")) as unknown as typeof fetch;
+
+    try {
+      const handle = createScheduler(db, undefined, { logger: makeSilentLogger() });
+      await handle.runOnce("reference");
+
+      // scrape run (reference) został utworzony + zamknięty.
+      expect(db.calls.createScrapeRun).toBe(1);
+      expect(db.calls.finishScrapeRun).toBe(1);
+
+      // Calibration methods wywołane.
+      expect(db.calls.fetchCalibrationSamples).toBe(1);
+      expect(db.calls.recordCalibrationRun).toBe(1);
+
+      // Stats: calibrationsRun inkrementowany (T57).
+      expect(handle.getStats().reference.calibrationsRun).toBe(1);
+      expect(handle.getStats().reference.executed).toBe(1);
+    } finally {
+      globalThis.fetch = originalFetch;
+    }
+  });
+
   it("Reference: scrapeReferenceData error → raportowany w scrape_runs (status=partial/failed)", async () => {
     // Pełny `scrapeReferenceData` (T32) skanuje 500×4 outfitów + 300 mountów
     // + 6 items = ~2300 HEAD requests → zbyt wolny dla testów.

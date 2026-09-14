@@ -25,6 +25,7 @@ export const scrapeRunTypeEnum = pgEnum('scrape_run_type', [
   'detail', // detail page pojedynczej aukcji
   'history', // zapis do auction_price_history
   'reference', // worlds/items/outfits/mounts/quests/bosses
+  'calibration', // pętla kalibracji wyceny (T57, arch §8.4 + §10 R3)
 ]);
 
 export const scrapeRunStatusEnum = pgEnum('scrape_run_status', [

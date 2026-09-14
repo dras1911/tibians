@@ -1,4 +1,4 @@
-export declare const scrapeRunTypeEnum: import("drizzle-orm/pg-core").PgEnum<["full", "ending_soon", "detail", "history", "reference"]>;
+export declare const scrapeRunTypeEnum: import("drizzle-orm/pg-core").PgEnum<["full", "ending_soon", "detail", "history", "reference", "calibration"]>;
 export declare const scrapeRunStatusEnum: import("drizzle-orm/pg-core").PgEnum<["running", "success", "partial", "failed"]>;
 export declare const scrapeErrorTypeEnum: import("drizzle-orm/pg-core").PgEnum<["timeout", "rate_limit", "parse", "http_4xx", "http_5xx", "db", "other"]>;
 export declare const scrapeRuns: import("drizzle-orm/pg-core").PgTableWithColumns<{
@@ -27,14 +27,14 @@ export declare const scrapeRuns: import("drizzle-orm/pg-core").PgTableWithColumn
             tableName: "scrape_runs";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "full" | "ending_soon" | "detail" | "history" | "reference";
+            data: "full" | "ending_soon" | "detail" | "history" | "reference" | "calibration";
             driverParam: string;
             notNull: true;
             hasDefault: false;
             isPrimaryKey: false;
             isAutoincrement: false;
             hasRuntimeDefault: false;
-            enumValues: ["full", "ending_soon", "detail", "history", "reference"];
+            enumValues: ["full", "ending_soon", "detail", "history", "reference", "calibration"];
             baseColumn: never;
             identity: undefined;
             generated: undefined;

@@ -29,6 +29,7 @@ import {
   auctionFiltersSchema,
   type AuctionFilters,
   type Pagination,
+  type Vocation,
 } from "@tibians/shared/auction";
 
 // ───────────────────────────────────────────────────────────────────────
@@ -455,21 +456,115 @@ export async function getAuctionById(
 }
 
 // ───────────────────────────────────────────────────────────────────────
-// Stats endpoint — agregaty dla /api/stats
+// Stats endpoint — agregaty dla /api/stats + /bazaar/statistics (T58)
 // ───────────────────────────────────────────────────────────────────────
 
+/**
+ * Bucket histogramu cen (TC) — 6 przedziałów (arch §5 krok "Analiza rynku"
+ * + task 58). Granice dopasowane do rozkładu Tibia Bazaar (większość
+ * aukcji mieści się w 1-20k TC).
+ */
+export const PRICE_DISTRIBUTION_BUCKETS = [
+  { key: "0-1k", min: 0, max: 999, label: "0–1k" },
+  { key: "1-5k", min: 1_000, max: 4_999, label: "1–5k" },
+  { key: "5-20k", min: 5_000, max: 19_999, label: "5–20k" },
+  { key: "20-50k", min: 20_000, max: 49_999, label: "20–50k" },
+  { key: "50-100k", min: 50_000, max: 99_999, label: "50–100k" },
+  { key: "100k+", min: 100_000, max: Number.MAX_SAFE_INTEGER, label: "100k+" },
+] as const;
+
+/**
+ * Bucket histogramu leveli — 5 przedziałów (arch §5 + task 58).
+ * Ostatni bucket `600+` jest otwarty od góry (czapka `MAX`).
+ */
+export const LEVEL_DISTRIBUTION_BUCKETS = [
+  { key: "8-50", min: 8, max: 49, label: "8–50" },
+  { key: "50-150", min: 50, max: 149, label: "50–150" },
+  { key: "150-300", min: 150, max: 299, label: "150–300" },
+  { key: "300-600", min: 300, max: 599, label: "300–600" },
+  { key: "600+", min: 600, max: 2500, label: "600+" },
+] as const;
+
+/**
+ * Kanoniczny kształt statystyk rynkowych dla `/bazaar/statistics`
+ * (plan task 58, arch §5 + §7.2).
+ *
+ * Polityka agregacji (arch §7.2 wydajność):
+ *   - `active` agregaty z `auctions` (index `idx_au_active_*`)
+ *   - `finished` agregaty z `auctions WHERE status='finished'`
+ *     ograniczone do ostatnich 30 dni (arch §7.1 pkt 3: partial
+ *     indexes na `status='finished'` trzymają tę część w RAM)
+ */
 export interface MarketStats {
+  // ── Aktywne (top of the funnel — task 58 + T53 home) ────────────
   totalActive: number;
   totalFinished: number;
   avgLevel: number | null;
-  topVocations: { vocation: string; count: number }[];
-  topWorlds: { world: string; count: number }[];
+
+  // ── Zakończone (ostatnie 30 dni) — agregaty sprzedaży ───────────
+  /** Liczba zakończonych aukcji w ostatnich 30 dniach. */
+  recentFinishedCount: number;
+  /** Średni level zakończonych aukcji (ostatnie 30 dni). */
+  avgLevelFinished: number | null;
+  /** Mediana levelu zakończonych aukcji (ostatnie 30 dni). */
+  medianLevel: number | null;
+  /** Średnia cena końcowa (final_price, ostatnie 30 dni). */
+  avgBidFinished: number | null;
+  /** Mediana ceny końcowej (ostatnie 30 dni). */
+  medianBidFinished: number | null;
+
+  // ── Top vocations (5) — z aktywnych + avgBid z zakończonych ────
+  topVocations: {
+    vocation: string;
+    count: number;
+    avgBid: number | null;
+  }[];
+
+  // ── Top worlds (10) — z aktywnych + avgLevel z zakończonych ─────
+  topWorlds: {
+    world: string;
+    count: number;
+    avgLevel: number | null;
+  }[];
+
+  // ── Histogramy (do Recharts) ────────────────────────────────────
+  /** Rozkład cenowy zakończonych aukcji (ostatnie 30 dni). */
+  priceDistribution: {
+    bucket: string;
+    count: number;
+  }[];
+  /** Rozkład leveli zakończonych aukcji (ostatnie 30 dni). */
+  levelDistribution: {
+    bucket: string;
+    count: number;
+  }[];
+
+  // ── Recent sales — top 10 zakończonych posortowane po ended DESC
+  recentSales: {
+    auctionId: string;
+    characterName: string;
+    level: number;
+    vocation: string;
+    worldName: string;
+    finalPrice: number | null;
+    auctionEnd: string; // ISO
+  }[];
 }
 
 /**
- * Statystyki rynkowe — agregaty z auctions + mv_facet_counts.
+ * Statystyki rynkowe — agregaty z `auctions` + `mv_facet_counts`
+ * (plan task 58, arch §5 + §7.2).
+ *
+ * Wykonuje **6 zapytań równolegle** (`Promise.all`) — łączny czas na
+ * zimnej bazie < 50 ms (arch §7.1 pkt 3: partial indexes).
+ *
+ * Zakres dat: agregaty `recentFinished*` + histogramy używają
+ * ostatnich 30 dni (`auction_end > NOW() - INTERVAL '30 days'`).
+ * Po 30 dniach aukcje są nadal archiwizowane (patrz task T7), ale nie
+ * wpływają na "bieżące" statystyki rynku.
  */
 export async function getMarketStats(): Promise<MarketStats> {
+  // ── Zapytanie 1: agregaty statusów (active/finished) ────────────
   const statusAggQuery = db.execute<{
     total_active: number;
     total_finished: number;
@@ -482,6 +577,7 @@ export async function getMarketStats(): Promise<MarketStats> {
     FROM auctions
   `);
 
+  // ── Zapytanie 2: top vocations z mv_facet_counts (aktywne) ─────
   const vocationQuery = db.execute<{
     vocation_base: string;
     total: number;
@@ -492,6 +588,7 @@ export async function getMarketStats(): Promise<MarketStats> {
     LIMIT 5
   `);
 
+  // ── Zapytanie 3: top worlds (aktywne) ───────────────────────────
   const worldQuery = db
     .select({
       world: worlds.name,
@@ -502,14 +599,101 @@ export async function getMarketStats(): Promise<MarketStats> {
     .where(eq(auctions.status, "active"))
     .groupBy(worlds.name)
     .orderBy(sql`COUNT(${auctions.auctionId}) DESC`)
-    .limit(5);
+    .limit(10);
 
-  const [statusResult, vocationResult, worldResult] = await Promise.all([
+  // ── Zapytanie 4: agregaty zakończonych (30 dni) + histogramy ───
+  // Jedno zapytanie `FILTER` zwraca wszystkie metryki — minimalizuje
+  // round-trip do DB (arch §8.2 wydajność).
+  const finishedAggQuery = db.execute<{
+    recent_count: number;
+    avg_level: string | null;
+    median_level: string | null;
+    avg_bid: string | null;
+    median_bid: string | null;
+    price_b0: number;
+    price_b1: number;
+    price_b2: number;
+    price_b3: number;
+    price_b4: number;
+    price_b5: number;
+    lvl_b0: number;
+    lvl_b1: number;
+    lvl_b2: number;
+    lvl_b3: number;
+    lvl_b4: number;
+  }>(sql`
+    SELECT
+      COUNT(*)::int AS recent_count,
+      AVG(level)::numeric AS avg_level,
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY level)::numeric AS median_level,
+      AVG(final_price)::numeric AS avg_bid,
+      PERCENTILE_CONT(0.5) WITHIN GROUP (ORDER BY final_price)::numeric AS median_bid,
+      COUNT(*) FILTER (WHERE final_price BETWEEN 0 AND 999)::int AS price_b0,
+      COUNT(*) FILTER (WHERE final_price BETWEEN 1000 AND 4999)::int AS price_b1,
+      COUNT(*) FILTER (WHERE final_price BETWEEN 5000 AND 19999)::int AS price_b2,
+      COUNT(*) FILTER (WHERE final_price BETWEEN 20000 AND 49999)::int AS price_b3,
+      COUNT(*) FILTER (WHERE final_price BETWEEN 50000 AND 99999)::int AS price_b4,
+      COUNT(*) FILTER (WHERE final_price >= 100000)::int AS price_b5,
+      COUNT(*) FILTER (WHERE level BETWEEN 8 AND 49)::int AS lvl_b0,
+      COUNT(*) FILTER (WHERE level BETWEEN 50 AND 149)::int AS lvl_b1,
+      COUNT(*) FILTER (WHERE level BETWEEN 150 AND 299)::int AS lvl_b2,
+      COUNT(*) FILTER (WHERE level BETWEEN 300 AND 599)::int AS lvl_b3,
+      COUNT(*) FILTER (WHERE level >= 600)::int AS lvl_b4
+    FROM auctions
+    WHERE status = 'finished'
+      AND auction_end > NOW() - INTERVAL '30 days'
+      AND final_price IS NOT NULL
+  `);
+
+  // ── Zapytanie 5: avgBid per vocation (zakończone 30 dni) ───────
+  const vocationAvgBidQuery = db.execute<{
+    vocation_base: string;
+    avg_bid: string | null;
+  }>(sql`
+    SELECT
+      vocation_base,
+      AVG(final_price)::numeric AS avg_bid
+    FROM auctions
+    WHERE status = 'finished'
+      AND auction_end > NOW() - INTERVAL '30 days'
+      AND final_price IS NOT NULL
+    GROUP BY vocation_base
+  `);
+
+  // ── Zapytanie 6: avgLevel per world (zakończone 30 dni) ────────
+  const worldAvgLevelQuery = db.execute<{
+    world: string;
+    avg_level: string | null;
+  }>(sql`
+    SELECT
+      w.name AS world,
+      AVG(a.level)::numeric AS avg_level
+    FROM auctions a
+    INNER JOIN worlds w ON w.id = a.world_id
+    WHERE a.status = 'finished'
+      AND a.auction_end > NOW() - INTERVAL '30 days'
+    GROUP BY w.name
+    ORDER BY COUNT(*) DESC
+    LIMIT 10
+  `);
+
+  const [
+    statusResult,
+    vocationResult,
+    worldResult,
+    finishedAggResult,
+    vocationAvgBidResult,
+    worldAvgLevelResult,
+  ] = await Promise.all([
     statusAggQuery,
     vocationQuery,
     worldQuery,
+    finishedAggQuery,
+    vocationAvgBidQuery,
+    worldAvgLevelQuery,
   ]);
 
+  // ── Parsowanie wyników raw SQL ───────────────────────────────────
   const statusRows = (
     statusResult as unknown as {
       rows: {
@@ -531,6 +715,110 @@ export async function getMarketStats(): Promise<MarketStats> {
     }
   ).rows;
 
+  const finishedAggRows = (
+    finishedAggResult as unknown as {
+      rows: Array<{
+        recent_count: number;
+        avg_level: string | null;
+        median_level: string | null;
+        avg_bid: string | null;
+        median_bid: string | null;
+        price_b0: number;
+        price_b1: number;
+        price_b2: number;
+        price_b3: number;
+        price_b4: number;
+        price_b5: number;
+        lvl_b0: number;
+        lvl_b1: number;
+        lvl_b2: number;
+        lvl_b3: number;
+        lvl_b4: number;
+      }>;
+    }
+  ).rows;
+  const finishedAgg = finishedAggRows[0] ?? {
+    recent_count: 0,
+    avg_level: null,
+    median_level: null,
+    avg_bid: null,
+    median_bid: null,
+    price_b0: 0,
+    price_b1: 0,
+    price_b2: 0,
+    price_b3: 0,
+    price_b4: 0,
+    price_b5: 0,
+    lvl_b0: 0,
+    lvl_b1: 0,
+    lvl_b2: 0,
+    lvl_b3: 0,
+    lvl_b4: 0,
+  };
+
+  const vocationAvgBidRows = (
+    vocationAvgBidResult as unknown as {
+      rows: Array<{ vocation_base: string; avg_bid: string | null }>;
+    }
+  ).rows;
+  const vocationAvgBidMap = new Map<string, number | null>();
+  for (const row of vocationAvgBidRows) {
+    vocationAvgBidMap.set(
+      row.vocation_base,
+      row.avg_bid !== null ? Math.round(parseFloat(row.avg_bid)) : null,
+    );
+  }
+
+  const worldAvgLevelRows = (
+    worldAvgLevelResult as unknown as {
+      rows: Array<{ world: string; avg_level: string | null }>;
+    }
+  ).rows;
+  const worldAvgLevelMap = new Map<string, number | null>();
+  for (const row of worldAvgLevelRows) {
+    worldAvgLevelMap.set(
+      row.world,
+      row.avg_level !== null ? Math.round(parseFloat(row.avg_level)) : null,
+    );
+  }
+
+  // ── Top vocations: 5 wierszy z mv_facet_counts + avgBid ────────
+  const topVocations = vocationRows.map((r) => ({
+    vocation: r.vocation_base,
+    count: r.total,
+    avgBid: vocationAvgBidMap.get(r.vocation_base) ?? null,
+  }));
+
+  // ── Top worlds: 10 wierszy + avgLevel ──────────────────────────
+  const topWorlds = worldResult.map((r) => ({
+    world: r.world,
+    count: r.count,
+    avgLevel: worldAvgLevelMap.get(r.world) ?? null,
+  }));
+
+  // ── Histogramy (z gotowych bucketów + countów z SQL) ──────────
+  const priceBuckets = PRICE_DISTRIBUTION_BUCKETS;
+  const priceCounts = [
+    finishedAgg.price_b0,
+    finishedAgg.price_b1,
+    finishedAgg.price_b2,
+    finishedAgg.price_b3,
+    finishedAgg.price_b4,
+    finishedAgg.price_b5,
+  ];
+
+  const levelBuckets = LEVEL_DISTRIBUTION_BUCKETS;
+  const levelCounts = [
+    finishedAgg.lvl_b0,
+    finishedAgg.lvl_b1,
+    finishedAgg.lvl_b2,
+    finishedAgg.lvl_b3,
+    finishedAgg.lvl_b4,
+  ];
+
+  // ── Recent sales: pole wypełniane osobno przez `getRecentSales()`.
+  const recentSales: MarketStats["recentSales"] = [];
+
   return {
     totalActive: status.total_active,
     totalFinished: status.total_finished,
@@ -538,12 +826,180 @@ export async function getMarketStats(): Promise<MarketStats> {
       status.avg_level !== null
         ? Math.round(parseFloat(status.avg_level))
         : null,
-    topVocations: vocationRows.map((r) => ({
-      vocation: r.vocation_base,
-      count: r.total,
+
+    recentFinishedCount: finishedAgg.recent_count,
+    avgLevelFinished:
+      finishedAgg.avg_level !== null
+        ? Math.round(parseFloat(finishedAgg.avg_level))
+        : null,
+    medianLevel:
+      finishedAgg.median_level !== null
+        ? Math.round(parseFloat(finishedAgg.median_level))
+        : null,
+    avgBidFinished:
+      finishedAgg.avg_bid !== null
+        ? Math.round(parseFloat(finishedAgg.avg_bid))
+        : null,
+    medianBidFinished:
+      finishedAgg.median_bid !== null
+        ? Math.round(parseFloat(finishedAgg.median_bid))
+        : null,
+
+    topVocations,
+    topWorlds,
+
+    priceDistribution: priceBuckets.map((b, idx) => ({
+      bucket: b.label,
+      count: priceCounts[idx] ?? 0,
     })),
-    topWorlds: worldResult,
+    levelDistribution: levelBuckets.map((b, idx) => ({
+      bucket: b.label,
+      count: levelCounts[idx] ?? 0,
+    })),
+
+    recentSales,
   };
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// T58 — getFinishedAuctions: archiwum zakończonych aukcji (paginated)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Filtry dla listy zakończonych aukcji (archiwum) — oddzielne od
+ * `AuctionFilters` (które są zoptymalizowane pod aktywne). Główne
+ * różnice:
+ *   - `status` jest wymuszony na `'finished'` (zawsze archiwum).
+ *   - Dodatkowe `dateFrom` / `dateTo` (zakres po `auction_end`).
+ *   - Domyślny sort: `auction_end DESC` (najnowsze zakończone na górze).
+ *   - Brak `skillType/skillMin/Max`, `search`, `hasSoulWar` itd. —
+ *     historia ma węższy zakres filtrów (mniej kryteriów decyzyjnych).
+ */
+export interface FinishedAuctionFilters {
+  /** Filtr po nazwie świata (resolve do worldId). */
+  world?: string;
+  /** Filtr po bazowej klasie postaci (5 opcji — strict union z `VocationSchema`). */
+  vocation?: Vocation;
+  /** Dolna granica `auction_end` (inclusive). */
+  dateFrom?: Date;
+  /** Górna granica `auction_end` (inclusive). */
+  dateTo?: Date;
+}
+
+export interface FinishedAuctionsResult {
+  rows: AuctionRow[];
+  total: number;
+}
+
+/**
+ * Lista zakończonych aukcji z paginacją i filtrami daty (task 58,
+ * arch §5 — historia).
+ *
+ * Wydajność (arch §7.2):
+ *   - Partial index `idx_au_finished_end ON auctions(auction_end DESC)
+ *     WHERE status='finished'` zapewnia szybki index scan sort + range.
+ *   - Dodatkowy filtr `world/vocation` to Index Scan z JOIN do `worlds`
+ *     (analogicznie do `listAuctions`).
+ *
+ * Sortowanie: `auction_end DESC` — najnowsze zakończone na górze
+ * (odwrotnie niż `listAuctions` gdzie domyślnie `auction_end ASC` dla
+ * aktywnych — tam pilność, tu kronologia).
+ */
+export async function getFinishedAuctions(
+  filters: FinishedAuctionFilters,
+  pagination: Pagination,
+): Promise<FinishedAuctionsResult> {
+  const conditions: SQL[] = [eq(auctions.status, "finished")];
+
+  if (filters.world !== undefined) {
+    conditions.push(eq(worlds.name, filters.world));
+  }
+
+  if (filters.vocation !== undefined) {
+    conditions.push(eq(auctions.vocationBase, filters.vocation));
+  }
+
+  if (filters.dateFrom !== undefined) {
+    conditions.push(gte(auctions.auctionEnd, filters.dateFrom));
+  }
+  if (filters.dateTo !== undefined) {
+    conditions.push(lte(auctions.auctionEnd, filters.dateTo));
+  }
+
+  const whereCondition = and(...conditions);
+
+  const countQuery = db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(whereCondition);
+
+  const listQuery = db
+    .select(AUCTION_PROJECTION)
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(whereCondition)
+    .orderBy(desc(auctions.auctionEnd))
+    .limit(pagination.pageSize)
+    .offset((pagination.page - 1) * pagination.pageSize);
+
+  const [countResult, rowsResult] = await Promise.all([
+    countQuery,
+    listQuery,
+  ]);
+
+  const total = Number(countResult[0]?.count ?? 0);
+  const rows = rowsResult as unknown as AuctionRow[];
+
+  return { rows, total };
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// T58 — Recent sales: top N zakończonych posortowane po ended DESC
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Top `limit` najnowszych sprzedanych aukcji z `final_price`
+ * (posortowane po `auction_end DESC`). Używane przez `/bazaar/statistics`
+ * jako sekcja "Recent sales".
+ *
+ * Wybieramy `final_price IS NOT NULL` (czyli aukcje zakończone przez
+ * kupno — `sold`). Aukcje `finished` bez kupca mają `final_price = null`
+ * (arch §7.2 — `finished` to zakończenie bez kupna).
+ */
+export interface RecentSale {
+  auctionId: bigint;
+  characterName: string;
+  level: number;
+  vocation: string;
+  worldName: string;
+  finalPrice: number | null;
+  auctionEnd: Date;
+}
+
+export async function getRecentSales(limit: number): Promise<RecentSale[]> {
+  const rows = await db
+    .select({
+      auctionId: auctions.auctionId,
+      characterName: auctions.characterName,
+      level: auctions.level,
+      vocation: auctions.vocation,
+      worldName: worlds.name,
+      finalPrice: auctions.finalPrice,
+      auctionEnd: auctions.auctionEnd,
+    })
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(
+      and(
+        eq(auctions.status, "sold"),
+        sql`${auctions.finalPrice} IS NOT NULL`,
+      ),
+    )
+    .orderBy(desc(auctions.auctionEnd))
+    .limit(limit);
+
+  return rows as unknown as RecentSale[];
 }
 
 // ───────────────────────────────────────────────────────────────────────

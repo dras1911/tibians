@@ -14,7 +14,7 @@ CREATE TYPE "public"."usp_category" AS ENUM('skill', 'gold', 'achievement', 'ble
 CREATE TYPE "public"."valuation_category" AS ENUM('base', 'feature', 'skill', 'item', 'cosmetic', 'progression', 'asset');--> statement-breakpoint
 CREATE TYPE "public"."scrape_error_type" AS ENUM('timeout', 'rate_limit', 'parse', 'http_4xx', 'http_5xx', 'db', 'other');--> statement-breakpoint
 CREATE TYPE "public"."scrape_run_status" AS ENUM('running', 'success', 'partial', 'failed');--> statement-breakpoint
-CREATE TYPE "public"."scrape_run_type" AS ENUM('full', 'ending_soon', 'detail', 'history', 'reference');--> statement-breakpoint
+CREATE TYPE "public"."scrape_run_type" AS ENUM('full', 'ending_soon', 'detail', 'history', 'reference', 'calibration');--> statement-breakpoint
 CREATE TABLE IF NOT EXISTS "bosses" (
 	"id" serial PRIMARY KEY NOT NULL,
 	"name" text NOT NULL,

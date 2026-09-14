@@ -77,6 +77,7 @@ import {
 import type { HttpClient } from "./http-client.js";
 import { defaultHttpClient } from "./http-client.js";
 import { SCRAPER_CONFIG, TIBIA_URLS } from "./config.js";
+import { runCalibration } from "./calibration.js";
 import {
   compareAuctionLists,
   parseAuctionList,
@@ -183,6 +184,33 @@ export interface SchedulerDb {
     message: string;
   }): Promise<void>;
 
+  // ── Calibration (task 57 — arch §8.4 + §10 R3) ─────────────────────
+  /**
+   * Pobierz próbki kalibracji (JOIN auctions ↔ valuation_history).
+   *
+   * Domyślna implementacja w produkcji (T34): SELECT dla zakończonych
+   * aukcji (`status IN ('finished','sold')`) z `final_price > 0` w oknie
+   * `archived_at > NOW() - interval '$1 hours'`.
+   *
+   * Mock w testach może zwracać dowolne próbki — logika kalibracji
+   * jest testowana w `calibration.test.ts`.
+   */
+  fetchCalibrationSamples(opts: {
+    windowHours: number;
+  }): Promise<
+    readonly import("./calibration.js").CalibrationSample[]
+  >;
+  /**
+   * Persistuj raport kalibracji do `scrape_runs` (runType='calibration').
+   *
+   * Używane przez `runCalibration` po każdym Reference loop. Pełny raport
+   * (avg/median/MAPE/worstCases) idzie do `error_summary` JSONB.
+   */
+  recordCalibrationRun(input: {
+    report: import("./calibration.js").CalibrationReport;
+    generatedAt: string;
+  }): Promise<void>;
+
   /** REFRESH MATERIALIZED VIEW CONCURRENTLY mv_facet_counts (T34 helper). */
   refreshFacetCounts(): Promise<void>;
 
@@ -222,6 +250,13 @@ export interface LoopStats {
   upserted: number;
   /** Ile aukcji zostało zarchiwizowanych (tylko Full). */
   archived: number;
+  /**
+   * Ile razy uruchomiono kalibrację wyceny (task 57).
+   *
+   * Tylko `reference` inkrementuje — kalibracja jest wywoływana po każdym
+   * Reference loop (arch §8.4 pętla feedbacku valuation_history vs final_price).
+   */
+  calibrationsRun: number;
 }
 
 /** Pełne statystyki schedulera (per-loop). */
@@ -244,6 +279,7 @@ function emptyLoopStats(): LoopStats {
     failed: 0,
     upserted: 0,
     archived: 0,
+    calibrationsRun: 0,
   };
 }
 
@@ -760,6 +796,31 @@ export function createScheduler(
         logger.error("Reference loop: scrapeReferenceData failed", {
           error: err instanceof Error ? err.message : String(err),
         });
+      }
+
+      // 3. Pętla kalibracji wyceny (T57 — arch §8.4 + §10 R3).
+      // Po każdym Reference loop porównaj `valuation_history.estimated_tc`
+      // z `auctions.final_price` → MAPE / worst cases → zapisz do scrape_runs
+      // z runType='calibration'. To jest wewnętrzny tool dla dev-teamu (NIE UI).
+      //
+      // Calibration NIE blokuje Reference — błąd kalibracji logujemy i idziemy dalej.
+      // Re-tuning wag (Faza 7) po zebraniu >30 próbek per vocation to manualna
+      // analiza tego raportu (NIE ML, NIE auto-update wag w tej pętli).
+      if (!isAborted()) {
+        try {
+          // SchedulerDb implementuje kontrakt CalibrationDb (subset metod
+          // `fetchCalibrationSamples` + `recordCalibrationRun`). TypeScript
+          // assignable structural — bez cast.
+          await runCalibration(db);
+          stats.reference.calibrationsRun += 1;
+        } catch (err) {
+          errorsCount += 1;
+          errorSummary.calibration =
+            err instanceof Error ? err.message : String(err);
+          logger.warn("Reference loop: runCalibration failed", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
       }
 
       return {

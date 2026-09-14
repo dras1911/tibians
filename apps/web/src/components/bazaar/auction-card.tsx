@@ -26,7 +26,7 @@
 
 import * as React from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, ExternalLink, Gavel, Scale, Timer } from "lucide-react";
+import { Check, CheckCircle2, ExternalLink, Gavel, Scale, Timer } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -56,6 +56,41 @@ function outfitImageUrl(outfitId: number | null): string | null {
 // ─────────────────────────────────────────────────────────────────────
 // Countdown — lokalny tykający komponent (arch §8.2: zero requestów)
 // ─────────────────────────────────────────────────────────────────────
+
+/**
+ * Statyczny znacznik "zakończona" — zamiennik `<Countdown>` w trybie
+ * readonly (T58, plan task 58 "AuctionCard w trybie readonly — bez
+ * countdown"). Pokazuje datę zakończenia aukcji w locale format.
+ *
+ * - `aria-live="off"` — statyczny element, nie wymaga ogłoszenia.
+ * - `tabular-nums` — spójność z resztą Bazaar UI (arch §6.2).
+ */
+function EndedBadge({ endedAt }: { endedAt: string }) {
+  const t = useTranslations("Bazaar.card");
+  const format = useFormatter();
+  const date = React.useMemo(() => new Date(endedAt), [endedAt]);
+  const formatted = React.useMemo(
+    () =>
+      format.dateTime(date, {
+        dateStyle: "medium",
+        timeStyle: "short",
+      }),
+    [date, format],
+  );
+  return (
+    <div
+      className={cn(
+        "numeric inline-flex items-center gap-1.5 rounded-md border border-border bg-muted px-2.5 py-1 text-sm font-semibold tabular-nums text-muted-foreground",
+      )}
+      aria-live="off"
+      aria-label={`${t("ended")} — ${formatted}`}
+      title={formatted}
+    >
+      <CheckCircle2 className="h-3.5 w-3.5" aria-hidden="true" />
+      <span>{t("ended")}</span>
+    </div>
+  );
+}
 
 /**
  * Pozostaje czasu do `auctionEnd` (ISO string).
@@ -207,6 +242,15 @@ const REGION_TONE: Record<AuctionSummary["worldRegion"], string> = {
 
 export interface AuctionCardProps {
   auction: AuctionSummary;
+  /**
+   * Tryb wyświetlania:
+   *   - `"active"` (default) — z live countdownem, porównaniem,
+   *     aktualną ofertą. Używane na `/bazaar` (T40).
+   *   - `"history"` — readonly (plan task 58): brak countdownu,
+   *     brak porównania, pokazuje `finalPrice` zamiast `bid`,
+   *     statyczny znacznik "Zakończona" z datą zakończenia.
+   */
+  mode?: "active" | "history";
   /** Wywoływane przez parent przy zaznaczeniu do porównania (T40). */
   onCompareToggle?: (id: string, selected: boolean) => void;
   /** Czy aktualnie zaznaczona (kontrolowany checkbox). */
@@ -216,6 +260,7 @@ export interface AuctionCardProps {
 
 export function AuctionCard({
   auction,
+  mode = "active",
   onCompareToggle,
   isCompared = false,
   className,
@@ -234,9 +279,18 @@ export function AuctionCard({
   const outfitUrl = outfitImageUrl(auction.outfitId);
 
   // Bid format z `Intl.NumberFormat` (arch §6.2 — locale-aware).
-  const bidLabel =
-    auction.bidType === "current" ? t("currentBid") : t("minimumBid");
-  const formattedBid = format.number(auction.bid, { useGrouping: true });
+  // W trybie history pokazujemy `finalPrice` zamiast `bid` (T58,
+  // plan task 58 — readonly: "z `finalPrice` zamiast `bid`").
+  const isHistory = mode === "history";
+  const displayPrice = isHistory
+    ? (auction.finalPrice ?? auction.bid)
+    : auction.bid;
+  const bidLabel = isHistory
+    ? t("finalPrice")
+    : auction.bidType === "current"
+      ? t("currentBid")
+      : t("minimumBid");
+  const formattedBid = format.number(displayPrice, { useGrouping: true });
 
   // Heuristic toggle handler (przekazywany z parenta).
   const handleCompareChange = React.useCallback(
@@ -304,7 +358,11 @@ export function AuctionCard({
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
-          <Countdown endsAt={auction.auctionEnd} />
+          {isHistory ? (
+            <EndedBadge endedAt={auction.auctionEnd} />
+          ) : (
+            <Countdown endsAt={auction.auctionEnd} />
+          )}
         </div>
       </div>
 
@@ -440,45 +498,51 @@ export function AuctionCard({
             </Link>
           </Button>
 
-          <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
-            <a
-              href={`https://www.tibia.com/charactertrade/?auctionid=${auction.id}`}
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              <ExternalLink className="h-4 w-4" aria-hidden="true" />
-              {t("openExternal")}
-            </a>
-          </Button>
+          {/* History: pomijamy Compare + OpenExternal (archiwum nie
+              jest aktywne na Bazaar — arch §5 + T58 "readonly"). */}
+          {isHistory ? null : (
+            <>
+              <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
+                <a
+                  href={`https://www.tibia.com/charactertrade/?auctionid=${auction.id}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                  {t("openExternal")}
+                </a>
+              </Button>
 
-          <label
-            className={cn(
-              "ml-auto inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-medium",
-              "transition-colors hover:bg-accent hover:text-accent-foreground",
-              "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-              isCompared
-                ? "border-primary bg-primary/10 text-primary"
-                : "border-input bg-background text-foreground",
-            )}
-          >
-            <Checkbox
-              checked={isCompared}
-              onCheckedChange={(value) =>
-                handleCompareChange(value === true)
-              }
-              aria-label={
-                isCompared ? t("unselectCompare") : t("compare")
-              }
-              className="h-4 w-4"
-            />
-            <Scale className="h-4 w-4" aria-hidden="true" />
-            <span className="hidden sm:inline">
-              {isCompared ? t("unselectCompare") : t("compare")}
-            </span>
-            {isCompared ? (
-              <Check className="h-4 w-4 text-success" aria-hidden="true" />
-            ) : null}
-          </label>
+              <label
+                className={cn(
+                  "ml-auto inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-medium",
+                  "transition-colors hover:bg-accent hover:text-accent-foreground",
+                  "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
+                  isCompared
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-input bg-background text-foreground",
+                )}
+              >
+                <Checkbox
+                  checked={isCompared}
+                  onCheckedChange={(value) =>
+                    handleCompareChange(value === true)
+                  }
+                  aria-label={
+                    isCompared ? t("unselectCompare") : t("compare")
+                  }
+                  className="h-4 w-4"
+                />
+                <Scale className="h-4 w-4" aria-hidden="true" />
+                <span className="hidden sm:inline">
+                  {isCompared ? t("unselectCompare") : t("compare")}
+                </span>
+                {isCompared ? (
+                  <Check className="h-4 w-4 text-success" aria-hidden="true" />
+                ) : null}
+              </label>
+            </>
+          )}
         </div>
       </CardContent>
     </Card>

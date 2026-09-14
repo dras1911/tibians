@@ -57,6 +57,14 @@ export interface AuctionSummary {
   /** Status aukcji. */
   status: "active" | "finished" | "cancelled" | "sold";
 
+  /**
+   * Końcowa cena sprzedaży w TC (T58 / arch §7.2).
+   * = `null` dla `status='active'` (aukcja jeszcze trwa).
+   * = kwota dla `status='sold'` (kupiona) i `status='finished'`
+   *   z finalPrice (rzadko — zwykle zakończone bez kupca mają null).
+   */
+  finalPrice: number | null;
+
   // 8 denormalizowanych skilli (arch §7.1 pkt 1)
   skillMagic: number;
   skillClub: number;
@@ -127,6 +135,7 @@ export function toAuctionSummary(row: AuctionRow): AuctionSummary {
     auctionStart: row.auctionStart.toISOString(),
     auctionEnd: row.auctionEnd.toISOString(),
     status: row.status,
+    finalPrice: row.finalPrice,
 
     skillMagic: row.skillMagic,
     skillClub: row.skillClub,

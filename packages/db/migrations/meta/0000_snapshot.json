@@ -2856,7 +2856,8 @@
         "ending_soon",
         "detail",
         "history",
-        "reference"
+        "reference",
+        "calibration"
       ]
     }
   },
