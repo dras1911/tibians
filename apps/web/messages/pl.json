@@ -2001,5 +2001,32 @@
       "button": "Zainstaluj",
       "dismiss": "Nie teraz"
     }
+  },
+  "Premium": {
+    "metaTitle": "Premium — odblokuj pełną analizę",
+    "metaDescription": "Rozwijalny breakdown wyceny, historia bidów i nielimitowany live tracking — dla graczy, którzy chcą wiedzieć więcej niż tylko czy warto.",
+    "breadcrumbHome": "Start",
+    "breadcrumbPremium": "Premium",
+    "title": "Premium",
+    "subtitle": "Free odpowiada na pytanie „czy warto?”. Premium pokazuje „dlaczego tyle i co dalej?”.",
+    "faqTitle": "Częste pytania",
+    "faq": {
+      "q1": {
+        "q": "Czy mogę anulować w każdej chwili?",
+        "a": "Tak. Anulowanie działa natychmiast w panelu płatności, a dostęp zachowujesz do końca opłaconego okresu."
+      },
+      "q2": {
+        "q": "Jak płacę i kto wystawia fakturę?",
+        "a": "Płatność obsługuje nasz partner (Merchant of Record) — on odpowiada za VAT i faktury. My nie przetwarzamy danych karty."
+      },
+      "q3": {
+        "q": "Czy moje dane są bezpieczne?",
+        "a": "Logujemy przez Discord (opcjonalnie). Nie zbieramy haseł ani danych kartowych. Zapisane postacie możesz trzymać lokalnie."
+      },
+      "q4": {
+        "q": "Co zyskuję od razu?",
+        "a": "Rozwijalny breakdown wyceny, wykres historii bidów, pole „zainwestowane”, SSE bez limitu, porównywarkę do 4 aukcji + CSV i brak reklam."
+      }
+    }
   }
 }

@@ -2001,5 +2001,32 @@
       "button": "Install",
       "dismiss": "Not now"
     }
+  },
+  "Premium": {
+    "metaTitle": "Premium — unlock full analysis",
+    "metaDescription": "Expandable valuation breakdown, bid history and unlimited live tracking — for players who want more than just “is it worth it?”.",
+    "breadcrumbHome": "Home",
+    "breadcrumbPremium": "Premium",
+    "title": "Premium",
+    "subtitle": "Free answers “is it worth it?”. Premium shows “why that much and what next?”.",
+    "faqTitle": "Frequently asked questions",
+    "faq": {
+      "q1": {
+        "q": "Can I cancel anytime?",
+        "a": "Yes. Cancellation takes effect immediately in the billing panel; access remains until the end of the paid period."
+      },
+      "q2": {
+        "q": "How do I pay and who issues the invoice?",
+        "a": "Payments are handled by our partner (Merchant of Record) — they handle VAT and invoices. We never process card data."
+      },
+      "q3": {
+        "q": "Is my data safe?",
+        "a": "We log in via Discord (optional). No passwords or card data collected. Saved characters can stay local."
+      },
+      "q4": {
+        "q": "What do I get right away?",
+        "a": "Expandable valuation breakdown, bid history chart, the “invested” field, unlimited SSE, compare up to 4 auctions + CSV, and no ads."
+      }
+    }
   }
 }
