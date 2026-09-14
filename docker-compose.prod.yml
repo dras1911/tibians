@@ -1,0 +1,160 @@
+# Docker Compose — Tibians PRODUCTION stack (plan T71 + T77, arch §3.3)
+#
+# 5 serwisów: caddy (SSL+proxy) ← web (Next.js) + scraper (worker)
+#             + db (PostgreSQL) + tibiadata (self-host API, R11)
+#
+# Uruchomienie:
+#   cp .env.production.example .env.production   # uzupełnij sekrety
+#   docker compose -f docker-compose.prod.yml up -d --build
+#
+# Dev stack (bez Caddy/web/scraper) → docker-compose.yml + docker-compose.override.yml
+
+name: tibians-prod
+
+services:
+  # ─── Reverse proxy + SSL (front, jedyny serwis z portami publicznymi) ────
+  caddy:
+    image: caddy:2-alpine
+    container_name: tibians-caddy
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+      - "443:443/udp"   # HTTP/3
+    environment:
+      DOMAIN: ${DOMAIN:?DOMAIN jest wymagany (np. tibians.tools)}
+      ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL jest wymagany (Let's Encrypt)}
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy-data:/data      # certyfikaty Let's Encrypt (persistent!)
+      - caddy-config:/config
+    networks:
+      - tibians-net
+    depends_on:
+      web:
+        condition: service_healthy
+      tibiadata:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:2019/config/"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+    logging: &default-logging
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
+    labels:
+      - "com.tibians.service=caddy"
+
+  # ─── Next.js 15 app (tylko sieć wewnętrzna) ──────────────────────────────
+  web:
+    build:
+      context: .
+      dockerfile: Dockerfile.web
+    image: tibians-web:latest
+    container_name: tibians-web
+    restart: unless-stopped
+    expose:
+      - "3000"
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      HOSTNAME: 0.0.0.0
+      PORT: "3000"
+      TIBIADATA_BASE_URL: http://tibiadata:8080   # self-host (§18.1)
+    networks:
+      - tibians-net
+    depends_on:
+      db:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://127.0.0.1:3000/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 30s
+    logging: *default-logging
+    labels:
+      - "com.tibians.service=web"
+
+  # ─── Scraper worker (3 pętle, brak portów) ───────────────────────────────
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile.scraper
+    image: tibians-scraper:latest
+    container_name: tibians-scraper
+    restart: unless-stopped
+    env_file:
+      - .env.production
+    environment:
+      NODE_ENV: production
+      TIBIADATA_BASE_URL: http://tibiadata:8080
+    networks:
+      - tibians-net
+    depends_on:
+      db:
+        condition: service_healthy
+      tibiadata:
+        condition: service_healthy
+    stop_grace_period: 30s   # graceful shutdown scheduler'a (T36)
+    logging: *default-logging
+    labels:
+      - "com.tibians.service=scraper"
+
+  # ─── PostgreSQL 17 ───────────────────────────────────────────────────────
+  db:
+    image: postgres:17-alpine
+    container_name: tibians-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-tibians}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?POSTGRES_PASSWORD jest wymagane}
+      POSTGRES_DB: ${POSTGRES_DB:-tibians}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    networks:
+      - tibians-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tibians} -d ${POSTGRES_DB:-tibians}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 15s
+    logging: *default-logging
+    labels:
+      - "com.tibians.service=db"
+
+  # ─── TibiaData API (self-host, MIT — §18.1, R11 cache przez Caddy) ───────
+  tibiadata:
+    image: ghcr.io/tibiadata/tibiadata-api-go:latest
+    container_name: tibians-tibiadata
+    restart: unless-stopped
+    expose:
+      - "8080"
+    environment:
+      TIBIADATA_HOST: ${DOMAIN:-tibians.tools}
+    networks:
+      - tibians-net
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q --spider http://127.0.0.1:8080/readyz || exit 1"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    logging: *default-logging
+    labels:
+      - "com.tibians.service=tibiadata"
+
+volumes:
+  postgres-data:
+  caddy-data:
+  caddy-config:
+
+networks:
+  tibians-net:
+    driver: bridge

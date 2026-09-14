@@ -1,0 +1,40 @@
+# .dockerignore — Tibians (plan T70)
+# Zmniejsza build context + chroni przed wyciekiem stanu lokalnego do obrazu.
+
+# Zależności (odbudowywane w obrazie)
+**/node_modules
+**/.pnpm-store
+
+# Artefakty build
+**/.next
+**/dist
+**/.turbo
+**/coverage
+**/*.tsbuildinfo
+
+# VCS / narzędzia
+.git
+.gitignore
+.github
+
+# Stan agenta / plany (nie belongs w obrazie)
+.omo
+
+# Sekrety i lokalna konfiguracja
+.env
+.env.*
+!.env.example
+!.env.production.example
+
+# Dokumentacja / edytor
+**/*.md
+!README.md
+.vscode
+.idea
+**/.DS_Store
+
+# Testy (nie potrzebne w runtime)
+**/*.test.ts
+**/*.test.tsx
+**/__tests__
+**/__fixtures__

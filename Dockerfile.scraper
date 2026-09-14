@@ -1,0 +1,54 @@
+# syntax=docker/dockerfile:1.7
+#
+# Dockerfile.scraper — Node.js worker (plan T70, arch §3.3, §8.3)
+#
+# Scraper to long-lived worker (3 pętle: Full 15min / EndingSoon 30s /
+# Reference 24h). NIE jest request-served — bez EXPOSE, bez HTTP healthcheck;
+# observability przez tabelę `scrape_runs` (T7) + logi do stdout.
+#
+# Build:  docker build -f Dockerfile.scraper -t tibians-scraper .
+# Run:    docker run --env-file .env.production tibians-scraper
+
+# ─── Stage 1: deps ────────────────────────────────────────────────────────
+FROM node:22-alpine AS deps
+RUN corepack enable && corepack prepare pnpm@9.15.9 --activate
+WORKDIR /repo
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml turbo.json ./
+COPY apps/web/package.json ./apps/web/package.json
+COPY apps/scraper/package.json ./apps/scraper/package.json
+COPY packages/ui/package.json ./packages/ui/package.json
+COPY packages/db/package.json ./packages/db/package.json
+COPY packages/shared/package.json ./packages/shared/package.json
+COPY packages/calc/package.json ./packages/calc/package.json
+COPY packages/character-context/package.json ./packages/character-context/package.json
+RUN --mount=type=cache,id=pnpm,target=/root/.local/share/pnpm/store \
+    pnpm install --frozen-lockfile
+
+# ─── Stage 2: builder — tsc dla scrapera + jego zależności workspace ──────
+FROM deps AS builder
+WORKDIR /repo
+COPY . .
+ENV NODE_ENV=production
+# Buduje scraper ORAZ jego zależności workspace (shared, db, character-context).
+RUN pnpm --filter @tibians/scraper... build
+
+# ─── Stage 3: runner ──────────────────────────────────────────────────────
+FROM node:22-alpine AS runner
+WORKDIR /app
+ENV NODE_ENV=production
+
+RUN addgroup --system --gid 1001 nodejs \
+ && adduser --system --uid 1001 --ingroup nodejs scraper
+
+# Scraper używa tsx/runtime z node_modules (nie bundlujemy — mniej ryzyka).
+COPY --from=builder --chown=scraper:nodejs /repo/package.json ./package.json
+COPY --from=builder --chown=scraper:nodejs /repo/pnpm-workspace.yaml ./pnpm-workspace.yaml
+COPY --from=builder --chown=scraper:nodejs /repo/node_modules ./node_modules
+COPY --from=builder --chown=scraper:nodejs /repo/apps/scraper ./apps/scraper
+COPY --from=builder --chown=scraper:nodejs /repo/packages ./packages
+
+USER scraper
+# SIGTERM → graceful shutdown scheduler'a (T36: stop + await in-flight + db.end()).
+STOPSIGNAL SIGTERM
+
+CMD ["node", "apps/scraper/dist/index.js"]

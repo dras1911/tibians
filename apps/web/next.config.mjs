@@ -33,6 +33,9 @@ const withMDX = createMDX({
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  // Docker (T70): standalone output = minimalny runtime image (~150MB vs ~1GB).
+  // Wymaga `node server.js` w runner stage (patrz Dockerfile.web).
+  output: "standalone",
   transpilePackages: [
     "@tibians/ui",
     "@tibians/shared",
