@@ -311,6 +311,152 @@
             "removeWeeklyTaskExp": "Drop the Weekly Task Expansion requirement",
             "removeTwistOfFate": "Drop the Twist of Fate requirement",
             "removeBattleye": "Remove the BattlEye filter"
+        },
+        "detail": {
+            "pageTitle": "{name} · {vocation} lvl {level} · {world}",
+            "pageDescription": "Auction #{id} ({name}, {vocation} level {level}, {world}). Valuation, bid history, full skills and items.",
+            "notFoundTitle": "Auction not found",
+            "notFoundDescription": "Auction #{id} does not exist or has ended.",
+            "notFoundCta": "Back to the Bazaar list",
+            "backToList": "Back to list",
+            "hero": {
+                "outfitAlt": "Outfit for {name}",
+                "noOutfit": "No outfit",
+                "levelLabel": "Level",
+                "vocationLabel": "Vocation",
+                "worldLabel": "World",
+                "pvpLabel": "PvP",
+                "battleyeLabel": "BattlEye",
+                "battleyeProtected": "🟢 protected",
+                "battleyeInitial": "🟡 initial",
+                "battleyeNone": "🔴 none",
+                "endingIn": "Ending in",
+                "ended": "Ended",
+                "currentBid": "Current bid",
+                "minimumBid": "Minimum bid",
+                "bidCurrency": "TC",
+                "boughtAt": "Bought at",
+                "statusSold": "Sold",
+                "statusFinished": "Finished",
+                "statusCancelled": "Cancelled",
+                "statusActive": "Active",
+                "openExternal": "🎯 Bid on Tibia.com",
+                "openExternalHint": "(opens tibia.com in a new tab)",
+                "analyzeInWorkspace": "🔬 Analyze this character in Workspace →",
+                "endingSoonBadge": "🔥 Auction ending soon!",
+                "reminderCta": "🔔 Set a reminder",
+                "reminderHint": "(Phase 13 — Discord OAuth)"
+            },
+            "valuation": {
+                "sectionTitle": "Estimated value",
+                "noEstimate": "No valuation available — character incomplete or missing market data.",
+                "premiumBreakdown": "Full breakdown with per-component weights",
+                "premiumLocked": "Full breakdown (Premium)",
+                "premiumTooltip": "Unlocks in Phase 7 — Discord OAuth + payment. Free tier sees valuation + deal indicator.",
+                "dealBadgeUnderpriced": "Underpriced {delta}",
+                "dealBadgeFair": "Fair price {delta}",
+                "dealBadgeOverpriced": "Overpriced {delta}",
+                "dealBadgeUnknown": "—",
+                "perLevelLabel": "Price per level",
+                "confidenceLabel": "Valuation confidence",
+                "breakdownLevel": "Base value (level {level})",
+                "breakdownSkills": "Skills (sum above 100)",
+                "breakdownFeatures": "Features",
+                "breakdownProgression": "Progression (charms, boss, quests, imbuements)",
+                "breakdownCosmetics": "Cosmetics (outfits, mounts, gems)",
+                "breakdownAssets": "Assets (gold, TC invested)",
+                "componentLabel": "{label}",
+                "showFullBreakdown": "Show full breakdown",
+                "hideFullBreakdown": "Hide breakdown"
+            },
+            "chart": {
+                "title": "Bid history",
+                "subtitle": "How the bid changed over the auction lifetime",
+                "xAxisLabel": "Time",
+                "yAxisLabel": "Bid (TC)",
+                "emptyTitle": "No bid history yet",
+                "emptyDescription": "Only one reading — cannot draw a change graph.",
+                "singlePointTitle": "Single bid reading",
+                "singlePointDescription": "The bid has not changed since we first scraped this auction.",
+                "tooltipBid": "Bid: {bid} TC",
+                "tooltipTime": "Time: {time}"
+            },
+            "tabs": {
+                "skills": "Skills",
+                "items": "Items",
+                "outfitsMounts": "Outfits & Mounts",
+                "charmsBlessings": "Charms & Blessings",
+                "gems": "Gems",
+                "imbuements": "Imbuements",
+                "quests": "Quests"
+            },
+            "skillsTab": {
+                "tableTitle": "8 skills (base — as Bazaar reports)",
+                "loyaltyBadge": "+{pct}% loyalty",
+                "noLoyalty": "No loyalty",
+                "highest": "Top skill",
+                "openCalculator": "How much to reach {skill} → {target}?",
+                "openCalculatorTrueSkill": "Check true skill (with loyalty)",
+                "openCalculatorSkillTraining": "Training (skill)",
+                "skillTargets": {
+                    "magic": "Magic",
+                    "sword": "Sword",
+                    "axe": "Axe",
+                    "club": "Club",
+                    "distance": "Distance",
+                    "shielding": "Shielding",
+                    "fist": "Fist",
+                    "fishing": "Fishing"
+                }
+            },
+            "itemsTab": {
+                "empty": "No item data available.",
+                "totalLabel": "{count, plural, =0 {No items} one {# item} other {# items}}",
+                "tierLabel": "T{tier}",
+                "openCharacterValue": "Compute value in TC"
+            },
+            "outfitsTab": {
+                "outfitsHeading": "Outfits ({count})",
+                "mountsHeading": "Mounts ({count})",
+                "addons": "addons",
+                "noOutfits": "No outfits",
+                "noMounts": "No mounts",
+                "storeCount": "Store outfits: {count}",
+                "mountsStoreCount": "Store mounts: {count}"
+            },
+            "charmsTab": {
+                "charmsPointsLabel": "Charm points",
+                "charmsUnusedLabel": "Unused",
+                "charmsEchoesLabel": "Minor echoes",
+                "blessingsLabel": "Blessings",
+                "blessingsHelp": "0-7 (7 = full XP-loss protection)",
+                "openBlessingsCalculator": "Open Blessings calculator"
+            },
+            "gemsTab": {
+                "lesser": "Lesser gems",
+                "regular": "Regular gems",
+                "greater": "Greater gems",
+                "openImbuementCalc": "Imbuement cost"
+            }
+        },
+        "crossLinks": {
+            "skillContext": "Context: {skill} {current} → {target}",
+            "openInWorkspace": "Open in Workspace →",
+            "calculatorLabel": "{label} (prefilled with auction data)",
+            "skillCalc": "Exercise Weapons ({skill})",
+            "trueSkillCalc": "True Skill ({skill})",
+            "skillsCalc": "Training / Skills ({skill})",
+            "characterValueCalc": "Character Value (full snapshot)",
+            "blessingsCalc": "Blessings (level {level})",
+            "imbuementCalc": "Imbuement cost",
+            "prefillNotice": "Data from auction #{id} ({name}) will be loaded into the calculator automatically."
+        },
+        "analyze": {
+            "sectionTitle": "Character analysis",
+            "description": "The full Tibians calculator arsenal (Skills, Training, Stamina, Value, Items, Progress, Comparison) prefilled with this auction snapshot. Change one field — every panel updates.",
+            "cta": "🔬 Analyze this character in Workspace →",
+            "ctaHint": "Full snapshot, 7 panels, what-if scenarios",
+            "workspacePrefilled": "Snapshot of this auction ({name}, lvl {level}) will be loaded into Workspace."
         }
     },
     "Calculators": {

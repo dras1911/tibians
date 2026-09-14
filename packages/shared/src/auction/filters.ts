@@ -122,7 +122,7 @@ export const auctionFiltersSchema = z
       .max(50, "Fraza wyszukiwania jest za długa")
       .optional(),
 
-    /** Boolean flagi „must-have". */
+    /** Boolean flagi „must-have" (arch §5 krok 4 — T42 advanced filters). */
     hasSoulWar: z
       .union([
         z.literal("true"),
@@ -149,6 +149,60 @@ export const auctionFiltersSchema = z
         z.literal("0"),
       ])
       .transform((v) => v === "true" || v === "1")
+      .optional(),
+    /** Prey Slot — rozszerzenie T42 + T45 (sugestie 0-wyników). */
+    hasPreySlot: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    /** Charm Expansion — rozszerzenie T42 + T45. */
+    hasCharmExpansion: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    /** Weekly Task Expansion — rozszerzenie T42 + T45. */
+    hasWeeklyTaskExpansion: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    /** Twist of Fate — rozszerzenie T42 + T45. */
+    hasTwistOfFate: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    /** `true` = wymaga `imbuementsUnlocked = imbuementsTotal` (23/23). */
+    imbuesFull: z
+      .union([
+        z.literal("true"),
+        z.literal("false"),
+        z.literal("1"),
+        z.literal("0"),
+      ])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+    /** BattlEye (wymuszenie na świecie — wcześniej dostępne tylko w UI). */
+    battleye: z
+      .enum(["protected", "initially protected", "not protected"])
       .optional(),
 
     /** Filtry dziedziczone z `worlds`. */
