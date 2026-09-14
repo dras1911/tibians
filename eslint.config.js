@@ -62,8 +62,12 @@ export default tseslint.config(
     },
     rules: {
       "@typescript-eslint/no-explicit-any": "error",
+      // `warn` (nie `error`): w dużych plikach schematów Zod eksportowane
+      // stałe są konsumowane wyłącznie w pozycjach typów (`z.infer<typeof X>`),
+      // co typescript-eslint w v8 raportuje jako "defined but only used as a
+      // type". Sygnał zostaje, ale nie blokuje bramki lint.
       "@typescript-eslint/no-unused-vars": [
-        "error",
+        "warn",
         { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
       ],
       // `{}` jest świadomie używane w mockach testowych / placeholderach
