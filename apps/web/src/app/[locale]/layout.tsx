@@ -9,6 +9,8 @@ import { DensityProvider } from "@/components/density-provider";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { SkipLink } from "@/components/layout/skip-link";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { ServiceWorkerRegistrar } from "@/components/pwa/service-worker-registrar";
 import { noFoucScript } from "@tibians/ui";
 import { routing } from "@/i18n/routing";
 
@@ -121,6 +123,11 @@ export default async function LocaleLayout({
 
               <Footer />
             </div>
+
+            {/* PWA (T69, arch §18.4): rejestracja SW tylko w produkcji +
+             *  baner instalacji po 2. wizycie. Oba renderują null gdy nieaktywne. */}
+            <ServiceWorkerRegistrar />
+            <InstallPrompt />
           </DensityProvider>
         </NextIntlClientProvider>
       </body>
