@@ -1796,14 +1796,6 @@
             "auctionLoadPlaceholder": "Loading auction #{id} — full Bazaar integration ships with T37."
         }
     },
-    "Reference": {
-        "title": "Reference",
-        "items": "Items",
-        "imbuements": "Imbuements",
-        "worlds": "Worlds",
-        "outfits": "Outfits",
-        "mounts": "Mounts"
-    },
     "Breadcrumb": {
         "aria": "Breadcrumb",
         "home": "Home",
@@ -1931,6 +1923,174 @@
                 "goldRange": "Gold: ≥ 0",
                 "storeRange": "{label}: ≥ 0"
             }
+        }
+    },
+    "Bosses": {
+        "title": "Bosses",
+        "list": {
+            "pageTitle": "Daily bosses",
+            "pageDescription": "A list of bosses you can hunt today — TibiaData /v4/boostablebosses, refreshed daily.",
+            "boostedTitle": "Currently boosted boss",
+            "boostedDescription": "The boosted boss has a higher loot drop rate. Look for them first.",
+            "detailsLabel": "Details",
+            "featuredLabel": "Featured",
+            "emptyTitle": "No bosses to show",
+            "emptyDescription": "TibiaData didn't return a boostable bosses list. Try again in a few minutes.",
+            "gridAria": "Boostable bosses list"
+        },
+        "detail": {
+            "pageTitle": "{name} — Boss",
+            "pageFallbackTitle": "Boss",
+            "pageDescription": "Boss details for {name} — stats, loot and best tactics.",
+            "backLabel": "Back to bosses list",
+            "statsHeading": "Boss stats",
+            "hpLabel": "HP",
+            "expLabel": "Experience",
+            "summonManaLabel": "Summon mana",
+            "convinceManaLabel": "Convince mana",
+            "behaviourTitle": "Behaviour",
+            "lootTitle": "Possible loot",
+            "strongTitle": "Strong against",
+            "weakTitle": "Weak against"
+        }
+    },
+    "Reference": {
+        "title": "Reference",
+        "items": "Items",
+        "imbuements": "Imbuements",
+        "worlds": "Worlds",
+        "outfits": "Outfits",
+        "mounts": "Mounts",
+        "index": {
+            "pageTitle": "Tibia Reference",
+            "pageDescription": "Browse items, worlds, spells, outfits and mounts — the full Tibia database in one place.",
+            "countLabel": "entries",
+            "categories": {
+                "items": {
+                    "title": "Items",
+                    "description": "Search items by PL/EN name, check market price and store availability."
+                },
+                "worlds": {
+                    "title": "Worlds",
+                    "description": "All Tibia worlds grouped by EU/NA/BR region with PvP mode and BattlEye."
+                },
+                "spells": {
+                    "title": "Spells",
+                    "description": "Instant and rune spells with level, mana and price."
+                },
+                "outfits": {
+                    "title": "Outfits",
+                    "description": "Outfit gallery with store and rare badges."
+                },
+                "mounts": {
+                    "title": "Mounts",
+                    "description": "Mount gallery with store and rare badges."
+                }
+            }
+        },
+        "items": {
+            "pageTitle": "Items",
+            "pageDescription": "Full Tibia item database — PL/EN names, market price, store and rare badges.",
+            "searchLabel": "Search item",
+            "searchPlaceholder": "e.g. Ferumbras, demon, sword…",
+            "resultsLabel": "Results: {count}",
+            "gridAria": "Items list",
+            "emptyTitle": "No results",
+            "emptyDescription": "Try a different name (min. 2 chars) or clear filters.",
+            "storeLabel": "Store",
+            "rareLabel": "Rare",
+            "prevLabel": "Previous",
+            "nextLabel": "Next",
+            "pageOfLabel": "Page {page} of {totalPages}",
+            "paginationAria": "Pagination"
+        },
+        "worlds": {
+            "pageTitle": "Worlds",
+            "pageDescription": "All Tibia worlds grouped by region (EU / NA / BR) with PvP mode and BattlEye status.",
+            "emptyTitle": "No worlds",
+            "emptyDescription": "Couldn't fetch the worlds list from the database or TibiaData.",
+            "resultsLabel": "Total: {count}",
+            "pvpLabel": "PvP",
+            "battleyeLabel": "BattlEye",
+            "retroLabel": "Retro",
+            "offlineLabel": "Offline",
+            "protectedLabel": "Protected",
+            "protectedPartialLabel": "Partially protected",
+            "unprotectedLabel": "Unprotected",
+            "regionEmpty": "No worlds in this region",
+            "regions": {
+                "EU": { "title": "Europe", "description": "European servers — lowest ping for EU players." },
+                "NA": { "title": "North America", "description": "Servers for US, Canada and Mexico." },
+                "BR": { "title": "Brazil", "description": "Servers for Brazilian and South American players." }
+            }
+        },
+        "spells": {
+            "pageTitle": "Spells",
+            "pageDescription": "List of all spells (instant and rune) with level, mana and price.",
+            "emptyTitle": "No spells",
+            "emptyDescription": "TibiaData didn't return a spells list. Try again in a few minutes.",
+            "resultsLabel": "Results: {count}",
+            "typeLabel": "Type",
+            "typeAll": "All",
+            "typeInstant": "Instant",
+            "typeRune": "Rune",
+            "levelLabel": "Level",
+            "manaLabel": "Mana",
+            "priceLabel": "Price",
+            "premiumLabel": "Premium",
+            "gridAria": "Spells list"
+        },
+        "outfits": {
+            "pageTitle": "Outfits",
+            "pageDescription": "Outfit gallery with store and rare badges.",
+            "emptyTitle": "No outfits",
+            "emptyDescription": "The database contains no outfits. Check back later.",
+            "resultsLabel": "Results: {count}",
+            "storeLabel": "Store",
+            "rareLabel": "Rare",
+            "gridAria": "Outfits list",
+            "prevLabel": "Previous",
+            "nextLabel": "Next",
+            "pageOfLabel": "Page {page} of {totalPages}",
+            "paginationAria": "Pagination"
+        },
+        "mounts": {
+            "pageTitle": "Mounts",
+            "pageDescription": "Mount gallery with store and rare badges.",
+            "emptyTitle": "No mounts",
+            "emptyDescription": "The database contains no mounts. Check back later.",
+            "resultsLabel": "Results: {count}",
+            "storeLabel": "Store",
+            "rareLabel": "Rare",
+            "gridAria": "Mounts list",
+            "prevLabel": "Previous",
+            "nextLabel": "Next",
+            "pageOfLabel": "Page {page} of {totalPages}",
+            "paginationAria": "Pagination"
+        }
+    },
+    "Blog": {
+        "title": "Blog",
+        "list": {
+            "pageTitle": "Tibians Blog",
+            "pageDescription": "Updates, tutorials and deep dives into Tibia — written by the Tibians team.",
+            "rssTitle": "Tibians — Blog",
+            "rssDescription": "Latest posts from the Tibians blog — calculators, character valuation and Char Bazaar.",
+            "resultsLabel": "Posts: {count}",
+            "emptyTitle": "No posts",
+            "emptyDescription": "There are no posts in this locale yet. Check back soon!",
+            "gridAria": "Blog posts list",
+            "readMoreLabel": "Read more",
+            "tagsLabel": "Post tags"
+        },
+        "detail": {
+            "pageTitle": "{title} — Tibians Blog",
+            "pageFallbackTitle": "Post not found",
+            "pageFallbackDescription": "This post does not exist or has been removed.",
+            "pageDescription": "{title} — article from the Tibians blog.",
+            "blogTitle": "Blog",
+            "backLabel": "Back to posts list",
+            "notFoundTitle": "Post not found"
         }
     }
 }

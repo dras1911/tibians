@@ -1,0 +1,82 @@
+---
+title: "Przewodnik po Char Bazaar"
+date: "2026-09-08"
+author: "Zespół Tibians"
+excerpt: "Jak korzystać z Tibians Bazaar jak profesjonalista — filtry, presety, URL state, porównywanie i sztuczki z przeglądarką."
+tags: ["tutorial", "bazaar", "filters"]
+locale: "pl"
+---
+
+# Przewodnik po Char Bazaar
+
+Bazaar na Tibians to nie jest „kliknij i patrz". To **potężne narzędzie**
+**z presetami, URL state, filtrami kontekstowymi i live SSE**. W tym
+przewodniku pokażemy, jak wycisnąć z niego siódme poty.
+
+## Filtry szybkie (lewy sidebar)
+
+Wszystkie filtry od razu pokazują **faceted counts** — ile wyników
+zostanie po wybraniu danej opcji. Np. klikając *Knight* widzisz liczbę
+dostępnych Knightów na każdym świecie.
+
+### Filtry kontekstowe (zaawansowane)
+
+Panel *Filtry zaawansowane* pokazuje opcje dopasowane do **wybranej
+vocacji**:
+
+- **Knight**: skill min dla Axe / Club / Sword / Distance / Shielding
+- **Paladin**: Distance + loyalty + charm points
+- **Sorcerer/Druid**: Magic Level + element damage + soul points
+- **Monk**: Fist Fighting + loyalty
+
+To klucz do znalezienia perełek.
+
+## Presety
+
+Nie musisz za każdym razem ustawiać filtrów od zera. Mamy **5 hardcoded
+presetów** + slot na Twoje własne (localStorage, max 3):
+
+- 🛡️ **Knight 300–600 EU &lt; 15k** — dla szukających mocnego EC na start
+- 🦅 **Monk z Soul War** — dla fanów fist fighting po rotacji
+- 🏹 **Paladin Distance 250+** — dla hunter buildów
+- 💰 **Tanie Knight &lt; 5k** — dla budżetowych buildów
+- ⚠️ **Przepłacone** — algorytm wykrywa podejrzanie drogie aukcje
+
+## URL state + share link
+
+**Każdy filtr jest w URL.** To znaczy:
+
+1. Możesz wysłać znajomemu dokładnie ten sam widok.
+2. Back / forward w przeglądarce działa z filtrami (nie resetuje ich).
+3. Po lewej stronie listy widzisz *aktywne filtry* jako usuwalne chipy +
+
+
+## Przeglądarka aukcji
+
+Każda karta aukcji ma **trzy CTA**:
+
+- 🎯 **Licytuj na Tibia.com** — zewnętrzny link z `target=_blank`.
+- 🔬 **Analizuj w Workspace** — otwiera `/workspace?auction={id}` z
+  wypełnionym snapshotem do manualnej analizy.
+- ⚖️ **Dodaj do porównania** — wybierz drugą aukcję i kliknij jej
+  „Dodaj do porównania" — dostaniesz side-by-side z kolumną *Przewaga*.
+
+## Live SSE
+
+Najnowsze aukcje (< 1h przed końcem) aktualizują **bid na żywo** przez
+Server-Sent Events. Bez polling, bez opóźnień, bez zbędnych requestów.
+
+Gdy SSE nie działa (firewall, ad-blocker) — automatyczny fallback do
+**pollingu co 30 s**.
+
+## Porównywanie
+
+`/bazaar/compare?a={ID1}&b={ID2}` pokazuje **wszystkie kolumny side-by-side**
++ dedykowaną kolumnę *Przewaga* (zielona/ czerwona strzałka).
+
+## Powodzenia!
+
+Bazaar Tibii to ogromny rynek — bez narzędzi łatwo przepłacić lub kupić
+kota w worku. Tibians Bazaar daje Ci **pełen kontekst** (skill breakdown,
+szacowana wartość, podobne aukcje, historia bidów) zanim podejmiesz
+decyzję. Korzystaj! 💎

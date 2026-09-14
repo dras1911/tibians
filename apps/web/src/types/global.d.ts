@@ -12,4 +12,19 @@ declare global {
     | undefined;
 }
 
+/**
+ * `import.meta.glob` — deklaracja dla bundlerów wspierających ten format
+ * (Next.js 15 + Turbopack/webpack z rozszerzeniem). Używane przez
+ * `src/lib/blog/index.ts` do statycznego importu postów MDX.
+ */
+declare module "*.mdx" {
+  import type { ComponentType } from "react";
+
+  const component: ComponentType<Record<string, unknown>> & {
+    frontmatter?: Record<string, unknown>;
+  };
+  export default component;
+  export const frontmatter: Record<string, unknown>;
+}
+
 export {};

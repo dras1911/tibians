@@ -1,0 +1,82 @@
+---
+title: "Char Bazaar guide"
+date: "2026-09-08"
+author: "The Tibians Team"
+excerpt: "How to use Tibians Bazaar like a pro — filters, presets, URL state, comparing auctions and browser tricks."
+tags: ["tutorial", "bazaar", "filters"]
+locale: "en"
+---
+
+# Char Bazaar guide
+
+The Bazaar on Tibians is not „click and watch". It's a **powerful tool**
+**with presets, URL state, contextual filters and live SSE**. In this
+guide we'll show you how to squeeze every last drop out of it.
+
+## Quick filters (left sidebar)
+
+All filters show **faceted counts** immediately — how many results
+remain after picking a given option. For example, clicking *Knight* shows
+you the count of available Knights on each world.
+
+### Contextual filters (advanced)
+
+The *Advanced filters* panel shows options tailored to the **selected
+vocation**:
+
+- **Knight**: skill min for Axe / Club / Sword / Distance / Shielding
+- **Paladin**: Distance + loyalty + charm points
+- **Sorcerer/Druid**: Magic Level + element damage + soul points
+- **Monk**: Fist Fighting + loyalty
+
+This is the key to finding hidden gems.
+
+## Presets
+
+You don't have to set filters from scratch every time. We have **5
+hardcoded presets** + a slot for your own (localStorage, max 3):
+
+- 🛡️ **Knight 300–600 EU &lt; 15k** — for those hunting a strong EC starter
+- 🦅 **Monk with Soul War** — for fist fighting fans post-rotation
+- 🏹 **Paladin Distance 250+** — for hunter builds
+- 💰 **Cheap Knight &lt; 5k** — for budget builds
+- ⚠️ **Overpriced** — algorithm flags suspiciously expensive auctions
+
+## URL state + share link
+
+**Every filter is in the URL.** That means:
+
+1. You can send a friend the exact same configuration.
+2. Browser back / forward works with filters (does not reset them).
+3. To the left of the list you see *active filters* as removable chips +
+
+
+## Auction browser
+
+Every auction card has **three CTAs**:
+
+- 🎯 **Bid on Tibia.com** — external link with `target=_blank`.
+- 🔬 **Analyze in Workspace** — opens `/workspace?auction={id}` with
+  the snapshot prefilled for manual analysis.
+- ⚖️ **Add to compare** — pick a second auction and click its
+  „Add to compare" — you'll get a side-by-side with the *Advantage* column.
+
+## Live SSE
+
+The newest auctions (< 1h before end) update the **bid live** via
+Server-Sent Events. No polling, no delay, no extra requests.
+
+When SSE does not work (firewall, ad-blocker) — automatic fallback to
+**polling every 30 s**.
+
+## Comparing
+
+`/bazaar/compare?a={ID1}&b={ID2}` shows **all columns side-by-side**
++ a dedicated *Advantage* column (green/red arrow).
+
+## Good luck!
+
+The Tibia Bazaar is a huge market — without tools it's easy to
+overpay or buy a pig in a poke. Tibians Bazaar gives you **full context**
+(skill breakdown, estimated value, similar auctions, bid history) before
+you decide. Use it! 💎

@@ -1,0 +1,77 @@
+---
+title: "Jak działa wycena postaci na Tibians"
+date: "2026-09-12"
+author: "Zespół Tibians"
+excerpt: "Głębokie zanurzenie w algorytm szacującym wartość postaci na Char Bazaar. Składniki wyceny, kalibracja po zakończeniu aukcji i praktyczne przykłady."
+tags: ["valuation", "technical", "bazaar"]
+locale: "pl"
+---
+
+# Jak działa wycena postaci na Tibians
+
+Wycena postaci (`estimated_value`) to nie magia — to **algorytm z jawnymi
+regułami**, regularnie kalibrowany na podstawie rzeczywistych zakończonych
+aukcji. W tym artykule pokażemy, jak to działa od środka.
+
+## Składniki wyceny
+
+Każdy `CharacterSnapshot` ma pięć kategorii wartości:
+
+1. **Base** — punkt wyjścia zależny od poziomu i promocji vocation.
+2. **Skills** — sumaryczna wartość magic level + skilli walki + dystansu.
+   Osobno liczymy też fishing dla EK, bo ma znaczenie dla rare builds.
+3. **Features** — boss points, charm points (używane i niewykorzystane),
+   achievement points, animus masteries.
+4. **Progression** — questy, imbuementy, blessingi, gemy (Lesser / Regular
+   / Greater), prey slot, charm expansion.
+5. **Cosmetics & assets** — store outfity, mounty, itemy, hirelingi, gold
+   i Tibia Coins.
+
+Wartość kategorię dodajemy z wagami z `valuation_rules` — tabeli w bazie
+danej, którą admin może edytować bez redeploy.
+
+## Walidacja vs rzeczywistość
+
+Po zakończeniu aukcji (`status = 'finished'`) porównujemy `estimated_value`
+z `final_price`. Różnica trafia do **modułu kalibracji** (T57):
+
+- Jeśli wycena jest regularnie za niska → podnosimy wagi w
+  `valuation_rules` dla podobnych postaci.
+- Jeśli za wysoka → obniżamy.
+
+Dane kalibracji są widoczne na `/bazaar/statistics` (T58) jako Recharts
+wykres z trendem błędu w czasie.
+
+## Przykład
+
+Dla postaci **Knight lvl 350, EU, Open PvP**:
+
+| Składnik | Wartość |
+| --- | ---: |
+| Base (lvl 350 EK) | 8 000 TC |
+| Skills (Magic 110, Axe 130, etc.) | 5 200 TC |
+| Boss points (150) | 2 100 TC |
+| Outfits (15 store) | 1 800 TC |
+| Mounts (3 store) | 600 TC |
+| Imbuements (8 powerful, 3 epic) | 1 400 TC |
+| Gold (10k) | 200 TC |
+| **Sum** | **19 300 TC** |
+
+To jest `estimated_value`. Final price (po licytacji) zwykle mieści się
+w ±15% — i właśnie tę rozbieżność minimalizuje nasz kalibrator.
+
+## Co NIE wchodzi do wyceny
+
+- **Tibia Coins włożone w postać** — `tc_invested` to info, nie wartość.
+  TC mają płynny kurs, a my celowo trzymamy się stałej waluty.
+- **Outfity/mounty „z festiwalu"** — te są nie do zweryfikowania w
+  publicznych danych Tibia API.
+- **Charakter znajomości** — modna postać z dużą gildią nie ma wpływu na
+  algorytm (celowo!).
+
+## Dlaczego to ważne
+
+Algorytm nie ma ambicji zastąpić Twojego osądu — ma dać Ci **startowy
+punkt**. Zawsze możesz wycenić ręcznie w `/workspace` i porównać z
+`estimated_value`. Jeśli robisz to regularnie, pomagasz nam kalibrować
+reguły — dzięki za to!

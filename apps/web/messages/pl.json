@@ -1796,14 +1796,6 @@
             "auctionLoadPlaceholder": "Ładowanie z aukcji #{id} — pełna integracja z Bazarem dostępna w T37."
         }
     },
-    "Reference": {
-        "title": "Referencje",
-        "items": "Przedmioty",
-        "imbuements": "Imbuements",
-        "worlds": "Światy",
-        "outfits": "Outfits",
-        "mounts": "Mounts"
-    },
     "Breadcrumb": {
         "aria": "Okruszki nawigacji",
         "home": "Strona główna",
@@ -1931,6 +1923,174 @@
                 "goldRange": "Złoto: ≥ 0",
                 "storeRange": "{label}: ≥ 0"
             }
+        }
+    },
+    "Bosses": {
+        "title": "Bossy",
+        "list": {
+            "pageTitle": "Bossy dnia",
+            "pageDescription": "Lista bossów, których możesz dziś pokonać — TibiaData /v4/boostablebosses, codziennie odświeżana.",
+            "boostedTitle": "Aktualnie boostowany boss",
+            "boostedDescription": "Boosted boss ma wyższy współczynnik dropu łupów. Warto go szukać w pierwszej kolejności.",
+            "detailsLabel": "Szczegóły",
+            "featuredLabel": "Wyróżniony",
+            "emptyTitle": "Brak bossów do wyświetlenia",
+            "emptyDescription": "TibiaData nie zwróciło listy boostable bossów. Spróbuj ponownie za kilka minut.",
+            "gridAria": "Lista boostable bossów"
+        },
+        "detail": {
+            "pageTitle": "{name} — Boss",
+            "pageFallbackTitle": "Boss",
+            "pageDescription": "Szczegóły bossa {name} — statystyki, loot i najlepsze taktyki.",
+            "backLabel": "Wróć do listy bossów",
+            "statsHeading": "Statystyki bossa",
+            "hpLabel": "HP",
+            "expLabel": "Doświadczenie",
+            "summonManaLabel": "Mana do przyzwania",
+            "convinceManaLabel": "Mana do przekonania",
+            "behaviourTitle": "Zachowanie",
+            "lootTitle": "Możliwy łup",
+            "strongTitle": "Silny przeciw",
+            "weakTitle": "Słaby przeciw"
+        }
+    },
+    "Reference": {
+        "title": "Referencje",
+        "items": "Przedmioty",
+        "imbuements": "Imbuements",
+        "worlds": "Światy",
+        "outfits": "Outfits",
+        "mounts": "Mounts",
+        "index": {
+            "pageTitle": "Referencje Tibii",
+            "pageDescription": "Przeglądaj przedmioty, światy, zaklęcia, outfity i mounty — pełna baza danych Tibii w jednym miejscu.",
+            "countLabel": "pozycji",
+            "categories": {
+                "items": {
+                    "title": "Przedmioty",
+                    "description": "Wyszukuj przedmioty po nazwie PL/EN, sprawdzaj cenę rynkową i dostępność w sklepie."
+                },
+                "worlds": {
+                    "title": "Światy",
+                    "description": "Lista wszystkich światów z regionami EU/NA/BR, trybem PvP i BattlEye."
+                },
+                "spells": {
+                    "title": "Zaklęcia",
+                    "description": "Zaklęcia instant i rune z poziomem, maną i ceną."
+                },
+                "outfits": {
+                    "title": "Outfity",
+                    "description": "Galeria outfitów z oznaczeniami sklepowymi i rzadkimi."
+                },
+                "mounts": {
+                    "title": "Mounty",
+                    "description": "Galeria mountów z oznaczeniami sklepowymi i rzadkimi."
+                }
+            }
+        },
+        "items": {
+            "pageTitle": "Przedmioty",
+            "pageDescription": "Pełna baza przedmiotów Tibii — nazwy PL/EN, cena rynkowa, oznaczenia store i rare.",
+            "searchLabel": "Szukaj przedmiotu",
+            "searchPlaceholder": "np. Ferumbras, demon, sword…",
+            "resultsLabel": "Wyniki: {count}",
+            "gridAria": "Lista przedmiotów",
+            "emptyTitle": "Brak wyników",
+            "emptyDescription": "Spróbuj innej nazwy (min. 2 znaki) lub wyczyść filtry.",
+            "storeLabel": "Sklep",
+            "rareLabel": "Rare",
+            "prevLabel": "Poprzednia",
+            "nextLabel": "Następna",
+            "pageOfLabel": "Strona {page} z {totalPages}",
+            "paginationAria": "Paginacja"
+        },
+        "worlds": {
+            "pageTitle": "Światy",
+            "pageDescription": "Lista wszystkich światów Tibii zgrupowana po regionie (EU / NA / BR), z trybem PvP i statusem BattlEye.",
+            "emptyTitle": "Brak światów",
+            "emptyDescription": "Nie udało się pobrać listy światów z bazy danych ani TibiaData.",
+            "resultsLabel": "Łącznie: {count}",
+            "pvpLabel": "PvP",
+            "battleyeLabel": "BattlEye",
+            "retroLabel": "Retro",
+            "offlineLabel": "Offline",
+            "protectedLabel": "Chroniony",
+            "protectedPartialLabel": "Częściowo chroniony",
+            "unprotectedLabel": "Niechroniony",
+            "regionEmpty": "Brak światów w tym regionie",
+            "regions": {
+                "EU": { "title": "Europa", "description": "Serwery europejskie — najniższe pingi dla graczy z Europy." },
+                "NA": { "title": "Ameryka Północna", "description": "Serwery dla graczy z USA, Kanady i Meksy." },
+                "BR": { "title": "Brazylia", "description": "Serwery dla graczy z Brazylii i Ameryki Południowej." }
+            }
+        },
+        "spells": {
+            "pageTitle": "Zaklęcia",
+            "pageDescription": "Lista wszystkich zaklęć (instant i rune) z poziomem, maną i ceną.",
+            "emptyTitle": "Brak zaklęć",
+            "emptyDescription": "TibiaData nie zwróciło listy zaklęć. Spróbuj ponownie za kilka minut.",
+            "resultsLabel": "Wyniki: {count}",
+            "typeLabel": "Typ",
+            "typeAll": "Wszystkie",
+            "typeInstant": "Instant",
+            "typeRune": "Rune",
+            "levelLabel": "Poziom",
+            "manaLabel": "Mana",
+            "priceLabel": "Cena",
+            "premiumLabel": "Premium",
+            "gridAria": "Lista zaklęć"
+        },
+        "outfits": {
+            "pageTitle": "Outfity",
+            "pageDescription": "Galeria outfitów z oznaczeniami ze sklepu i rzadkich (rare).",
+            "emptyTitle": "Brak outfitów",
+            "emptyDescription": "Baza danych nie zawiera outfitów. Sprawdź później.",
+            "resultsLabel": "Wyniki: {count}",
+            "storeLabel": "Sklep",
+            "rareLabel": "Rare",
+            "gridAria": "Lista outfitów",
+            "prevLabel": "Poprzednia",
+            "nextLabel": "Następna",
+            "pageOfLabel": "Strona {page} z {totalPages}",
+            "paginationAria": "Paginacja"
+        },
+        "mounts": {
+            "pageTitle": "Mounty",
+            "pageDescription": "Galeria mountów z oznaczeniami ze sklepu i rzadkich (rare).",
+            "emptyTitle": "Brak mountów",
+            "emptyDescription": "Baza danych nie zawiera mountów. Sprawdź później.",
+            "resultsLabel": "Wyniki: {count}",
+            "storeLabel": "Sklep",
+            "rareLabel": "Rare",
+            "gridAria": "Lista mountów",
+            "prevLabel": "Poprzednia",
+            "nextLabel": "Następna",
+            "pageOfLabel": "Strona {page} z {totalPages}",
+            "paginationAria": "Paginacja"
+        }
+    },
+    "Blog": {
+        "title": "Blog",
+        "list": {
+            "pageTitle": "Blog Tibians",
+            "pageDescription": "Aktualizacje, tutoriale i głębokie analizy Tibii — pisane przez zespół Tibians.",
+            "rssTitle": "Tibians — Blog",
+            "rssDescription": "Najnowsze posty z bloga Tibians — kalkulatory, wycena postaci i Char Bazaar.",
+            "resultsLabel": "Liczba postów: {count}",
+            "emptyTitle": "Brak postów",
+            "emptyDescription": "W tym locale nie ma jeszcze żadnych postów. Wróć wkrótce!",
+            "gridAria": "Lista postów bloga",
+            "readMoreLabel": "Czytaj dalej",
+            "tagsLabel": "Tagi posta"
+        },
+        "detail": {
+            "pageTitle": "{title} — Blog Tibians",
+            "pageFallbackTitle": "Post nie znaleziony",
+            "pageFallbackDescription": "Ten post nie istnieje lub został usunięty.",
+            "pageDescription": "{title} — artykuł na blogu Tibians.",
+            "blogTitle": "Blog",
+            "backLabel": "Wróć do listy postów",
+            "notFoundTitle": "Nie znaleziono posta"
         }
     }
 }

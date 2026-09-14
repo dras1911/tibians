@@ -1,0 +1,78 @@
+---
+title: "How character valuation works on Tibians"
+date: "2026-09-12"
+author: "The Tibians Team"
+excerpt: "A deep dive into the algorithm that estimates character value on the Char Bazaar. Valuation components, post-auction calibration and practical examples."
+tags: ["valuation", "technical", "bazaar"]
+locale: "en"
+---
+
+# How character valuation works on Tibians
+
+Character valuation (`estimated_value`) is not magic — it's an **algorithm
+with explicit rules**, regularly calibrated against real finished auctions.
+In this post we'll show how it works under the hood.
+
+## The valuation components
+
+Every `CharacterSnapshot` has five value categories:
+
+1. **Base** — the starting point, depending on level and vocation promotion.
+2. **Skills** — total of magic level + combat skills + distance. We also
+   count fishing separately for EK because it matters for rare builds.
+3. **Features** — boss points, charm points (used and unused), achievement
+   points, animus masteries.
+4. **Progression** — quests, imbuements, blessings, gems (Lesser / Regular
+   / Greater), prey slot, charm expansion.
+5. **Cosmetics & assets** — store outfits, mounts, items, hirelings, gold
+   and Tibia Coins.
+
+We add categories with weights from `valuation_rules` — a database table
+that admins can edit without a redeploy.
+
+## Validation against reality
+
+After an auction ends (`status = 'finished'`) we compare `estimated_value`
+with `final_price`. The gap goes to our **calibration module** (T57):
+
+- If we regularly undervalue similar characters → we raise the weights
+  in `valuation_rules` for that category.
+- If we overvalue → we lower them.
+
+Calibration data is visible at `/bazaar/statistics` (T58) as a Recharts
+trend chart over time.
+
+## Example
+
+For a **Knight lvl 350, EU, Open PvP**:
+
+| Component | Value |
+| --- | ---: |
+| Base (lvl 350 EK) | 8 000 TC |
+| Skills (Magic 110, Axe 130, etc.) | 5 200 TC |
+| Boss points (150) | 2 100 TC |
+| Outfits (15 store) | 1 800 TC |
+| Mounts (3 store) | 600 TC |
+| Imbuements (8 powerful, 3 epic) | 1 400 TC |
+| Gold (10k) | 200 TC |
+| **Sum** | **19 300 TC** |
+
+That's `estimated_value`. The final price (after bidding) lands within
+±15% most of the time — and that's exactly the gap our calibrator
+minimises.
+
+## What is NOT part of the valuation
+
+- **Tibia Coins invested in the character** — `tc_invested` is info, not
+  value. TC has a floating rate, and we deliberately stick to a stable unit.
+- **Outfits/mounts „from festivals"** — those are unverifiable in
+  public Tibia API data.
+- **Social standing** — a popular character with a big guild has no
+  impact on the algorithm (on purpose!).
+
+## Why this matters
+
+The algorithm has no ambition to replace your judgement — it gives you
+a **starting point**. You can always value by hand in `/workspace` and
+compare against `estimated_value`. If you do this regularly, you're
+helping us calibrate the rules — thanks!
