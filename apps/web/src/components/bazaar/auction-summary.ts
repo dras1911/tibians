@@ -74,6 +74,8 @@ export interface AuctionSummary {
   questsCompleted: number;
   questsTotal: number;
   bossPoints: number;
+  achievementPoints: number;
+  animusMasteries: number;
 
   // Heurystyczne flagi
   hasSoulWar: boolean;
@@ -141,6 +143,8 @@ export function toAuctionSummary(row: AuctionRow): AuctionSummary {
     questsCompleted: row.questsCompleted,
     questsTotal: row.questsTotal,
     bossPoints: row.bossPoints,
+    achievementPoints: row.achievementPoints,
+    animusMasteries: row.animusMasteries,
 
     hasSoulWar: row.hasSoulWar,
     hasPrimalOrdeal: row.hasPrimalOrdeal,

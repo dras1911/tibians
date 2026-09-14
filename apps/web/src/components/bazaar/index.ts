@@ -69,3 +69,17 @@ export {
   VIRTUALIZE_THRESHOLD,
   type VirtualizedAuctionGridProps,
 } from "./virtualized-grid";
+// T51 — Porównanie 2 aukcji (side-by-side + picker)
+export {
+  ComparePicker,
+  type ComparePickerProps,
+} from "./compare-picker";
+export {
+  CompareTable,
+  type CompareTableProps,
+} from "./compare-table";
+// T52 — Podobne aukcje na detalu
+export {
+  SimilarAuctions,
+  type SimilarAuctionsProps,
+} from "./similar-auctions";

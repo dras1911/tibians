@@ -34,6 +34,42 @@
             "closeAria": "Zamknij menu"
         }
     },
+    "Home": {
+        "title": "Kupuj i sprzedawaj postacie na oficjalnym Tibijskim Bazarze Postaci!",
+        "subtitle": "Świeże dane, szacowana wartość i porównania dla całego Char Bazaar.",
+        "statsLabel": "aktywnych aukcji",
+        "freshness": {
+            "updated": "aktualizowane {minutes, plural, =0 {przed chwilą} one {# minutę temu} few {# minuty temu} many {# minut temu} other {# minut temu}}",
+            "neverScraped": "brak danych o ostatnim scrape — wróć za kilka minut",
+            "scrapeDetails": "Ostatni pełny scrape znalazł {found} aukcji (zarchiwizował {archived}).",
+            "liveDot": "na żywo"
+        },
+        "heroCta": "Przeglądaj aukcje →",
+        "heroCtaHint": "(domyślny filtr: Kończące się najwcześniej)",
+        "sections": {
+            "endingSoon": {
+                "title": "Kończące się w ciągu godziny",
+                "description": "Aukcje z najkrótszym czasem do końca — łap okazje zanim ktoś je przebije.",
+                "viewAll": "Wszystkie kończące się"
+            },
+            "recentlyUpdated": {
+                "title": "Ostatnio zaktualizowane",
+                "description": "Aukcje najświeżej zaktualizowane przez scraper (nowe oferty lub korekty).",
+                "viewAll": "Cała lista"
+            },
+            "crossSell": {
+                "title": "Najpopularniejsze kalkulatory",
+                "description": "Planuj trening, wyceniaj postać i analizuj wyniki — wszystko za darmo.",
+                "viewAll": "Wszystkie kalkulatory"
+            }
+        },
+        "empty": {
+            "endingSoonTitle": "Żadna aukcja nie kończy się w ciągu godziny",
+            "endingSoonDescription": "Wszystkie aktywne aukcje mają jeszcze ponad 60 minut do końca.",
+            "recentTitle": "Brak świeżych aktualizacji",
+            "recentDescription": "Scraper nie zaktualizował jeszcze żadnej aukcji — wróć za kilka minut."
+        }
+    },
     "Bazaar": {
         "title": "Bazaar",
         "description": "Przeglądaj aktualne aukcje postaci Tibia.",
@@ -457,6 +493,71 @@
             "cta": "🔬 Analizuj tę postać w Workspace →",
             "ctaHint": "Pełny snapshot, 7 paneli, scenariusze what-if",
             "workspacePrefilled": "Snapshot tej aukcji ({name}, lvl {level}) zostanie załadowany do Workspace."
+        },
+        "compare": {
+            "pageTitle": "Porównaj aukcje",
+            "pageDescription": "Porównanie dwóch aukcji Char Bazaar side-by-side z kolumną Przewaga i podświetleniem różnic powyżej 10%.",
+            "emptyTitle": "Wybierz 2 aukcje do porównania",
+            "emptyDescription": "Otwórz listę aukcji, zaznacz dwie postaci checkboxem ⚖ Porównaj i kliknij przycisk na dole ekranu.",
+            "emptyCta": "Przeglądaj aukcje",
+            "singleTitle": "Wybierz jeszcze jedną aukcję",
+            "singleDescription": "Pierwsza aukcja wybrana. Dodaj drugą, aby zobaczyć porównanie side-by-side.",
+            "pickerLabel": "Druga aukcja",
+            "pickerPlaceholder": "Wklej ID aukcji lub wybierz z listy",
+            "pickerInputLabel": "ID aukcji",
+            "pickerDropdownLabel": "Ostatnie aukcje",
+            "pickerSubmit": "Porównaj",
+            "pickerClear": "Wyczyść",
+            "remove": "Usuń z porównania",
+            "changeAuction": "Zmień aukcję",
+            "rows": {
+                "metric": "Metryka",
+                "level": "Level",
+                "vocation": "Vocation",
+                "world": "Świat",
+                "region": "Region",
+                "pvp": "PvP",
+                "bid": "Aktualna oferta",
+                "estimatedValue": "Szacowana wartość",
+                "pricePerLevel": "Cena / level",
+                "skillMagic": "Magic",
+                "skillClub": "Club",
+                "skillFist": "Fist",
+                "skillSword": "Sword",
+                "skillAxe": "Axe",
+                "skillDistance": "Distance",
+                "skillShielding": "Shielding",
+                "skillFishing": "Fishing",
+                "charmPoints": "Charm Points",
+                "bossPoints": "Boss Points",
+                "quests": "Questy",
+                "imbuements": "Imbuementy",
+                "achievementPoints": "Achievement Points",
+                "animusMasteries": "Animus Masteries",
+                "goldTotal": "Gold (bank+inventory+depot)",
+                "gems": "Gemy (L-R-G)",
+                "storeOutfits": "Store Outfits",
+                "storeMounts": "Store Mounty",
+                "storeItems": "Store Items",
+                "hirelings": "Hirelingi"
+            },
+            "advantage": {
+                "left": "← {name}",
+                "right": "{name} →",
+                "tie": "="
+            },
+            "premiumHint": "Porównanie do 4 aukcji + eksport CSV dostępne w Premium",
+            "notFoundTitle": "Nie znaleziono aukcji",
+            "notFoundDescription": "Co najmniej jedna z aukcji ({ids}) nie istnieje lub została zakończona.",
+            "notFoundCta": "Wróć do listy"
+        },
+        "similar": {
+            "sectionTitle": "Podobne aukcje",
+            "sectionDescription": "Te same vocation i PvP, level ±50, oferta ±30% — wykluczając bieżącą aukcję.",
+            "emptyTitle": "Brak podobnych aukcji",
+            "emptyDescription": "Aukcje spełniające te filtry pojawią się tutaj, gdy tylko pojawią się na Bazaarze.",
+            "viewAll": "Zobacz wszystkie podobne",
+            "limitNotice": "Pokazujemy {count} z {total} pasujących aukcji."
         }
     },
     "Calculators": {

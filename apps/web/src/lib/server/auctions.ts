@@ -20,11 +20,11 @@
 // Server-only — importowane wyłącznie przez route handlers (Node runtime).
 // NIE importuj tego pliku z komponentów klienta.
 
-import { and, asc, desc, eq, gte, lte, sql, SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gte, lte, ne, sql, SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@tibians/db";
-import { auctions, worlds } from "@tibians/db/schema";
+import { auctions, scrapeRuns, worlds } from "@tibians/db/schema";
 import {
   auctionFiltersSchema,
   type AuctionFilters,
@@ -951,6 +951,191 @@ export async function getSuggestionCounts(
     }));
 
   return suggestions;
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// T51 — Recent auctions (top 10 najnowszych) — picker do Compare
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Top `limit` najnowszych aktywnych aukcji (sort po `scraped_at DESC`).
+ *
+ * Używane przez `ComparePicker` (T51) jako dropdown alternatywy dla
+ * ręcznego wpisania ID. arch §5 krok 6 — "input ID lub dropdown z
+ * top-10 najnowszych".
+ *
+ * Wydajność: index `idx_au_active_end` / partial indexes na `status='active'`,
+ * a `scraped_at DESC` wymaga pojedynczego sort po denormalizowanej kolumnie.
+ * ~3-5 ms na 2500 aukcjach.
+ */
+export async function getRecentAuctions(limit: number): Promise<AuctionRow[]> {
+  const rows = await db
+    .select(AUCTION_PROJECTION)
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(eq(auctions.status, "active"))
+    .orderBy(desc(auctions.scrapedAt))
+    .limit(limit);
+
+  return rows as unknown as AuctionRow[];
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// T52 — Similar auctions (na detalu, plan task 52, arch §5 krok 7)
+// ───────────────────────────────────────────────────────────────────────
+
+export interface SimilarAuctionsOptions {
+  /** Filtr ±level (default 50). Aukcje poza zakresem odrzucane. */
+  levelRange?: number;
+  /** Filtr ±procent bazu od `excludeAuction.bid` (default 0.3 = ±30%). */
+  bidPctRange?: number;
+  /** Ile aukcji zwrócić (default 4, max 12). */
+  limit?: number;
+}
+
+/**
+ * Podobne aukcje do danej — wykluczając ją samą. Heurystyka prosta
+ * (plan task 52 MUST NOT do: "Nie rób ML/embeddings"):
+ *   - `vocationBase` = ten sam bazowy zawód (Knight ↔ Elite Knight itd.)
+ *   - `worlds.pvpType` = ten sam tryb PvP
+ *   - `level BETWEEN (level - levelRange) AND (level + levelRange)`
+ *   - `bid BETWEEN (bid * (1 - bidPctRange)) AND (bid * (1 + bidPctRange))`
+ *   - status='active'
+ *   - exclude obecne `auctionId`
+ *
+ * Sort: bid ASC (najtańsze na górze — najbardziej atrakcyjne oferty).
+ *
+ * Wydajność (arch §7.1 pkt 1): wszystkie filtry to denormalizowane
+ * kolumny. Index `idx_au_filter_main` (voc+level+bid) łapie 3 z 4
+ * warunków WHERE → ~3-8 ms na 2500 aukcjach.
+ */
+export async function getSimilarAuctions(
+  excludeAuction: AuctionRow,
+  options: SimilarAuctionsOptions = {},
+): Promise<AuctionRow[]> {
+  const levelRange = options.levelRange ?? 50;
+  const bidPctRange = options.bidPctRange ?? 0.3;
+  const limit = Math.min(options.limit ?? 4, 12);
+
+  // Dolny bound bid: floor((1 - pct) * bid); górny: ceil((1 + pct) * bid).
+  // Math.max(0, …) chroni przed ujemnymi dla bid=0 (teoretyczny edge case).
+  const bidMin = Math.max(0, Math.floor(excludeAuction.bid * (1 - bidPctRange)));
+  const bidMax = Math.ceil(excludeAuction.bid * (1 + bidPctRange));
+
+  const rows = await db
+    .select(AUCTION_PROJECTION)
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(
+      and(
+        eq(auctions.status, "active"),
+        ne(auctions.auctionId, excludeAuction.auctionId),
+        eq(auctions.vocationBase, excludeAuction.vocationBase),
+        eq(worlds.pvpType, excludeAuction.worldPvpType),
+        gte(auctions.level, Math.max(8, excludeAuction.level - levelRange)),
+        lte(
+          auctions.level,
+          excludeAuction.level + levelRange,
+        ),
+        gte(auctions.bid, bidMin),
+        lte(auctions.bid, bidMax),
+      ),
+    )
+    .orderBy(asc(auctions.bid))
+    .limit(limit);
+
+  return rows as unknown as AuctionRow[];
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// T53 — Recently updated (home dashboard, plan task 53)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Top `limit` aukcji posortowanych po `last_seen_at DESC` — aukcje
+ * najświeżej zaktualizowane przez scraper.
+ *
+ * Używane przez home dashboard (T53) — sekcja "Ostatnio zaktualizowane".
+ *
+ * Implementacja (arch §7.1): `last_seen_at` jest denormalizowaną
+ * kolumną z defaultNow() — partial index `idx_au_active_end` łapie
+ * status='active' szybko, a sort po timestamp jest Index Scan.
+ */
+export async function getRecentlyUpdated(limit: number): Promise<AuctionRow[]> {
+  const rows = await db
+    .select(AUCTION_PROJECTION)
+    .from(auctions)
+    .innerJoin(worlds, eq(auctions.worldId, worlds.id))
+    .where(eq(auctions.status, "active"))
+    .orderBy(desc(auctions.lastSeenAt))
+    .limit(limit);
+
+  return rows as unknown as AuctionRow[];
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// T53 — Home freshness (scrape_runs, plan task 53 MUST DO: real data)
+// ───────────────────────────────────────────────────────────────────────
+
+export interface HomeFreshness {
+  /** ISO datetime ostatniego udanego pełnego scrapu (`status='success'`). */
+  lastSuccessfulScrapeAt: string | null;
+  /** Ile minut temu (null jeśli brak danych). */
+  minutesSinceLastScrape: number | null;
+  /** Ile aukcji znaleziono w ostatnim scrape. */
+  auctionsLastFound: number;
+  /** Ile aukcji zarchiwizowano (zakończonych). */
+  auctionsLastArchived: number;
+}
+
+/**
+ * Czasy ostatniego udanego pełnego scrapu — licznik "aktualizowane
+ * X min temu" na home (T53, arch §5 krok 1: "dowód świeżości").
+ *
+ * Źródło: tabela `scrape_runs` (packages/db/src/schema/ops.ts) —
+ * zapisywana przez scheduler w apps/scraper/src/scheduler.ts.
+ * Wybieramy najnowszy rekord z `run_type='full'` i `status='success'`.
+ */
+export async function getHomeFreshness(): Promise<HomeFreshness> {
+  const rows = await db
+    .select({
+      finishedAt: scrapeRuns.finishedAt,
+      auctionsFound: scrapeRuns.auctionsFound,
+      auctionsArch: scrapeRuns.auctionsArch,
+      startedAt: scrapeRuns.startedAt,
+    })
+    .from(scrapeRuns)
+    .where(
+      and(
+        eq(scrapeRuns.runType, "full"),
+        eq(scrapeRuns.status, "success"),
+      ),
+    )
+    .orderBy(desc(scrapeRuns.startedAt))
+    .limit(1);
+
+  const latest = rows[0];
+
+  if (!latest || latest.finishedAt === null) {
+    return {
+      lastSuccessfulScrapeAt: null,
+      minutesSinceLastScrape: null,
+      auctionsLastFound: 0,
+      auctionsLastArchived: 0,
+    };
+  }
+
+  const minutesSince = Math.max(
+    0,
+    Math.floor((Date.now() - latest.finishedAt.getTime()) / 60_000),
+  );
+
+  return {
+    lastSuccessfulScrapeAt: latest.finishedAt.toISOString(),
+    minutesSinceLastScrape: minutesSince,
+    auctionsLastFound: latest.auctionsFound,
+    auctionsLastArchived: latest.auctionsArch,
+  };
 }
 
 // Wyłączony nie używany import — sql alias() do późniejszego rozszerzenia relacji

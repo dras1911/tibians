@@ -34,6 +34,42 @@
             "closeAria": "Close menu"
         }
     },
+    "Home": {
+        "title": "Buy and sell characters on the official Tibia Char Bazaar!",
+        "subtitle": "Fresh data, valuation and side-by-side comparisons for the entire Char Bazaar.",
+        "statsLabel": "active auctions",
+        "freshness": {
+            "updated": "updated {minutes, plural, =0 {just now} one {# minute ago} other {# minutes ago}}",
+            "neverScraped": "no scrape data yet — check back in a few minutes",
+            "scrapeDetails": "The last full scrape found {found} auctions (archived {archived}).",
+            "liveDot": "live"
+        },
+        "heroCta": "Browse auctions →",
+        "heroCtaHint": "(default filter: Ending soonest)",
+        "sections": {
+            "endingSoon": {
+                "title": "Ending within an hour",
+                "description": "Auctions with the least time remaining — grab the deal before someone outbids you.",
+                "viewAll": "All ending soon"
+            },
+            "recentlyUpdated": {
+                "title": "Recently updated",
+                "description": "Auctions most recently refreshed by the scraper (new bids or corrections).",
+                "viewAll": "Full list"
+            },
+            "crossSell": {
+                "title": "Most popular calculators",
+                "description": "Plan training, value your character and analyse results — all for free.",
+                "viewAll": "All calculators"
+            }
+        },
+        "empty": {
+            "endingSoonTitle": "No auction ends within an hour",
+            "endingSoonDescription": "All active auctions still have over 60 minutes remaining.",
+            "recentTitle": "No fresh updates",
+            "recentDescription": "The scraper has not refreshed any auction yet — check back in a few minutes."
+        }
+    },
     "Bazaar": {
         "title": "Bazaar",
         "description": "Browse current Tibia character auctions.",
@@ -457,6 +493,71 @@
             "cta": "🔬 Analyze this character in Workspace →",
             "ctaHint": "Full snapshot, 7 panels, what-if scenarios",
             "workspacePrefilled": "Snapshot of this auction ({name}, lvl {level}) will be loaded into Workspace."
+        },
+        "compare": {
+            "pageTitle": "Compare auctions",
+            "pageDescription": "Side-by-side comparison of two Char Bazaar auctions with an Advantage column and rows highlighted when differences exceed 10%.",
+            "emptyTitle": "Pick 2 auctions to compare",
+            "emptyDescription": "Open the auctions list, tick two characters with the ⚖ Compare checkbox and click the bar at the bottom of the screen.",
+            "emptyCta": "Browse auctions",
+            "singleTitle": "Pick one more auction",
+            "singleDescription": "First auction selected. Add the second one to see the side-by-side comparison.",
+            "pickerLabel": "Second auction",
+            "pickerPlaceholder": "Paste auction ID or pick from the list",
+            "pickerInputLabel": "Auction ID",
+            "pickerDropdownLabel": "Recent auctions",
+            "pickerSubmit": "Compare",
+            "pickerClear": "Clear",
+            "remove": "Remove from compare",
+            "changeAuction": "Change auction",
+            "rows": {
+                "metric": "Metric",
+                "level": "Level",
+                "vocation": "Vocation",
+                "world": "World",
+                "region": "Region",
+                "pvp": "PvP",
+                "bid": "Current bid",
+                "estimatedValue": "Estimated value",
+                "pricePerLevel": "Price / level",
+                "skillMagic": "Magic",
+                "skillClub": "Club",
+                "skillFist": "Fist",
+                "skillSword": "Sword",
+                "skillAxe": "Axe",
+                "skillDistance": "Distance",
+                "skillShielding": "Shielding",
+                "skillFishing": "Fishing",
+                "charmPoints": "Charm Points",
+                "bossPoints": "Boss Points",
+                "quests": "Quests",
+                "imbuements": "Imbuements",
+                "achievementPoints": "Achievement Points",
+                "animusMasteries": "Animus Masteries",
+                "goldTotal": "Gold (bank+inventory+depot)",
+                "gems": "Gems (L-R-G)",
+                "storeOutfits": "Store Outfits",
+                "storeMounts": "Store Mounts",
+                "storeItems": "Store Items",
+                "hirelings": "Hirelings"
+            },
+            "advantage": {
+                "left": "← {name}",
+                "right": "{name} →",
+                "tie": "="
+            },
+            "premiumHint": "Compare up to 4 auctions + CSV export is available with Premium",
+            "notFoundTitle": "Auction not found",
+            "notFoundDescription": "At least one of the auctions ({ids}) does not exist or has ended.",
+            "notFoundCta": "Back to list"
+        },
+        "similar": {
+            "sectionTitle": "Similar auctions",
+            "sectionDescription": "Same vocation and PvP, level ±50, bid ±30% — excluding the current auction.",
+            "emptyTitle": "No similar auctions",
+            "emptyDescription": "Auctions matching these filters will appear here as soon as they hit the Bazaar.",
+            "viewAll": "View all similar",
+            "limitNotice": "Showing {count} of {total} matching auctions."
         }
     },
     "Calculators": {

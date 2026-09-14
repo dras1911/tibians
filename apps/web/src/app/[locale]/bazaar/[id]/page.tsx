@@ -41,8 +41,11 @@ import { AuctionHero } from "@/components/bazaar/auction-hero";
 import { AuctionDetailTabs } from "@/components/bazaar/auction-detail-tabs";
 import { BidHistoryChart } from "@/components/bazaar/bid-history-chart";
 import { EstimatedValue } from "@/components/bazaar/estimated-value";
+import { SimilarAuctions } from "@/components/bazaar/similar-auctions";
 import { Link } from "@/i18n/routing";
 import { getAuctionDetail } from "@/lib/server/auction-detail";
+import { getAuctionById, getSimilarAuctions } from "@/lib/server/auctions";
+import { toAuctionSummary } from "@/components/bazaar/auction-summary";
 import { routing, type Locale } from "@/i18n/routing";
 
 const SITE_URL =
@@ -195,6 +198,15 @@ export default async function AuctionDetailPage({
   const a = detail.auction;
   const canonical = `${SITE_URL}/${locale}/bazaar/${id}`;
 
+  // Sekcja "Podobne aukcje" (T52) — fetch AuctionRow do getSimilarAuctions
+  // oraz 4 kart AuctionSummary do renderingu.
+  const currentRow = await getAuctionById(BigInt(id));
+  const similarRows = currentRow !== null
+    ? await getSimilarAuctions(currentRow, { limit: 4 })
+    : [];
+  const similarSummaries = similarRows.map(toAuctionSummary);
+  const currentSummary = currentRow !== null ? toAuctionSummary(currentRow) : null;
+
   // i18n — BreadcrumbList używa tytułu sekcji "Bazaar" (np. "Bazaar" / "Bazaar").
   // `Bazaar.detail` namespace zostawiamy klientowi (AuctionDetailTabs + inne
   // client komponenty), tu tylko pobieramy root namespace dla breadcrumbów.
@@ -281,6 +293,16 @@ export default async function AuctionDetailPage({
           auctionId={a.id}
         />
       </div>
+
+      {/* Sekcja "Podobne aukcje" (T52) — arch §5 krok 7 stopka */}
+      {currentSummary !== null ? (
+        <div className="mt-10">
+          <SimilarAuctions
+            currentAuction={currentSummary}
+            similar={similarSummaries}
+          />
+        </div>
+      ) : null}
 
       {/* JSON-LD Product + BreadcrumbList (SEO §4.3) */}
       <script
