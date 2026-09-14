@@ -16,6 +16,7 @@ export * from './calculator-config';
 export * from './valuation';
 export * from './ops';
 export * from './content';
+export * from './subscriptions';
 export * from './views';
 
 /**
@@ -29,6 +30,7 @@ import * as calculatorConfig from './calculator-config';
 import * as content from './content';
 import * as ops from './ops';
 import * as reference from './reference';
+import * as subscriptions from './subscriptions';
 import * as timeSeries from './time-series';
 import * as valuation from './valuation';
 import * as views from './views';
@@ -43,5 +45,6 @@ export const schema = {
   ...valuation,
   ...ops,
   ...content,
+  ...subscriptions,
   ...views,
 } as const;
