@@ -32,13 +32,14 @@
 
 import * as React from "react";
 import type { Metadata } from "next";
-import { Clock, RefreshCcw, Sparkles } from "lucide-react";
+import { RefreshCcw, Sparkles } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
 import {
   AuctionSection,
 } from "@/components/home/auction-section";
 import { CrossSellSection } from "@/components/home/cross-sell-section";
+import { EndingSoonSectionLive } from "@/components/home/ending-soon-section-live";
 import { HeroSection } from "@/components/home/hero-section";
 import { toAuctionSummaries } from "@/components/bazaar/auction-summary";
 import {
@@ -162,19 +163,15 @@ export default async function HomePage({
         freshness={freshness}
       />
 
-      {/* ── Sekcja "Kończące się w ciągu godziny" (4 karty) ───────────── */}
+      {/* ── Sekcja "Kończące się w ciągu godziny" — LIVE SSE (T59) ────── */}
       <div className="mt-12">
-        <AuctionSection
-          sectionId="ending-soon"
+        <EndingSoonSectionLive
+          initialAuctions={endingSoon}
           title={tHome("sections.endingSoon.title")}
           description={tHome("sections.endingSoon.description")}
-          icon={Clock}
-          auctions={endingSoon}
-          viewAllHref="/bazaar/ending-soon"
           viewAllLabel={tHome("sections.endingSoon.viewAll")}
           emptyTitle={tHome("empty.endingSoonTitle")}
           emptyDescription={tHome("empty.endingSoonDescription")}
-          maxItems={4}
         />
       </div>
 

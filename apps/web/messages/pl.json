@@ -68,6 +68,20 @@
             "endingSoonDescription": "Wszystkie aktywne aukcje mają jeszcze ponad 60 minut do końca.",
             "recentTitle": "Brak świeżych aktualizacji",
             "recentDescription": "Scraper nie zaktualizował jeszcze żadnej aukcji — wróć za kilka minut."
+        },
+        "live": {
+            "live": "LIVE",
+            "polling": "POLLING",
+            "connecting": "ŁĄCZENIE",
+            "error": "OFFLINE",
+            "tooltip": {
+                "live": "Dane aktualizowane na żywo przez SSE — nowe zakończenia pojawiają się w ciągu sekund.",
+                "polling": "Serwer SSE niedostępny — dane odświeżane co 30 sekund.",
+                "connecting": "Trwa nawiązywanie połączenia z serwerem live…",
+                "error": "Połączenie z serwerem live nie powiodło się — wyświetlamy ostatnie dane z cache."
+            },
+            "counter": "({formatted}) {count, plural, =0 {brak kończących się aukcji} one {# kończąca się aukcja} few {# kończące się aukcje} many {# kończących się aukcji} other {# kończących się aukcji}}",
+            "lastUpdate": "Ostatnia aktualizacja: {time}"
         }
     },
     "Bazaar": {
@@ -331,6 +345,19 @@
             "first": "Pierwsza",
             "last": "Ostatnia"
         },
+        "live": {
+            "live": "LIVE",
+            "polling": "POLLING",
+            "connecting": "ŁĄCZENIE",
+            "error": "OFFLINE",
+            "tooltip": {
+                "live": "Live przez SSE — dane aktualizowane w ciągu sekund.",
+                "polling": "Dane odświeżane co 30s (SSE niedostępne).",
+                "connecting": "Trwa nawiązywanie połączenia…",
+                "error": "Połączenie z serwerem live nie powiodło się."
+            },
+            "lastUpdate": "Ostatnia aktualizacja: {time}"
+        },
         "empty": {
             "title": "Brak aukcji dla wybranych filtrów",
             "description": "Nic nie znaleźliśmy przy tak wąskim zestawie filtrów. Spróbuj rozluźnić warunki — dokładne liczby po prawej pokazują ile aukcji pojawi się po danej zmianie.",
@@ -558,6 +585,19 @@
             "emptyDescription": "Aukcje spełniające te filtry pojawią się tutaj, gdy tylko pojawią się na Bazaarze.",
             "viewAll": "Zobacz wszystkie podobne",
             "limitNotice": "Pokazujemy {count} z {total} pasujących aukcji."
+        },
+        "endingSoon": {
+            "pageTitle": "Kończące się aukcje",
+            "pageDescription": "Lista aukcji Char Bazaar, które kończą się w ciągu godziny. Aktualizowana na żywo przez SSE — łap okazje zanim ktoś je przebije.",
+            "headerTitle": "🕒 Kończące się w ciągu godziny",
+            "auctionsCount": "{count, plural, =0 {Brak aukcji} one {# aukcja} few {# aukcje} many {# aukcji} other {# aukcji}}",
+            "liveBadge": "LIVE",
+            "pollingBadge": "POLLING",
+            "offlineBadge": "OFFLINE",
+            "lastUpdate": "Ostatnia aktualizacja: {time}",
+            "emptyTitle": "Brak aukcji kończących się w ciągu godziny",
+            "emptyDescription": "Wszystkie aktywne aukcje mają jeszcze ponad 60 minut do końca. Wróć za chwilę lub przeglądaj pełną listę.",
+            "emptyCta": "Przeglądaj wszystkie aukcje"
         }
     },
     "Calculators": {

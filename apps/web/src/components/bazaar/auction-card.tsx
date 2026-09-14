@@ -36,6 +36,7 @@ import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 import type { AuctionSummary } from "./auction-summary";
+import { LivePriceFlash } from "./live-price-flash";
 
 // ─────────────────────────────────────────────────────────────────────
 // URL outfitu TibiaWiki (arch §13 + T25) — fallback gdy DB nie ma
@@ -255,6 +256,13 @@ export interface AuctionCardProps {
   onCompareToggle?: (id: string, selected: boolean) => void;
   /** Czy aktualnie zaznaczona (kontrolowany checkbox). */
   isCompared?: boolean;
+  /**
+   * T56 — czy animować flash przy zmianie `bid` (plan task 56 "LivePriceFlash").
+   * Domyślnie `true` (czyli karta reaguje na live update z SSE / polling).
+   * Wyłącz `false` na listach statycznych (np. detail "Podobne aukcje",
+   * porównanie), gdzie bid się nie zmienia.
+   */
+  showLiveFlash?: boolean;
   className?: string;
 }
 
@@ -263,6 +271,7 @@ export function AuctionCard({
   mode = "active",
   onCompareToggle,
   isCompared = false,
+  showLiveFlash = true,
   className,
 }: AuctionCardProps) {
   const t = useTranslations("Bazaar.card");
@@ -465,7 +474,20 @@ export function AuctionCard({
               {bidLabel}
             </p>
             <p className="numeric mt-0.5 font-mono text-2xl font-bold tabular-nums text-foreground">
-              {formattedBid}{" "}
+              {/* T56 — LivePriceFlash: highlight bid przy zmianie (SSE/polling).
+                  Wyłączony w trybie "history" (finalPrice się nie zmienia).
+                  `displayPrice` jako klucz animacji — gdy SSE zwróci nowy bid,
+                  komponent wewnętrznie remountuje i animuje flash. */}
+              {isHistory || !showLiveFlash ? (
+                <>{formattedBid} </>
+              ) : (
+                <LivePriceFlash
+                  value={displayPrice}
+                  className="font-mono text-2xl font-bold"
+                >
+                  {formattedBid}
+                </LivePriceFlash>
+              )}
               <span className="text-xs font-medium text-muted-foreground">TC</span>
             </p>
           </div>

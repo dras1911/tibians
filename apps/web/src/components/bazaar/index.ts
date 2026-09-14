@@ -83,3 +83,5 @@ export {
   SimilarAuctions,
   type SimilarAuctionsProps,
 } from "./similar-auctions";
+// T55/T56 — LivePriceFlash: animacja flash przy zmianie bid (SSE/polling)
+export { LivePriceFlash, type LivePriceFlashProps } from "./live-price-flash";

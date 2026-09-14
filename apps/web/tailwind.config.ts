@@ -127,10 +127,31 @@ const config: Config = {
           from: { height: "var(--radix-accordion-content-height)" },
           to: { height: "0" },
         },
+        // T56 — flash przy zmianie bid (arch §6.4 pkt "non-distracting live").
+        // Subtelny highlight tła + skali, ~900 ms — znaczy "coś się zmieniło"
+        // ale nie rozprasza przy długim czytaniu listy.
+        "bazaar-flash": {
+          "0%": { backgroundColor: "transparent", transform: "scale(1)" },
+          "20%": {
+            backgroundColor: "color-mix(in oklch, var(--success) 18%, transparent)",
+            transform: "scale(1.04)",
+          },
+          "100%": {
+            backgroundColor: "transparent",
+            transform: "scale(1)",
+          },
+        },
+        // T56 — fade-out dla auto-remove aukcji zakończonych (5 s grace).
+        "bazaar-fade-out": {
+          from: { opacity: "1", transform: "translateY(0)" },
+          to: { opacity: "0", transform: "translateY(-8px)" },
+        },
       },
       animation: {
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
+        "bazaar-flash": "bazaar-flash 0.9s ease-out",
+        "bazaar-fade-out": "bazaar-fade-out 0.6s ease-in forwards",
       },
     },
   },

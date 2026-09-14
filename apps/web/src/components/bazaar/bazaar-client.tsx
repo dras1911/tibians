@@ -55,6 +55,7 @@ import {
   type FacetCounts,
 } from "./index";
 import { ActiveFiltersBar } from "./active-filters-bar";
+import { BazaarLiveIndicator } from "./bazaar-live-indicator";
 import { PresetDropdown } from "./preset-dropdown";
 import {
   EmptyResults,
@@ -317,7 +318,7 @@ function BazaarClientInner({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Top bar (toolbar + preset dropdown) ─────────────────────── */}
+      {/* ── Top bar (toolbar + preset dropdown + live indicator) ────── */}
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0 flex-1">
           <AuctionResultsToolbar
@@ -331,6 +332,7 @@ function BazaarClientInner({
           />
         </div>
         <div className="flex shrink-0 items-center gap-2">
+          <BazaarLiveIndicator />
           <PresetDropdown />
         </div>
       </div>

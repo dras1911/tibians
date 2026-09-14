@@ -68,6 +68,20 @@
             "endingSoonDescription": "All active auctions still have over 60 minutes remaining.",
             "recentTitle": "No fresh updates",
             "recentDescription": "The scraper has not refreshed any auction yet — check back in a few minutes."
+        },
+        "live": {
+            "live": "LIVE",
+            "polling": "POLLING",
+            "connecting": "CONNECTING",
+            "error": "OFFLINE",
+            "tooltip": {
+                "live": "Live data over SSE — new endings appear within seconds.",
+                "polling": "Server polling every 30s (SSE unavailable).",
+                "connecting": "Establishing connection to live server…",
+                "error": "Live server connection failed — showing cached data."
+            },
+            "counter": "({formatted}) {count, plural, =0 {no ending auctions} one {# ending auction} other {# ending auctions}}",
+            "lastUpdate": "Last update: {time}"
         }
     },
     "Bazaar": {
@@ -331,6 +345,19 @@
             "first": "First",
             "last": "Last"
         },
+        "live": {
+            "live": "LIVE",
+            "polling": "POLLING",
+            "connecting": "CONNECTING",
+            "error": "OFFLINE",
+            "tooltip": {
+                "live": "Live data over SSE — updates within seconds.",
+                "polling": "Data refreshed every 30s (SSE unavailable).",
+                "connecting": "Establishing connection…",
+                "error": "Live server connection failed."
+            },
+            "lastUpdate": "Last update: {time}"
+        },
         "empty": {
             "title": "No auctions match your filters",
             "description": "Nothing matched this strict combination of filters. Try relaxing the rules below — the exact count on the right shows how many auctions would appear after each change.",
@@ -558,6 +585,19 @@
             "emptyDescription": "Auctions matching these filters will appear here as soon as they hit the Bazaar.",
             "viewAll": "View all similar",
             "limitNotice": "Showing {count} of {total} matching auctions."
+        },
+        "endingSoon": {
+            "pageTitle": "Ending soon",
+            "pageDescription": "Char Bazaar auctions ending within the next hour. Updated live via SSE — grab the deal before someone outbids you.",
+            "headerTitle": "🕒 Ending within an hour",
+            "auctionsCount": "{count, plural, =0 {No auctions} one {# auction} other {# auctions}}",
+            "liveBadge": "LIVE",
+            "pollingBadge": "POLLING",
+            "offlineBadge": "OFFLINE",
+            "lastUpdate": "Last updated: {time}",
+            "emptyTitle": "No auctions ending within an hour",
+            "emptyDescription": "Every active auction still has over 60 minutes remaining. Check back in a moment or browse the full list.",
+            "emptyCta": "Browse all auctions"
         }
     },
     "Calculators": {
