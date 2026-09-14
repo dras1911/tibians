@@ -16,6 +16,12 @@
     }
   },
   "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "exclude": [
+    "node_modules",
+    "dist",
+    "**/*.test.ts",
+    "**/*.test.tsx"
+  ],
   "references": [
     { "path": "../../packages/shared" }
   ]
