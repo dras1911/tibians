@@ -69,7 +69,6 @@ export function useTheme(): UseThemeResult {
       applyThemeToDocument(resolved);
     }
     // Run only on mount.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // 2. Whenever `theme` changes, re-apply to DOM.
