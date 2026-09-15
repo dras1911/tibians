@@ -649,6 +649,24 @@ docker compose -f docker-compose.prod.yml up -d
   zwracał 404. Zamiast commitować kilkadziesiąt binariów, jeden route handler
   (`app/og/[file]/route.tsx`, `next/og`) generuje je na żądanie, a tytuł wynika
   ze sluga. **Zweryfikowane ręcznie:** `HTTP 200`, `image/png`, ~100-111 KB
+- ✅ **20 zepsutych etykiet nawigacji** — `Bazaar.endingSoon`, `Bazaar.compare`,
+  `Reference.items/worlds/outfits/mounts` były **obiektami** (nie stringami),
+  a `Calculators.experience.{label,xp,leech,expShare}` **nie istniały**.
+  Mega-menu renderował pozycje **bez tekstu** na każdej stronie, w PL i EN.
+  Wykryte dopiero przez **uruchomienie aplikacji** — `tsc` tego nie widzi.
+  **Zweryfikowane:** 15/15 etykiet obecnych w HTML w obu językach
+- ✅ **`/bazaar` zwracał 500 przy niedostępnej bazie** — `page.tsx:167` wołał
+  `listAuctions` + `getFacetCounts` + `getWorldsByRegion` w `Promise.all`
+  **bez `try/catch`** (sąsiedni `getSuggestionCounts` miał `.catch()`).
+  Teraz degraduje do stanu pustego. **Zweryfikowane:** `500 → 200`, nawigacja
+  renderuje, komunikat stanu pustego obecny, zero `undefined` w DOM
+- ✅ **Brak error boundary** — nie było `error.tsx`, `global-error.tsx` ani
+  `not-found.tsx`, więc każdy nieobsłużony wyjątek dawał surowy 500.
+  Dodane `app/[locale]/error.tsx` z istniejącym `ErrorState` (T66).
+  ⚠️ **Status uczciwy:** kod zgodny z konwencją Next, ale renderowania
+  **nie potwierdziłem** — w trybie dev overlay Next zasłania boundary,
+  a `next build` nie przejdzie na tym Windowsie (`EPERM`). Do sprawdzenia
+  na serwerze.
 
 ### Otwarte
 
