@@ -311,7 +311,58 @@ cały raport do `error_summary` (jsonb), `status='success'`.
 `startScheduler` zwraca `SchedulerHandle { start(): void; stop(): Promise<void>; ... }`
 i sam woła `handle.start()` (index.ts:102). `stop()` zamyka DB → nie wołać `pool.end()` drugi raz.
 
-## 9. Powiązania
+## 9. USTALENIA BLOKUJĄCE (odkryte na końcu rekonesansu — czytaj PRZED pisaniem)
+
+### 9.1 `packages/db/package.json` NIE eksportuje `./queries`
+Obecny `exports`:
+```json
+{ ".": "./src/index.ts", "./schema": "./src/schema/index.ts", "./seed": "./src/seed/index.ts" }
+```
+`"main"`/`"types"` = `./src/index.ts` → **pakiet wysyła surowy TS** (konsumenci transpilują).
+Konsekwencja: nowy katalog `queries/` **nie będzie importowalny** jako `@tibians/db/queries`,
+dopóki nie zrobisz JEDNEGO z:
+- **(A)** dodać do `packages/db/src/index.ts`: `export * from './queries';`
+  → potem `import { upsertAuction } from '@tibians/db'` (prostsze, rekomendowane)
+- **(B)** dodać `"./queries": "./src/queries/index.ts"` do `exports` w `package.json`
+
+**Konwencja importów w tym pakiecie**: bez rozszerzeń (`'./schema'`, nie `'./schema.js'`).
+`src/index.ts` kompiluje się tak — nowe pliki muszą używać tej samej konwencji.
+Uwaga: `apps/scraper` używa rozszerzeń `.js` (`'./scrapers/auction-list.js'`) — **NIE
+kopiować tej konwencji do `packages/db`**, to dwa różne tsconfigi.
+Typcheck tego pakietu: `tsc -p tsconfig.scripts.json` (nie `tsconfig.json`).
+
+### 9.2 PROBLEM WARSTW: `AuctionSummary` żyje w `apps/scraper`, nie w `packages/db`
+`SchedulerDb.fetchAllAuctionSummaries(): Promise<readonly AuctionSummary[]>`
+a `AuctionSummary` jest zdefiniowane w
+**`apps/scraper/src/scrapers/auction-list.ts`** (jako `z.infer<typeof AuctionSummarySchema>`).
+
+`packages/db` **NIE MOŻE** importować z `apps/scraper` (odwrócenie zależności,
+pakiet nie ma `apps/*` w zależnościach). Więc:
+
+**`packages/db/src/queries` musi zwracać kształt DB** (wiersz + nazwa świata), a
+**mapowanie DB → `AuctionSummary` robi `apps/scraper/src/wiring.ts`** (bo tam oba typy są dostępne).
+
+`AuctionSummarySchema` (scraper) wymaga m.in.: `auctionId`, `characterName`, `level`,
+`vocation` (**VocationPromoted**, np. 'Elite Knight'), `sex`, `world` (**NAZWA**, nie id!),
+`outfitUrl`, … → zapytanie w `queries` musi **JOIN `worlds`** po `worlds.name`,
+a `wiring.ts` złoży z tego `AuctionSummary`.
+
+To jest realny powód, dla którego T34 był osobnym, dużym zadaniem — i dlaczego
+nie da się tego napisać „na skróty".
+
+### 9.3 Detal PK: `auction_items.tier` jest NULLABLE, ale wchodzi w PK
+`primaryKey({ columns: [auctionId, itemId, tier] })` a `tier` jest nullable.
+PostgreSQL **zabrania NULL w kolumnie PK** → insert z `tier: null` poleci błędem.
+Mapper musi zdecydować: `tier: item.tier ?? 0` (z komentarzem) ALBO sprawdzić
+realną migrację (`packages/db/drizzle/*.sql`) czy kolumna nie jest `NOT NULL DEFAULT 0`.
+**Zweryfikuj migrację przed pisaniem upsertu.**
+
+### 9.4 `ON CONFLICT` dla relacji
+Upsert relacji: najprościej `DELETE` wszystkich wierszy relacji dla `auctionId`
++ `INSERT` nowych (w tej samej transakcji co upsert aukcji). Dzięki temu nie trzeba
+zgadywać targetów `ON CONFLICT` dla złożonych PK z nullable `tier`.
+
+## 10. Powiązania
 - Plan: `.omo/plans/tibians.md` (T34, T37 oznaczone `[~]` jako regresja)
 - Issues: `.omo/notepads/tibians/issues.md` (wpis o regresji T34/T37)
 - Instrukcja deploy: `DEPLOYMENT.md` §9.2 (szkic fixu)
