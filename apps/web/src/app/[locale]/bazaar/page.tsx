@@ -164,12 +164,38 @@ export default async function BazaarPage({
   // T45: dodatkowe `getSuggestionCounts()` wywoływane **warunkowo** —
   //      tylko gdy `total === 0` (arch §5: "nie pokazuj sugestii gdy
   //      count > 0"). Oszczędzamy ~5 query przy każdym normalnym renderze.
-  const listPromise = listAuctions(filters, pagination);
-  const facetPromise = getFacetCounts(filters);
-  const worldsPromise = getWorldsByRegion();
+  // ── Zapytania do DB — OSŁONIĘTE (degradacja zamiast 500) ──────────
+  // Wcześniej ten `Promise.all` nie miał `try/catch`, więc chwilowa
+  // niedostępność bazy wywalała CAŁĄ stronę błędem 500. Sąsiedni
+  // `getSuggestionCounts` niżej miał `.catch(() => [])`, ale te trzy
+  // zapytania — nie.
+  //
+  // Arch §6.4: URL zawsze ma działać. Przy niedostępnych danych poprawnym
+  // zachowaniem jest pusta lista + stany „brak wyników”, a nie biały ekran.
+  // `headers()` celowo POZA `Promise.all` — to nie jest operacja DB i nie
+  // powinna być degradowana razem z zapytaniami.
+  const dbResult = await Promise.all([
+    listAuctions(filters, pagination),
+    getFacetCounts(filters),
+    getWorldsByRegion(),
+  ]).catch((error: unknown) => {
+    // eslint-disable-next-line no-console
+    console.error("[bazaar] zapytania DB nie powiodły się — degradacja do stanu pustego:", error);
+    return null;
+  });
 
-  const [requestHeaders, listResult, facetCounts, worldsByRegion] =
-    await Promise.all([headers(), listPromise, facetPromise, worldsPromise]);
+  const requestHeaders = await headers();
+
+  const listResult = dbResult?.[0] ?? { rows: [], total: 0 };
+  const facetCounts = dbResult?.[1] ?? {
+    vocation: [],
+    region: [],
+    world: [],
+    pvpType: [],
+    battleye: [],
+    totalActive: 0,
+  };
+  const worldsByRegion = dbResult?.[2] ?? { EU: [], NA: [], BR: [] };
 
   const { rows, total } = listResult;
 
