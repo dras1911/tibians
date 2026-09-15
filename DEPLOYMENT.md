@@ -528,21 +528,39 @@ Ekran zgody powie: *„Tibians Tools chce uzyskać dostęp do Twojego konta"*.
 **Zakresy (scopes)**: `identify` (id, nazwa, avatar). Dodawaj `email` tylko jeśli
 faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
 
-> **⚠️ KOD LOGOWANIA JESZCZE NIE ISTNIEJE.**
-> W repozytorium **nie ma implementacji OAuth2** — brak `next-auth`/`lucia`/sesji,
-> brak tras auth. W kodzie są wyłącznie placeholdery
-> (np. `workspace-layout.tsx`: `isAuthenticated = false; // Faza 6`).
-> `apps/web/src/lib/auth/entitlements.ts` przyjmuje `discordId` jako **parametr** —
-> to czysta funkcja uprawnień, bez przepływu OAuth.
+> **✅ Kod logowania JEST zaimplementowany** (commit `9409c49`, T78).
+> Zero nowych zależności — cały przepływ to dwa `fetch`e do Discorda.
 >
-> Do wdrożenia logowania trzeba dopisać (T78-T80):
-> - trasy `/api/auth/login/discord` + `/api/auth/callback/discord`
->   (wymiana `code` → token, wywołanie `GET /users/@me`),
-> - tabelę `users` (`discord_id`, `username`, `avatar_url`) + sesje (cookie/JWT),
-> - powiązanie `users` ↔ `subscriptions` (żeby premium wiedziało, kto zapłacił).
+> Co powstało:
+> - `apps/web/src/lib/auth/session.ts` — sesja w podpisanym HMAC cookie
+>   (bez tabeli sesji; TTL wymuszany serwerowo przez `<iat>`)
+> - `apps/web/src/lib/auth/discord.ts` — klient OAuth2 (scope `identify`)
+> - trasy: `/api/auth/login/discord`, `/api/auth/callback/discord`,
+>   `/api/auth/logout`, `/api/auth/me`
+> - tabela `users` (migracja `0001_needy_dreaming_celestial.sql`)
+> - `UserMenu` w nagłówku (awatar + wylogowanie, albo „Zaloguj")
+> - i18n: przestrzeń `Auth` w PL i EN
 >
-> Bez tego kroki 1-8 to przygotowanie (aplikacja + sekrety), ale przycisk
-> „Zaloguj przez Discord" nie zadziała.
+> Po ustawieniu sekretów (kroki 1-8 powyżej) logowanie działa od razu.
+> **Nie trzeba dopisywać żadnego kodu.**
+>
+> Weryfikacja po wdrożeniu:
+> ```bash
+> # 1. Czy konfiguracja jest widoczna (powinno przekierować na discord.com)
+> curl -sI https://tibians.tools/api/auth/login/discord | head -1
+> # → HTTP/2 307  (Location: https://discord.com/oauth2/authorize?...)
+>
+> # 2. Stan sesji bez zalogowania
+> curl -s https://tibians.tools/api/auth/me | jq
+> # → { "authenticated": false, "user": null, "entitlements": { ... } }
+> ```
+>
+> Gdy `CLIENT_ID` nie jest ustawione, `/api/auth/login/discord` zwraca
+> czytelne **503 `DiscordNotConfigured`** (a nie mylący błąd po stronie Discorda).
+>
+> Uwaga: migracja `0001` zawiera **także** tabelę `subscriptions`, która dotąd
+> nie miała własnej migracji (powstała w T83 bez regeneracji). Jest bezpieczna —
+> `CREATE TABLE IF NOT EXISTS` — i przy pierwszym wdrożeniu po prostu ją utworzy.
 
 ### 13.3 Premium — Lemon Squeezy / Paddle (Faza 7, T82)
 1. Załóż konto (MoR — oni obsługują VAT i faktury)
@@ -588,23 +606,38 @@ docker compose -f docker-compose.prod.yml up -d
 
 ---
 
-## 15. ✅ Znane luki (stan: 2026-09-15 — po naprawie scrapingu)
+## 15. ✅ Znane luki (stan: 2026-09-15 — po naprawie scrapingu i logowania)
 
-### Zamknięte (commit `ca7441e`)
+### Zamknięte
 
-- ✅ **`apps/scraper/src/wiring.ts`** — adapter Drizzle → `SchedulerDb` (13 metod)
+**Scraper (commit `ca7441e`)** — kontener realnie zapełnia bazę:
+
 - ✅ **`packages/db/src/queries/`** — warstwa zapytań + mappery (to było „T34")
+- ✅ **`apps/scraper/src/wiring.ts`** — adapter Drizzle → `SchedulerDb` (13 metod)
 - ✅ **`createPgAdvisoryLockClient`** — wcześniej **nie istniał nigdzie** w repo,
   mimo że `index.ts:28` go wywoływał; używa dedykowanego połączenia, bo advisory
   locki są session-scoped (przez `pool.query()` lock znikałby natychmiast)
 - ✅ **`apps/scraper/src/start.ts`** — bootstrap produkcyjny (entrypoint kontenera)
 - ✅ **`apps/scraper/src/cli/scrape.ts`** — realne `scrap:*` / `ref:scrape`
   (wcześniej `package.json` wskazywał na 4 nieistniejące pliki)
-- ✅ **`Dockerfile.scraper` CMD** — kontener realnie startuje scheduler
+- ✅ **`Dockerfile.scraper` CMD** — kontener startuje scheduler
   (wcześniej `dist/index.js` tylko eksportował funkcję → baza pusta)
 - ✅ **`apps/scraper/src/index.ts`** — usunięte handlery SIGTERM/SIGINT wołające
   `process.exit(0)` natychmiast; uniemożliwiały graceful shutdown
   (drain in-flight + zwolnienie advisory locka)
+
+**Logowanie Discord (commit `9409c49`)** — pełny przepływ OAuth2:
+
+- ✅ **`apps/web/src/lib/auth/session.ts`** — sesja w podpisanym HMAC cookie
+- ✅ **`apps/web/src/lib/auth/discord.ts`** — klient OAuth2 (scope `identify`)
+- ✅ **trasy** `/api/auth/{login,callback,logout,me}`
+- ✅ **tabela `users`** + migracja `0001_needy_dreaming_celestial.sql`
+  (dodaje też `subscriptions`, które nie miało własnej migracji)
+- ✅ **`UserMenu`** w nagłówku + przestrzeń i18n `Auth` (PL/EN)
+- ✅ **12 testów** kryptografii sesji (podpis, tampering, TTL, brak sekretu)
+
+**Higiena / bugfixy:**
+
 - ✅ **`vitest.config.ts`** — alias `@tibians/db/seed`. Vite traktuje string `find`
   jako **prefix**, więc `@tibians/db` przesłaniał subpath i przepisywał go na
   `db/src/index.ts/seed` → `valuation.test.ts` padał na czystym HEAD
@@ -615,10 +648,14 @@ docker compose -f docker-compose.prod.yml up -d
 
 | # | Luka | Wpływ | Gdzie |
 |---|---|---|---|
-| 1 | Brak implementacji Discord OAuth (brak `next-auth`/sesji/tras auth) | Brak logowania; w kodzie placeholdery `isAuthenticated = false` | §13.2 |
-| 2 | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier | Faza 7 |
+| 1 | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier, nawet po zapłacie | Faza 7 |
+| 2 | Płatności (Lemon Squeezy / Paddle) — brak konta i webhooka | Nie da się kupić premium | §13.3 |
 | 3 | Brak `og-default.png` (manifest/OG) | Podgląd w social media bez obrazka | dodać do `apps/web/public/` |
-| 4 | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"` | **Tylko lokalny Windows** — tworzenie symlinków wymaga trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | — |
+| 4 | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"` | **Tylko lokalny Windows** — symlinki wymagają trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | — |
+
+> **Uwaga o premium**: logowanie i tabela `subscriptions` są gotowe, więc po
+> podłączeniu dostawcy płatności wystarczy wpiąć `hasFeature()` w komponenty
+> (mechanizm `PremiumGate` z T85 już istnieje) — to praca na godziny, nie dni.
 
 ---
 
