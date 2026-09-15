@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslations } from "next-intl";
 import { CircleUserRound, LogIn, LogOut, Sparkles } from "lucide-react";
 
+import { useAuthState } from "@/lib/auth/use-auth";
 import { cn } from "@/lib/utils";
 
 /**
@@ -23,46 +24,17 @@ import { cn } from "@/lib/utils";
  *               ma prefiksu lokalizacji)
  *   - zalogowany → awatar + rozwijane menu (wyloguj)
  */
-interface MeResponse {
-  readonly authenticated: boolean;
-  readonly user: {
-    readonly discordId: string;
-    readonly username: string;
-    readonly avatarUrl: string | null;
-  } | null;
-  readonly entitlements: { readonly isPremium: boolean };
-}
-
-const ANONYMOUS_FALLBACK: MeResponse = {
-  authenticated: false,
-  user: null,
-  entitlements: { isPremium: false },
-};
-
 export function UserMenu() {
   const t = useTranslations("Auth");
-  const [state, setState] = React.useState<MeResponse | null>(null);
+  /*
+   * Stan sesji pochodzi ze wspólnego hooka `useAuthState` (ten sam, którego
+   * używa workspace). Wcześniej ten komponent miał własny `fetch`, co
+   * oznaczało dwa identyczne żądania `/api/auth/me` na stronie.
+   */
+  const { status, user, isPremium } = useAuthState();
   const [open, setOpen] = React.useState(false);
   const [busy, setBusy] = React.useState(false);
   const containerRef = React.useRef<HTMLDivElement | null>(null);
-
-  React.useEffect(() => {
-    let cancelled = false;
-
-    fetch("/api/auth/me", { cache: "no-store" })
-      .then((response) => response.json() as Promise<MeResponse>)
-      .then((data) => {
-        if (!cancelled) setState(data);
-      })
-      .catch(() => {
-        // Brak sieci / endpoint padł → traktujemy jak anonimowego.
-        if (!cancelled) setState(ANONYMOUS_FALLBACK);
-      });
-
-    return () => {
-      cancelled = true;
-    };
-  }, []);
 
   // Zamknij menu po kliknięciu poza nim (standardowy wzorzec a11y).
   React.useEffect(() => {
@@ -96,7 +68,7 @@ export function UserMenu() {
   }
 
   // Skeleton: ten sam rozmiar co docelowy element → brak przesunięcia layoutu.
-  if (state === null) {
+  if (status === "loading") {
     return (
       <div
         className="h-11 w-11 rounded-md bg-muted/40"
@@ -106,7 +78,7 @@ export function UserMenu() {
     );
   }
 
-  if (!state.authenticated || state.user === null) {
+  if (status === "anonymous" || user === null) {
     return (
       <a
         href="/api/auth/login/discord"
@@ -124,7 +96,6 @@ export function UserMenu() {
     );
   }
 
-  const { user, entitlements } = state;
   const displayName = user.username;
 
   return (
@@ -169,7 +140,7 @@ export function UserMenu() {
         >
           <div className="border-b px-2 py-2">
             <p className="truncate text-sm font-medium">{displayName}</p>
-            {entitlements.isPremium && (
+            {isPremium && (
               <p className="mt-0.5 inline-flex items-center gap-1 text-xs text-primary">
                 <Sparkles className="h-3 w-3" aria-hidden="true" />
                 {t("premium")}

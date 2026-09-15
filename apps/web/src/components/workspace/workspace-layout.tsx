@@ -33,6 +33,8 @@
 
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+
+import { useAuthState } from "@/lib/auth/use-auth";
 import {
   Check,
   ChevronDown,
@@ -316,7 +318,21 @@ function SnapshotHeader({
 }: SnapshotHeaderProps) {
   const t = useTranslations("Workspace.snapshotHeader");
   const tCommon = useTranslations("Common");
-  const isAuthenticated = false; // Faza 6 (Discord OAuth)
+  /**
+   * T78: logowanie przez Discord jest już zaimplementowane, więc bierzemy
+   * REALNY stan sesji zamiast zaszytego `false`.
+   *
+   * Wartość jest dziś tylko przekazywana dalej (UI limitu zapisanych postaci
+   * jeszcze nie istnieje — patrz `character-count-badge.tsx`), ale musi być
+   * prawdziwa: gdy limit zostanie podłączony, zaszyte `false` dawałoby
+   * zalogowanym zachowanie anonimowych.
+   *
+   * Stan `loading` celowo NIE jest traktowany jako zalogowany — do czasu
+   * odpowiedzi serwera użytkownik widzi zachowanie anonimowe (bezpieczniejszy
+   * default niż obiecanie nielimitowanych zapisów, których nie ma).
+   */
+  const { status: authStatus } = useAuthState();
+  const isAuthenticated = authStatus === "authenticated";
 
   const updateNestedField = useCharacterStore((s) => s.updateNestedField);
 
