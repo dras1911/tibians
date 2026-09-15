@@ -138,13 +138,13 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
                     {tBazaar("all")}
                   </MobileLink>
                   <MobileLink href="/bazaar/ending-soon" onSelect={() => onOpenChange(false)}>
-                    🔴 {tBazaar("endingSoon")}
+                    🔴 {tBazaar("endingSoon.pageTitle")}
                   </MobileLink>
                   <MobileLink href="/bazaar/statistics" onSelect={() => onOpenChange(false)}>
                     {tBazaar("statistics")}
                   </MobileLink>
                   <MobileLink href="/bazaar/compare" onSelect={() => onOpenChange(false)}>
-                    {tBazaar("compare")}
+                    {tBazaar("compare.pageTitle")}
                   </MobileLink>
                   <MobileLink href="/bazaar/history" onSelect={() => onOpenChange(false)}>
                     {tBazaar("history")}
@@ -185,13 +185,13 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
                     {tCalc("imbuementCharms.charmsDamage")}
                   </MobileLink>
                   <MobileLink href="/calculators/experience" onSelect={() => onOpenChange(false)}>
-                    {tCalc("experience.xp")}
+                    {tCalc("experience.title")}
                   </MobileLink>
                   <MobileLink href="/calculators/leech" onSelect={() => onOpenChange(false)}>
-                    {tCalc("experience.leech")}
+                    {tCalc("leech.title")}
                   </MobileLink>
                   <MobileLink href="/calculators/exp-share" onSelect={() => onOpenChange(false)}>
-                    {tCalc("experience.expShare")}
+                    {tCalc("expShare.title")}
                   </MobileLink>
                   <MobileLink href="/planners/wheel" onSelect={() => onOpenChange(false)}>
                     {tCalc("wheelOfDestiny")}
@@ -208,19 +208,19 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
               <AccordionContent>
                 <ul className="flex flex-col gap-0.5 pl-2">
                   <MobileLink href="/reference/items" onSelect={() => onOpenChange(false)}>
-                    {tRef("items")}
+                    {tRef("items.pageTitle")}
                   </MobileLink>
                   <MobileLink href="/reference/imbuements" onSelect={() => onOpenChange(false)}>
                     {tRef("imbuements")}
                   </MobileLink>
                   <MobileLink href="/reference/worlds" onSelect={() => onOpenChange(false)}>
-                    {tRef("worlds")}
+                    {tRef("worlds.pageTitle")}
                   </MobileLink>
                   <MobileLink href="/reference/outfits" onSelect={() => onOpenChange(false)}>
-                    {tRef("outfits")}
+                    {tRef("outfits.pageTitle")}
                   </MobileLink>
                   <MobileLink href="/reference/mounts" onSelect={() => onOpenChange(false)}>
-                    {tRef("mounts")}
+                    {tRef("mounts.pageTitle")}
                   </MobileLink>
                 </ul>
               </AccordionContent>

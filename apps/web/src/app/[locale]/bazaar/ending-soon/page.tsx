@@ -95,7 +95,7 @@ export default async function EndingSoonPage({
 
   const breadcrumbItems: BreadcrumbItem[] = [
     { label: tBazaar("title"), href: "/bazaar" },
-    { label: tBazaar("endingSoon"), href: "/bazaar/ending-soon" },
+    { label: tBazaar("endingSoon.pageTitle"), href: "/bazaar/ending-soon" },
   ];
 
   return (

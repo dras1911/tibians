@@ -62,12 +62,12 @@ export function Header() {
           description: tBazaar("all"),
         },
         {
-          label: tBazaar("endingSoon"),
+          label: tBazaar("endingSoon.pageTitle"),
           href: "/bazaar/ending-soon",
           icon: <span aria-hidden="true">🔴</span>,
         },
         { label: tBazaar("statistics"), href: "/bazaar/statistics" },
-        { label: tBazaar("compare"), href: "/bazaar/compare" },
+        { label: tBazaar("compare.pageTitle"), href: "/bazaar/compare" },
         { label: tBazaar("history"), href: "/bazaar/history" },
       ],
     },
@@ -128,12 +128,12 @@ export function Header() {
       ],
     },
     {
-      label: tCalc("experience.label"),
+      label: tCalc("experience.title"),
       items: [
-        { label: tCalc("experience.xp"), href: "/calculators/experience" },
-        { label: tCalc("experience.leech"), href: "/calculators/leech" },
+        { label: tCalc("experience.title"), href: "/calculators/experience" },
+        { label: tCalc("leech.title"), href: "/calculators/leech" },
         {
-          label: tCalc("experience.expShare"),
+          label: tCalc("expShare.title"),
           href: "/calculators/exp-share",
         },
       ],
@@ -153,11 +153,11 @@ export function Header() {
     {
       label: tRef("title"),
       items: [
-        { label: tRef("items"), href: "/reference/items" },
+        { label: tRef("items.pageTitle"), href: "/reference/items" },
         { label: tRef("imbuements"), href: "/reference/imbuements" },
-        { label: tRef("worlds"), href: "/reference/worlds" },
-        { label: tRef("outfits"), href: "/reference/outfits" },
-        { label: tRef("mounts"), href: "/reference/mounts" },
+        { label: tRef("worlds.pageTitle"), href: "/reference/worlds" },
+        { label: tRef("outfits.pageTitle"), href: "/reference/outfits" },
+        { label: tRef("mounts.pageTitle"), href: "/reference/mounts" },
       ],
     },
   ];
