@@ -6,7 +6,10 @@
     "closeMenu": "Zamknij menu",
     "loading": "Ładowanie…",
     "privacyPolicy": "Polityka prywatności",
-    "language": "Język"
+    "language": "Język",
+    "errorTitle": "Coś poszło nie tak",
+    "errorDescription": "Nie udało się załadować danych. Spróbuj ponownie za chwilę.",
+    "errorRetry": "Spróbuj ponownie"
   },
   "Nav": {
     "brand": "Tibians",
