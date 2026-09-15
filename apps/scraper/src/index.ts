@@ -104,25 +104,20 @@ export function startScheduler(
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// CLI: `node --import tsx/esm src/index.ts`
+// ENTRYPOINT PRODUKCYJNY
 // ──────────────────────────────────────────────────────────────────────────
-
-// Bez podpiętego DB nie ma co startować — wypisz instrukcję i czekaj na SIGTERM.
-// Produkcyjny bootstrap powinien wywołać `startScheduler(db)` z własnego
-// entrypointu (np. `scripts/start.ts`).
-console.log("Tibians scraper starting...");
-console.log(
-  "INFO: production wiring requires T34 (DB queries). Import `startScheduler(db)` from your bootstrap script.",
-);
-let shuttingDown = false;
-function cliShutdown(signal: NodeJS.Signals): void {
-  if (shuttingDown) return;
-  shuttingDown = true;
-  console.log(`Received ${signal}, shutting down gracefully...`);
-  process.exit(0);
-}
-process.on("SIGTERM", cliShutdown);
-process.on("SIGINT", cliShutdown);
+//
+// UWAGA: ten moduł jest BIBLIOTEKĄ, nie CLI. Wcześniej rejestrował tu własne
+// handlery SIGTERM/SIGINT wołające `process.exit(0)` natychmiast — to psuło
+// graceful shutdown, bo `SchedulerHandle.stop()` (drain in-flight iteracji +
+// zwolnienie advisory locka + zamknięcie poola) nigdy się nie wykonywał.
+// Handlery usunięto: shutdown należy do procesu-bootstrapa, który jako jedyny
+// ma dostęp do `SchedulerHandle`.
+//
+// Produkcyjny entrypoint: `apps/scraper/scripts/start.ts`
+// (patrz `Dockerfile.scraper` → CMD).
+//
+// Uruchomienie samego `src/index.ts` nie robi już nic — to celowe.
 
 // Re-eksport API dla konsumentów (testy, docker-entrypoint, integracja).
 export { createScheduler } from "./scheduler.js";

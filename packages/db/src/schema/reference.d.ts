@@ -638,7 +638,7 @@ export declare const imbuements: import("drizzle-orm/pg-core").PgTableWithColumn
             tableName: "imbuements";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "damage" | "protection" | "support" | "skill";
+            data: "skill" | "damage" | "protection" | "support";
             driverParam: string;
             notNull: true;
             hasDefault: false;
@@ -730,7 +730,7 @@ export declare const quests: import("drizzle-orm/pg-core").PgTableWithColumns<{
             tableName: "quests";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "other" | "access" | "achievement" | "boss" | "hunt" | "exploration";
+            data: "other" | "achievement" | "boss" | "access" | "hunt" | "exploration";
             driverParam: string;
             notNull: true;
             hasDefault: false;

@@ -305,7 +305,7 @@ export declare const auctionUsps: import("drizzle-orm/pg-core").PgTableWithColum
             tableName: "auction_usps";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "store" | "other" | "skill" | "achievement" | "boss" | "gold" | "blessing" | "cosmetic" | "imbuement" | "charm" | "world_transfer" | "rare_item" | "progression";
+            data: "store" | "other" | "skill" | "cosmetic" | "progression" | "gold" | "achievement" | "blessing" | "imbuement" | "charm" | "world_transfer" | "rare_item" | "boss";
             driverParam: string;
             notNull: true;
             hasDefault: false;

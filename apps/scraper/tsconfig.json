@@ -15,14 +15,17 @@
       "@tibians/character-context": ["packages/character-context/src/index.ts"]
     }
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "include": ["src/**/*", "../../packages/shared/src/**/*", "../../packages/db/src/**/*"],
   "exclude": [
     "node_modules",
     "dist",
     "**/*.test.ts",
-    "**/*.test.tsx"
+    "**/*.test.tsx",
+    "../../packages/db/src/__tests__/**",
+    "../../packages/shared/src/**/__tests__/**"
   ],
   "references": [
-    { "path": "../../packages/shared" }
+    { "path": "../../packages/shared" },
+    { "path": "../../packages/db" }
   ]
 }

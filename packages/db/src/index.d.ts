@@ -24,6 +24,7 @@ import { schema } from './schema';
 export * from './schema';
 export * from './seed';
 export * from './config-loader';
+export * from './queries';
 /**
  * Tworzy nowy pg.Pool + Drizzle wrapper.
  * Używane przez `createDb` (testy) oraz przez `scripts/migrate.ts`.

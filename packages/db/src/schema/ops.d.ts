@@ -27,7 +27,7 @@ export declare const scrapeRuns: import("drizzle-orm/pg-core").PgTableWithColumn
             tableName: "scrape_runs";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "full" | "ending_soon" | "detail" | "history" | "reference" | "calibration";
+            data: "full" | "reference" | "ending_soon" | "detail" | "history" | "calibration";
             driverParam: string;
             notNull: true;
             hasDefault: false;

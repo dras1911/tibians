@@ -27,8 +27,13 @@ const aliasEntries: Array<{ find: string | RegExp; replacement: string }> = [
   { find: "@tibians/ui", replacement: path.resolve(packagesRoot, "ui/src/index.ts") },
   { find: /^@tibians\/shared\/(.*)$/, replacement: path.resolve(packagesRoot, "shared/src") + "/$1" },
   { find: "@tibians/shared", replacement: path.resolve(packagesRoot, "shared/src/index.ts") },
+  // Reguła `@tibians/db/*` MUSI być przed exact `@tibians/db`.
+  // Vite traktuje string `find` jako PREFIX — bez tego `@tibians/db/seed`
+  // zostało dopasowane przez `@tibians/db` i przepisane na
+  // `<root>/db/src/index.ts/seed` → "Cannot find module '@tibians/db/seed'".
+  // Objaw: valuation.test.ts w apps/scraper padał przy każdym uruchomieniu.
+  { find: /^@tibians\/db\/(.*)$/, replacement: path.resolve(packagesRoot, "db/src") + "/$1" },
   { find: "@tibians/db", replacement: path.resolve(packagesRoot, "db/src/index.ts") },
-  { find: "@tibians/db/seed", replacement: path.resolve(packagesRoot, "db/src/seed/index.ts") },
   { find: "@tibians/calc", replacement: path.resolve(packagesRoot, "calc/src/index.ts") },
   { find: "@tibians/character-context", replacement: path.resolve(packagesRoot, "character-context/src/index.ts") },
 ];

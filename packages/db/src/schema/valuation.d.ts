@@ -42,7 +42,7 @@ export declare const valuationRules: import("drizzle-orm/pg-core").PgTableWithCo
             tableName: "valuation_rules";
             dataType: "string";
             columnType: "PgEnumColumn";
-            data: "base" | "skill" | "cosmetic" | "progression" | "feature" | "item" | "asset";
+            data: "base" | "feature" | "skill" | "item" | "cosmetic" | "progression" | "asset";
             driverParam: string;
             notNull: true;
             hasDefault: false;

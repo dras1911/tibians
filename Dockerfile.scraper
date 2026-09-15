@@ -48,7 +48,11 @@ COPY --from=builder --chown=scraper:nodejs /repo/apps/scraper ./apps/scraper
 COPY --from=builder --chown=scraper:nodejs /repo/packages ./packages
 
 USER scraper
-# SIGTERM → graceful shutdown scheduler'a (T36: stop + await in-flight + db.end()).
+# SIGTERM → graceful shutdown schedulera (stop + await in-flight + zwolnienie locka).
 STOPSIGNAL SIGTERM
 
-CMD ["node", "apps/scraper/dist/index.js"]
+# `tsx` jest wymagany, nie opcjonalny: workspace'owe pakiety (`@tibians/db`)
+# eksportują SUROWY TypeScript (`main: "./src/index.ts"`), więc `node` bez
+# loadera nie zaimportuje ich w ogóle. Wcześniej CMD wskazywał na
+# `dist/index.js`, który jedynie eksportował funkcje — nic nie startował.
+CMD ["node", "--import", "tsx/esm", "apps/scraper/src/start.ts"]

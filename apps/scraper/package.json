@@ -15,14 +15,14 @@
   "scripts": {
     "build": "tsc -p tsconfig.json",
     "dev": "tsc -p tsconfig.json --watch",
-    "start": "node dist/index.js",
+    "start": "node --import tsx/esm src/start.ts",
     "test": "vitest run",
     "lint": "eslint src",
     "typecheck": "tsc -p tsconfig.json --noEmit",
-    "scrap:auctions": "node --import tsx/esm src/cli/scrap-auctions.ts",
-    "scrap:items": "node --import tsx/esm src/cli/scrap-items.ts",
-    "scrap:scheduler": "node --import tsx/esm src/cli/scheduler.ts",
-    "ref:scrape": "node --import tsx/esm src/cli/ref-scrape.ts"
+    "scrap:auctions": "node --import tsx/esm src/cli/scrape.ts full",
+    "scrap:items": "node --import tsx/esm src/cli/scrape.ts reference",
+    "scrap:scheduler": "node --import tsx/esm src/start.ts",
+    "ref:scrape": "node --import tsx/esm src/cli/scrape.ts reference"
   },
   "dependencies": {
     "@tibians/db": "workspace:^",
