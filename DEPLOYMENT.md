@@ -643,6 +643,12 @@ docker compose -f docker-compose.prod.yml up -d
   `db/src/index.ts/seed` → `valuation.test.ts` padał na czystym HEAD
 - ✅ **108 śmieci builda** (`.js`/`.js.map`/`.d.ts`/`.d.ts.map`) zacommitowanych
   wewnątrz `src/` pakietów `db` i `shared` — Vite preferował nieaktualny `.js`
+- ✅ **OG images braku 404** — metadata stron referencjonowało `/og/*.png`
+  (bazaar, bazaar-history, bazaar-statistics, calculators-\<slug\>, planners-\<slug\>,
+  workspace), ale `public/og/` nigdy nie powstało → każdy podgląd w social media
+  zwracał 404. Zamiast commitować kilkadziesiąt binariów, jeden route handler
+  (`app/og/[file]/route.tsx`, `next/og`) generuje je na żądanie, a tytuł wynika
+  ze sluga. **Zweryfikowane ręcznie:** `HTTP 200`, `image/png`, ~100-111 KB
 
 ### Otwarte
 
@@ -650,8 +656,7 @@ docker compose -f docker-compose.prod.yml up -d
 |---|---|---|---|
 | 1 | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier, nawet po zapłacie | Faza 7 |
 | 2 | Płatności (Lemon Squeezy / Paddle) — brak konta i webhooka | Nie da się kupić premium | §13.3 |
-| 3 | Brak `og-default.png` (manifest/OG) | Podgląd w social media bez obrazka | dodać do `apps/web/public/` |
-| 4 | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"` | **Tylko lokalny Windows** — symlinki wymagają trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | — |
+| 3 | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"` | **Tylko lokalny Windows** — symlinki wymagają trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | — |
 
 > **Uwaga o premium**: logowanie i tabela `subscriptions` są gotowe, więc po
 > podłączeniu dostawcy płatności wystarczy wpiąć `hasFeature()` w komponenty
