@@ -1,10 +1,10 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
 import { Lock } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
 
 /**
@@ -63,7 +63,10 @@ export function PremiumGate({
           {benefit}
         </p>
         <Button asChild size="sm">
-          <Link href="/pl/premium">Zobacz plany →</Link>
+          {/* `Link` z `@/i18n/routing` dokłada prefiks lokalizacji.
+              Wcześniej href był zaszyty na `/pl/premium`, więc użytkownik
+              angielskiej wersji trafiał na polską stronę. */}
+          <Link href="/premium">Zobacz plany →</Link>
         </Button>
       </div>
     </div>
