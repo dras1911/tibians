@@ -294,85 +294,79 @@ curl -s -o /dev/null -w "%{http_code}\n" https://tibians.tools/robots.txt
 
 ---
 
-## 9. ⚠️ Pierwszy scrape (WAŻNE — przeczytaj przed uruchomieniem)
+## 9. Pierwszy scrape (scraper działa automatycznie)
 
-> **ZNANA LUKA**: kontener `scraper` w obecnej wersji **nie uruchamia automatycznie schedulera**.
-> `apps/scraper/src/index.ts` eksportuje funkcję `startScheduler()`, ale nie ma jeszcze
-> produkcyjnego bootstrapu (`apps/scraper/scripts/start.ts`) ani adaptera `wiring.ts`
-> (Drizzle → interfejs `SchedulerDb`). Bez tego baza pozostanie **pusta** i portal
-> pokaże „0 aukcji".
->
-> **Aby dokończyć** — patrz §9.2 poniżej.
+Kontener `scraper` uruchamia 3 pętle schedulera **od razu po starcie**:
 
-### 9.1 Co działa już teraz
-- ✅ Strony renderują się (puste listy — brak danych)
-- ✅ Kalkulatory działają (czysto klientowe, nie potrzebują bazy)
-- ✅ Blog, premium, reference (część z TibiaData) działają
-- ❌ Bazaar pokazuje 0 aukcji (brak danych)
+| Pętla | Interwał | Co robi |
+|---|---|---|
+| **Full** | 15 min | lista 101 stron Bazaar → diff → fan-out detali → upsert do DB |
+| **EndingSoon** | 30 s | aukcje kończące się <1 h (zasila SSE) |
+| **Reference** | 24 h | items / outfits / mounts + kalibracja wyceny |
 
-### 9.2 Dokończenie scrapingu (2 pliki)
+Pierwsze dane pojawiają się w ciągu kilku minut od `docker compose up`.
 
-**Plik 1**: `apps/scraper/src/wiring.ts` — adapter Drizzle → `SchedulerDb`:
-```typescript
-import type { Pool } from "pg";
-import type { SchedulerDb } from "./scheduler.js";
-// Implementuje wszystkie metody interfejsu SchedulerDb (patrz src/scheduler.ts):
-//   fetchAllAuctionSummaries, upsertAuction, archiveFinishedAuctions,
-//   getEndingSoonIds, upsertItems, upsertOutfits, upsertMounts, …scrape_runs
-// Deleguje do zapytań z packages/db/src/queries (T34).
-export function createPgSchedulerDb(pool: Pool): SchedulerDb { /* … */ }
-export function createPgAdvisoryLockClient(pool: Pool): AdvisoryLockClient { /* … */ }
-```
+### 9.1 Weryfikacja, że scheduler wystartował
 
-**Plik 2**: `apps/scraper/scripts/start.ts` — bootstrap:
-```typescript
-import { pool, closeDb } from "@tibians/db";
-import { startScheduler } from "../src/index.js";
-import { createPgSchedulerDb, createPgAdvisoryLockClient } from "../src/wiring.js";
-
-const db = createPgSchedulerDb(pool);
-const lock = createPgAdvisoryLockClient(pool);
-const handle = startScheduler(db, { lockClient: lock });
-
-for (const sig of ["SIGTERM", "SIGINT"] as const) {
-  process.on(sig, async () => {
-    await handle.stop();
-    await closeDb();
-    process.exit(0);
-  });
-}
-console.log("[scraper] scheduler started");
-```
-
-**Następnie**:
 ```bash
-# 1. Zmień CMD w Dockerfile.scraper z:
-#      CMD ["node", "apps/scraper/dist/index.js"]
-#    na:
-#      CMD ["node", "--import", "tsx/esm", "apps/scraper/scripts/start.ts"]
-# 2. Rebuild + restart
-cd /opt/tibians
-docker compose -f docker-compose.prod.yml up -d --build scraper
-docker compose -f docker-compose.prod.yml logs -f scraper
+# Logi startowe (powinno być widać banner)
+docker compose -f docker-compose.prod.yml logs --tail=20 scraper
+# → [start] Tibians scraper — bootstrap produkcyjny
+# → [start] scheduler wystartował (Full 15min / EndingSoon 30s / Reference 24h)
 ```
 
-**Weryfikacja działania:**
+### 9.2 Weryfikacja, że dane napływają (po ~5-15 min)
+
 ```bash
-# Po ~15 min sprawdź czy dane się pojawiły
+# 1. Ile aukcji w bazie?
 docker compose -f docker-compose.prod.yml exec db \
-  psql -U tibians -d tibians -c "SELECT COUNT(*), status FROM auctions GROUP BY status;"
+  psql -U tibians -d tibians -c "SELECT status, COUNT(*) FROM auctions GROUP BY status;"
 # → active | ~2500
 
+# 2. Świeżość scrape'a (z health endpointu)
 curl -s https://tibians.tools/api/health | jq '.scrapeFreshnessMinutes'
-# → liczba < 30
+# → liczba < 30  (i .scrapeStale == false)
+
+# 3. Historia runów (observability)
+docker compose -f docker-compose.prod.yml exec db \
+  psql -U tibians -d tibians -c \
+  "SELECT run_type, status, auctions_found, errors_count FROM scrape_runs ORDER BY started_at DESC LIMIT 5;"
 ```
 
-### 9.3 Tryb ręczny (obejście na już)
-Jeśli chcesz zobaczyć dane bez czekania na dokończenie §9.2, uruchom scrape ręcznie:
+### 9.3 Tryb ręczny (jednorazowy scrape, bez czekania)
+
 ```bash
-docker compose -f docker-compose.prod.yml exec scraper pnpm --filter @tibians/scraper scrap:auctions
+# tryby: full | endingSoon | reference
+docker compose -f docker-compose.prod.yml exec scraper \
+  pnpm --filter @tibians/scraper scrap:auctions
+
+docker compose -f docker-compose.prod.yml exec scraper \
+  pnpm --filter @tibians/scraper ref:scrape
 ```
-> ⚠️ Wymaga również uzupełnienia `src/cli/scrap-auctions.ts` (obecnie nie istnieje — `package.json` wskazuje na brakujący plik).
+
+Advisory lock jest brany identycznie jak w produkcji, więc tryb ręczny
+**nie zdubluje** pracy działającego kontenera — druga iteracja zostanie
+pominięta jako „lock zajęty".
+
+### 9.4 Jeśli dane się nie pojawiają
+
+```bash
+# 1. Błędy w logach
+docker compose -f docker-compose.prod.yml logs scraper | grep -iE "error|fatal"
+
+# 2. Co mówi ostatni run?
+docker compose -f docker-compose.prod.yml exec db \
+  psql -U tibians -d tibians -c \
+  "SELECT run_type, status, errors_count, error_summary FROM scrape_runs ORDER BY started_at DESC LIMIT 3;"
+
+# 3. Czy są zapisane błędy szczegółowe?
+docker compose -f docker-compose.prod.yml exec db \
+  psql -U tibians -d tibians -c \
+  "SELECT error_type, message FROM scrape_errors ORDER BY created_at DESC LIMIT 10;"
+```
+
+Najczęstsze przyczyny: brak `DATABASE_URL` w kontenerze scrapera, Tibia blokuje
+IP (403/429 — patrz §14), albo brak migracji (§7).
 
 ---
 
@@ -501,12 +495,54 @@ docker compose -f docker-compose.prod.yml up -d --build
 
 **Zysk**: link z `tibia.com` = darmowy, wysokointentowy ruch.
 
-### 13.2 Discord OAuth (Faza 6, T78-T80)
-1. https://discord.com/developers/applications → **New Application** → `Tibians`
-2. **OAuth2** → Redirect URL: `https://tibians.tools/api/auth/discord/callback`
-3. Skopiuj `CLIENT_ID` + `CLIENT_SECRET` do `.env.production`
-4. Wygeneruj `SESSION_SECRET` (`openssl rand -hex 32`)
-5. `docker compose up -d --build web`
+### 13.2 Discord OAuth — logowanie (aplikacja Discord, NIE bot)
+
+> **Bot NIE jest potrzebny. Serwer Discord NIE jest potrzebny.**
+> „Sign in with Discord" używa **Aplikacji Discord** (OAuth2), nie bota.
+> Bot przydałby się wyłącznie, gdyby portal miał *działać wewnątrz* serwera
+> Discord (nadawać role, pisać wiadomości) — czego nie robimy.
+
+**Nazwa „Tibians Tools" a Twój prywatny nick**
+
+OAuth pokazuje **nazwę aplikacji**, a nie nazwę konta właściciela. Twój osobisty
+nick nie pojawi się nigdzie — jesteś właścicielem aplikacji wyłącznie technicznie.
+Ekran zgody powie: *„Tibians Tools chce uzyskać dostęp do Twojego konta"*.
+
+**Krok po kroku:**
+
+1. https://discord.com/developers/applications → **New Application**
+2. Nazwa: **`Tibians Tools`** — dokładnie to zobaczą użytkownicy
+3. **General Information** → wgraj ikonę (512×512), opis i link do strony.
+   Im pełniejszy profil, tym poważniej wygląda ekran zgody.
+4. **OAuth2 → Redirects** → dodaj dokładnie:
+   `https://tibians.tools/api/auth/callback/discord`
+   (Discord wymaga HTTPS; `http://localhost:3000/api/auth/callback/discord`
+   możesz dodać jako osobny wpis do developmentu)
+5. Skopiuj **Client ID** + **Client Secret** → do `.env.production`
+   (`DISCORD_CLIENT_ID`, `DISCORD_CLIENT_SECRET`)
+6. `SESSION_SECRET` → `openssl rand -hex 32` (do tego samego pliku)
+7. **Uwaga na Secret**: pokazywany jest jednorazowo. Jeśli go zgubisz →
+   „Reset Secret" (stary natychmiast przestaje działać).
+8. `docker compose -f docker-compose.prod.yml up -d --build web`
+
+**Zakresy (scopes)**: `identify` (id, nazwa, avatar). Dodawaj `email` tylko jeśli
+faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
+
+> **⚠️ KOD LOGOWANIA JESZCZE NIE ISTNIEJE.**
+> W repozytorium **nie ma implementacji OAuth2** — brak `next-auth`/`lucia`/sesji,
+> brak tras auth. W kodzie są wyłącznie placeholdery
+> (np. `workspace-layout.tsx`: `isAuthenticated = false; // Faza 6`).
+> `apps/web/src/lib/auth/entitlements.ts` przyjmuje `discordId` jako **parametr** —
+> to czysta funkcja uprawnień, bez przepływu OAuth.
+>
+> Do wdrożenia logowania trzeba dopisać (T78-T80):
+> - trasy `/api/auth/login/discord` + `/api/auth/callback/discord`
+>   (wymiana `code` → token, wywołanie `GET /users/@me`),
+> - tabelę `users` (`discord_id`, `username`, `avatar_url`) + sesje (cookie/JWT),
+> - powiązanie `users` ↔ `subscriptions` (żeby premium wiedziało, kto zapłacił).
+>
+> Bez tego kroki 1-8 to przygotowanie (aplikacja + sekrety), ale przycisk
+> „Zaloguj przez Discord" nie zadziała.
 
 ### 13.3 Premium — Lemon Squeezy / Paddle (Faza 7, T82)
 1. Załóż konto (MoR — oni obsługują VAT i faktury)
@@ -527,7 +563,7 @@ Self-hosted kontener lub https://plausible.io (płatne).
 | `web` nie startuje (unhealthy) | DB niedostępna / złe `DATABASE_URL` | `docker compose logs db web`; sprawdź hasło w `DATABASE_URL` vs `POSTGRES_PASSWORD` |
 | Caddy nie wystawia SSL | DNS nie propagował się / Cloudflare proxy ON | `dig +short twojadomena.pl` musi zwrócić IP VPS; wyłącz proxy w CF |
 | `curl /api/health` → 503 | DB down lub brak tabel | Sprawdź `db: ok` w odpowiedzi; uruchom §7 (migracje) |
-| Portal pokazuje 0 aukcji | Scraper nie działa (patrz §9) | Dokończ §9.2 |
+| Portal pokazuje 0 aukcji | Scraper nie zdążył / pada (patrz §9) | Sprawdź `logs scraper` + `scrape_runs` (§9.4) |
 | `scrapeFreshnessMinutes` > 30 | Scraper padł / rate-limit | `docker compose logs scraper`; sprawdź czy Tibia nie blokuje IP |
 | Brakuje miejsca na dysku | Historia aukcji rośnie | `docker system prune -a`; rozważ większy wolumen |
 | Wolne odpowiedzi | Brak cache / za mały VPS | Sprawdź `docker stats`; rozważ CX42 |
@@ -552,21 +588,37 @@ docker compose -f docker-compose.prod.yml up -d
 
 ---
 
-## 15. ⚠️ Znane luki w obecnej wersji (stan: 2026-09-15)
+## 15. ✅ Znane luki (stan: 2026-09-15 — po naprawie scrapingu)
 
-Te elementy **wymagają dokończenia** zanim portal będzie w pełni funkcjonalny:
+### Zamknięte (commit `ca7441e`)
 
-| # | Luka | Wpływ | Gdzie naprawić |
+- ✅ **`apps/scraper/src/wiring.ts`** — adapter Drizzle → `SchedulerDb` (13 metod)
+- ✅ **`packages/db/src/queries/`** — warstwa zapytań + mappery (to było „T34")
+- ✅ **`createPgAdvisoryLockClient`** — wcześniej **nie istniał nigdzie** w repo,
+  mimo że `index.ts:28` go wywoływał; używa dedykowanego połączenia, bo advisory
+  locki są session-scoped (przez `pool.query()` lock znikałby natychmiast)
+- ✅ **`apps/scraper/src/start.ts`** — bootstrap produkcyjny (entrypoint kontenera)
+- ✅ **`apps/scraper/src/cli/scrape.ts`** — realne `scrap:*` / `ref:scrape`
+  (wcześniej `package.json` wskazywał na 4 nieistniejące pliki)
+- ✅ **`Dockerfile.scraper` CMD** — kontener realnie startuje scheduler
+  (wcześniej `dist/index.js` tylko eksportował funkcję → baza pusta)
+- ✅ **`apps/scraper/src/index.ts`** — usunięte handlery SIGTERM/SIGINT wołające
+  `process.exit(0)` natychmiast; uniemożliwiały graceful shutdown
+  (drain in-flight + zwolnienie advisory locka)
+- ✅ **`vitest.config.ts`** — alias `@tibians/db/seed`. Vite traktuje string `find`
+  jako **prefix**, więc `@tibians/db` przesłaniał subpath i przepisywał go na
+  `db/src/index.ts/seed` → `valuation.test.ts` padał na czystym HEAD
+- ✅ **108 śmieci builda** (`.js`/`.js.map`/`.d.ts`/`.d.ts.map`) zacommitowanych
+  wewnątrz `src/` pakietów `db` i `shared` — Vite preferował nieaktualny `.js`
+
+### Otwarte
+
+| # | Luka | Wpływ | Gdzie |
 |---|---|---|---|
-| 1 | **Brak `apps/scraper/src/wiring.ts`** — adapter Drizzle → `SchedulerDb` | Scraper nie może zapisywać do bazy | §9.2 |
-| 2 | **Brak `apps/scraper/scripts/start.ts`** — bootstrap schedulera | Kontener scrapera nic nie robi | §9.2 |
-| 3 | **Brak `apps/scraper/src/cli/*.ts`** — `package.json` wskazuje na 4 nieistniejące pliki | `pnpm scrap:*` nie działa | §9.3 |
-| 4 | **`Dockerfile.scraper` CMD** wskazuje `dist/index.js`, który tylko eksportuje | Kontener "działa" ale nie scrapuje | §9.2 (zmiana CMD) |
-| 5 | Brak integracji Discord OAuth w UI (`components/auth/`) | Login niedostępny | §13.2 |
-| 6 | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier | Faza 7 |
-| 7 | Brak `og-default.png` (manifest/OG) | Podgląd w social media bez obrazka | dodać do `public/` |
-
-**Szacowany czas na dokończenie luk 1-4 (krytyczne dla Bazaar)**: ~2-3 h pracy agenta.
+| 1 | Brak implementacji Discord OAuth (brak `next-auth`/sesji/tras auth) | Brak logowania; w kodzie placeholdery `isAuthenticated = false` | §13.2 |
+| 2 | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier | Faza 7 |
+| 3 | Brak `og-default.png` (manifest/OG) | Podgląd w social media bez obrazka | dodać do `apps/web/public/` |
+| 4 | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"` | **Tylko lokalny Windows** — tworzenie symlinków wymaga trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | — |
 
 ---
 
