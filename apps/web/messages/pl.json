@@ -2028,5 +2028,11 @@
         "a": "Rozwijalny breakdown wyceny, wykres historii bidów, pole „zainwestowane”, SSE bez limitu, porównywarkę do 4 aukcji + CSV i brak reklam."
       }
     }
+  },
+  "Auth": {
+    "login": "Zaloguj przez Discord",
+    "logout": "Wyloguj",
+    "accountMenu": "Menu konta",
+    "premium": "Premium"
   }
 }

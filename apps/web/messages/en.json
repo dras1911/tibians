@@ -2028,5 +2028,11 @@
         "a": "Expandable valuation breakdown, bid history chart, the “invested” field, unlimited SSE, compare up to 4 auctions + CSV, and no ads."
       }
     }
+  },
+  "Auth": {
+    "login": "Sign in with Discord",
+    "logout": "Sign out",
+    "accountMenu": "Account menu",
+    "premium": "Premium"
   }
 }

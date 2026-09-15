@@ -17,6 +17,7 @@ export * from './valuation';
 export * from './ops';
 export * from './content';
 export * from './subscriptions';
+export * from './users';
 export * from './views';
 
 /**
@@ -32,6 +33,7 @@ import * as ops from './ops';
 import * as reference from './reference';
 import * as subscriptions from './subscriptions';
 import * as timeSeries from './time-series';
+import * as users from './users';
 import * as valuation from './valuation';
 import * as views from './views';
 
@@ -46,5 +48,6 @@ export const schema = {
   ...ops,
   ...content,
   ...subscriptions,
+  ...users,
   ...views,
 } as const;

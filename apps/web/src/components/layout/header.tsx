@@ -11,6 +11,7 @@ import { LocaleSwitch } from "./locale-switch";
 import { MegaMenu, type MegaMenuGroup } from "./mega-menu";
 import { MobileSheetTrigger } from "./mobile-sheet";
 import { ThemeToggle } from "./theme-toggle";
+import { UserMenu } from "./user-menu";
 import { cn } from "@/lib/utils";
 
 import type { Locale } from "@/i18n/routing";
@@ -229,6 +230,10 @@ export function Header() {
           <div className="hidden md:inline-flex">
             <LocaleSwitch />
           </div>
+
+          {/* Account — Discord login (T78). Visible on every breakpoint:
+              on mobile it sits before the hamburger so it stays reachable. */}
+          <UserMenu />
 
           {/* Mobile only — hamburger trigger */}
           <div className="md:hidden">

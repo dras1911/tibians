@@ -34,6 +34,7 @@ import {
   outfits as outfitsTable,
   scrapeErrors,
   scrapeRuns,
+  users as usersTable,
   worlds,
 } from '../schema';
 import { MV_FACET_COUNTS_REFRESH } from '../schema/views';
@@ -505,6 +506,67 @@ export async function recordCalibrationRun(
  */
 export async function refreshFacetCounts(db: Db): Promise<void> {
   await db.execute(MV_FACET_COUNTS_REFRESH);
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  UŻYTKOWNICY (T78 — Discord OAuth)
+ * ════════════════════════════════════════════════════════════════ */
+
+/** Dane profilu z Discorda do zapisania w `users`. */
+export interface UpsertUserData {
+  readonly discordId: string;
+  readonly username: string;
+  readonly globalName: string | null;
+  readonly avatarUrl: string | null;
+  readonly email: string | null;
+}
+
+/**
+ * Zakłada lub aktualizuje profil użytkownika po logowaniu.
+ *
+ * Idempotentne — każde logowanie odświeża profil (nazwa/awatar mogą się
+ * zmienić po stronie Discorda).
+ *
+ * `email` zachowujemy przez `COALESCE`: gdy użytkownik nie udostępnił e-maila
+ * (brak scope `email`), NIE nadpisujemy zapisanego wcześniej adresu wartością
+ * NULL. Ta sama zasada dla `global_name` i `avatar_url` — brak danych w
+ * payloadzie nie może kasować tego, co już mamy.
+ */
+export async function upsertUser(db: Db, input: UpsertUserData): Promise<void> {
+  const now = new Date();
+
+  await db
+    .insert(usersTable)
+    .values({
+      discordId: input.discordId,
+      username: input.username,
+      globalName: input.globalName,
+      avatarUrl: input.avatarUrl,
+      email: input.email,
+      lastLoginAt: now,
+    })
+    .onConflictDoUpdate({
+      target: usersTable.discordId,
+      set: {
+        username: sql`excluded.username`,
+        globalName: sql`coalesce(excluded.global_name, ${usersTable.globalName})`,
+        avatarUrl: sql`coalesce(excluded.avatar_url, ${usersTable.avatarUrl})`,
+        email: sql`coalesce(excluded.email, ${usersTable.email})`,
+        lastLoginAt: now,
+        updatedAt: now,
+      },
+    });
+}
+
+/** Profil użytkownika po `discordId` (albo `null`). */
+export async function getUserById(db: Db, discordId: string) {
+  const rows = await db
+    .select()
+    .from(usersTable)
+    .where(eq(usersTable.discordId, discordId))
+    .limit(1);
+
+  return rows[0] ?? null;
 }
 
 export type { ScraperAuctionLike, ScraperItemLike, ScraperReferenceLike };
