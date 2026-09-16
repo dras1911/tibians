@@ -560,6 +560,43 @@ describe("useAuctionLive — React hook integration (SSR-safe)", () => {
     expect(ctor).toHaveBeenCalledTimes(1);
   });
 
+  it("renderuje się w SSR bez EventSource (realny przypadek z produkcji)", () => {
+    // TO JEST PRZYPADEK, KTÓRY WYWALAŁ STRONĘ GŁÓWNĄ NA 500.
+    //
+    // Poprzedni test „SSR-safe" wstrzykiwał własny `eventSourceCtor`, więc
+    // omijał jedyną rzucającą ścieżkę: `resolveEventSourceCtor()` bez
+    // wstrzyknięcia. Na serwerze Next `globalThis.EventSource` nie istnieje,
+    // kontroler rzucał już w konstruktorze (wołanym przez `useState` podczas
+    // SSR), a strona główna (renderuje `EndingSoonSectionLive`) zwracała 500.
+    //
+    // Ten test usuwa `EventSource` i renderuje hook BEZ opcji — dokładnie
+    // tak, jak robi to produkcja.
+    const originalDescriptor = Object.getOwnPropertyDescriptor(
+      globalThis,
+      "EventSource",
+    );
+    delete (globalThis as { EventSource?: unknown }).EventSource;
+
+    try {
+      function Probe(): React.ReactElement {
+        const live = useAuctionLive();
+        return React.createElement("div", {
+          "data-status": live.status,
+          "data-count": String(live.auctions.length),
+        });
+      }
+
+      // Najważniejsze: NIE rzuca.
+      const html = renderToString(React.createElement(Probe));
+      expect(html).toContain('data-status="connecting"');
+      expect(html).toContain('data-count="0"');
+    } finally {
+      if (originalDescriptor !== undefined) {
+        Object.defineProperty(globalThis, "EventSource", originalDescriptor);
+      }
+    }
+  });
+
   it("zwraca initial state z enabled: false bez tworzenia EventSource", () => {
     const ctor = vi.fn().mockReturnValue(makeFakeEventSource());
 

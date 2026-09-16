@@ -159,14 +159,22 @@ const DEFAULT_SCHEDULER: SchedulerLike = {
 
 /**
  * Rozpoznaje środowisko i zwraca natywny EventSource.
+ *
+ * Zwraca `null`, gdy `EventSource` nie istnieje (SSR / Node) — **nie rzuca**.
+ *
+ * POPRZEDNIO rzucało to wyjątek, a konstruktor kontrolera jest wołany przez
+ * `useState(() => new AuctionLiveController(...))`, czyli **także podczas SSR**.
+ * Efekt: strona główna (renderuje `EndingSoonSectionLive`) zwracała 500:
+ *   `Error: [useAuctionLive] EventSource is not available in this environment.`
+ *
+ * Istniejący test „SSR-safe" tego nie łapał, bo wstrzykiwał własny `ctor` —
+ * a więc omijał właśnie tę, jedyną rzucającą, ścieżkę.
  */
-function resolveEventSourceCtor(): EventSourceConstructor {
+function resolveEventSourceCtor(): EventSourceConstructor | null {
   const g = globalThis as unknown as { EventSource?: EventSourceConstructor };
   const ctor = g.EventSource;
   if (typeof ctor !== "function") {
-    throw new Error(
-      "[useAuctionLive] EventSource is not available in this environment.",
-    );
+    return null;
   }
   // Adapter: native EventSource ma drugi opcjonalny parametr (EventSourceInit),
   // którego nie używamy. Wrapper gwarantuje zgodność z naszym typem
@@ -214,7 +222,7 @@ export class AuctionLiveController {
   private enabled: boolean;
   private disposed = false;
 
-  private readonly eventSourceCtor: EventSourceConstructor;
+  private readonly eventSourceCtor: EventSourceConstructor | null;
   private readonly fetchImpl: FetchLike;
   private readonly scheduler: SchedulerLike;
   private readonly liveUrl: string;
@@ -249,7 +257,19 @@ export class AuctionLiveController {
       lastUpdate: null,
     };
 
-    if (this.enabled) {
+    /**
+     * Startujemy TYLKO gdy mamy czym połączyć się na żywo.
+     *
+     * Poza przeglądarką (SSR) `resolveEventSourceCtor()` zwraca `null` —
+     * wtedy kontroler pozostaje pasywny: bez SSE i bez pollingu, więc
+     * serwerowy render nie wykonuje żadnych żądań sieciowych. Stan zostaje
+     * `"connecting"`, czyli dokładnie to, co trafia do HTML-a i co React
+     * podnosi w przeglądarce.
+     *
+     * Testy wstrzykują własny `eventSourceCtor`, więc dla nich ta gałąź
+     * zachowuje się jak w przeglądarce (i to jest zamierzone).
+     */
+    if (this.enabled && this.eventSourceCtor !== null) {
       this.start();
     }
   }
@@ -335,6 +355,16 @@ export class AuctionLiveController {
 
   private connectSse(): void {
     if (this.es !== null) return;
+
+    // Poza przeglądarką `EventSource` nie istnieje, więc nie ma czego otwierać.
+    // Rzucamy celowo: wołający `start()` ma `try/catch`, który w tym wypadku
+    // przechodzi do `startPolling()` — czyli zachowanie „SSE z fallbackiem"
+    // działa także w środowiskach bez SSE.
+    if (this.eventSourceCtor === null) {
+      throw new Error(
+        "[useAuctionLive] EventSource unavailable — using polling fallback",
+      );
+    }
 
     this.setState({ status: "connecting" });
 
@@ -478,12 +508,12 @@ export function useAuctionLive(
   );
 
   React.useEffect(() => {
-    controller.setEnabled(options.enabled ?? true);
+    controller?.setEnabled(options.enabled ?? true);
   }, [controller, options.enabled]);
 
   React.useEffect(() => {
     return (): void => {
-      controller.dispose();
+      controller?.dispose();
     };
   }, [controller]);
 
