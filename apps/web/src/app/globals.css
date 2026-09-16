@@ -1,13 +1,18 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
-
 /*
  * ★ Tibians tokens — single source of truth for OKLCH palette + typography.
  * Imported from @tibians/ui so dark/light/typography rules ship from one file
  * (no hardcoded colors anywhere in apps/web — see tailwind.config.ts).
+ *
+ * ⚠️ `@import` MUSI stać PRZED `@tailwind` — specyfikacja CSS wymaga, aby
+ * `@import` poprzedzał wszystkie inne reguły. Wcześniej był PO dyrektywach
+ * Tailwinda, więc postcss-import go pomijał i tokeny (paleta OKLCH,
+ * typografia) nigdy nie trafiały do wynikowego CSS.
  */
 @import "@tibians/ui/styles.css";
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 @layer base {
   /*

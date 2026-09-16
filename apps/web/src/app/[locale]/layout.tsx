@@ -1,3 +1,13 @@
+// ⚠️ GLOBALNY CSS — MUSI być zaimportowany tutaj.
+//
+// Ten plik jest ROOT LAYOUTEM (wszystkie trasy żyją pod `[locale]`), więc to
+// jedyne miejsce, w którym `globals.css` może zostać wpięty. Wcześniej NIE był
+// importowany nigdzie — Tailwind i design system (`@tibians/ui`) nie trafiały
+// do bundla, a portal renderował się jako surowy HTML bez żadnych stylów.
+// Typcheck, testy jednostkowe i `curl` (HTTP 200) tego nie wykrywają —
+// widać to wyłącznie w przeglądarce.
+import "../globals.css";
+
 import * as React from "react";
 import type { Metadata } from "next";
 import { Inter, JetBrains_Mono } from "next/font/google";
