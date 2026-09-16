@@ -220,7 +220,10 @@ export function EndingSoonSectionLive({
         </p>
       </header>
 
-      {/* Body: reużycie `<AuctionSection>` (T53) — SSR dane (AuctionSummary[]). */}
+      {/* Body: reużycie `<AuctionSection>` (T53) — SSR dane (AuctionSummary[]).
+          `hideHeader` — nagłówek (tytuł, opis, ikona) renderuje już ten
+          komponent powyżej, wraz z badge LIVE i licznikiem. Bez tej flagi
+          tytuł sekcji pojawiał się DWA razy. */}
       <AuctionSection
         sectionId="ending-soon-live"
         title={title}
@@ -232,6 +235,7 @@ export function EndingSoonSectionLive({
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
         maxItems={4}
+        hideHeader
       />
     </section>
   );

@@ -52,6 +52,16 @@ export const metadata: Metadata = {
   },
   description:
     "Community hub dla graczy Tibii: kalkulatory, wycena postaci i analiza Char Bazaar.",
+  /**
+   * Favicon. Bez tego przeglądarka żąda `/favicon.ico` i dostaje 404
+   * (widoczne jako błąd w konsoli na KAŻDEJ stronie).
+   * Używamy istniejącej ikony SVG z `public/icons/` — tej samej co manifest PWA.
+   */
+  icons: {
+    icon: "/icons/icon.svg",
+    shortcut: "/icons/icon.svg",
+    apple: "/icons/icon.svg",
+  },
 };
 
 /**

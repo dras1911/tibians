@@ -46,6 +46,14 @@ export interface AuctionSectionProps {
   emptyDescription: string;
   /** Ile aukcji pokazać (default 4 dla ending-soon, 6 dla recently-updated). */
   maxItems?: number;
+  /**
+   * Nie renderuj tytułu i opisu (zostaw sam link „view all" po prawej).
+   *
+   * Używane przez `EndingSoonSectionLive`, który ma WŁASNY nagłówek z badge
+   * LIVE i licznikiem. Bez tej flagi ten sam tytuł pojawiał się DWA razy na
+   * stronie głównej (własny nagłówek + nagłówek `AuctionSection`).
+   */
+  hideHeader?: boolean;
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -63,6 +71,7 @@ export function AuctionSection({
   emptyTitle,
   emptyDescription,
   maxItems = 4,
+  hideHeader = false,
 }: AuctionSectionProps) {
   const shown = auctions.slice(0, maxItems);
   const titleId = `${sectionId}-title`;
@@ -73,18 +82,20 @@ export function AuctionSection({
       className="space-y-4"
     >
       <header className="flex flex-wrap items-end justify-between gap-3">
-        <div>
-          <h2
-            id={titleId}
-            className="flex items-center gap-2 text-lg font-semibold tracking-tight sm:text-xl"
-          >
-            {Icon !== undefined ? (
-              <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
-            ) : null}
-            {title}
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-        </div>
+        {hideHeader === true ? null : (
+          <div>
+            <h2
+              id={titleId}
+              className="flex items-center gap-2 text-lg font-semibold tracking-tight sm:text-xl"
+            >
+              {Icon !== undefined ? (
+                <Icon className="h-5 w-5 text-primary" aria-hidden="true" />
+              ) : null}
+              {title}
+            </h2>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+          </div>
+        )}
         <Link
           href={viewAllHref as "/bazaar"}
           className={cn(
