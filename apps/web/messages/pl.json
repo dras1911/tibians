@@ -732,6 +732,16 @@
           "label": "Bonus lojalności",
           "help": "360 punktów lojalności = 5%. Wybierz z listy {0,5,…,50}.",
           "placeholder": "Wybierz procent"
+        },
+        "vocation": {
+          "label": "Profesja postaci",
+          "help": "Od profesji zależy stała „b\" w formule Tibii — dlatego ten sam skill bazowy daje różny wynik wyświetlany u Knighta i u Paladyna.",
+          "placeholder": "Wybierz profesję"
+        },
+        "skill": {
+          "label": "Rodzaj skilla",
+          "help": "Każdy skill ma własną stałą i offset w formule (Magic Level startuje od 0, pozostałe od 10).",
+          "placeholder": "Wybierz skill"
         }
       },
       "result": {
@@ -746,6 +756,24 @@
       "errors": {
         "invalidSkill": "Wpisz liczbę całkowitą ≥ 0",
         "invalidLoyalty": "Niedozwolona wartość bonusu"
+      },
+      "vocations": {
+        "knight": "Knight / Elite Knight",
+        "paladin": "Paladin / Royal Paladin",
+        "sorcerer": "Sorcerer / Master Sorcerer",
+        "druid": "Druid / Elder Druid",
+        "monk": "Monk / Exalted Monk",
+        "none": "Brak (Rookgaard)"
+      },
+      "skills": {
+        "sword": "Sword Fighting",
+        "axe": "Axe Fighting",
+        "club": "Club Fighting",
+        "fist": "Fist Fighting",
+        "distance": "Distance Fighting",
+        "shielding": "Shielding",
+        "magic": "Magic Level",
+        "fishing": "Fishing"
       }
     },
     "stamina": {

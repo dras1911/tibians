@@ -120,7 +120,18 @@ export {
 // Formulas — True Skill (T15, arch. §2.2)
 // ──────────────────────────────────────────────────────────────────────────
 
-export { trueSkill } from "./formulas/true-skill.js";
+export {
+  // Odwrotność bonusu lojalności (displayed → base)
+  trueSkill,
+  // Kierunek odwrotny (base → displayed) — do podglądu „co zobaczę w grze"
+  displayedSkill,
+  // Stałe i typy potrzebne UI do selektorów profesji/skilla
+  TRUE_SKILL_SKILLS,
+  TRUE_SKILL_VOCATIONS,
+  vocationConstant,
+  type TrueSkillSkill,
+  type TrueSkillVocation,
+} from "./formulas/true-skill.js";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Formulas — Stamina (T18, arch. §2.1, TibiaWiki Stamina)

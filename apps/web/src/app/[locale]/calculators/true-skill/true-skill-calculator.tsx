@@ -3,6 +3,8 @@
 import * as React from "react";
 import { z } from "zod";
 import { trueSkill, type LoyaltyBonus } from "@tibians/calc";
+import { TRUE_SKILL_SKILLS, TRUE_SKILL_VOCATIONS } from "@tibians/calc";
+import type { TrueSkillSkill, TrueSkillVocation } from "@tibians/calc";
 import { useFormatter, useTranslations } from "next-intl";
 
 import {
@@ -41,16 +43,25 @@ const formSchema = z.object({
       z.ZodLiteral<50>,
     ],
   ),
+  // Skill i profesja decydują o stałych `b` (profesja) i `c` (offset) w formule
+  // z TibiaWiki. Bez nich kalkulator liczy dla domyślnych (sword/knight) —
+  // Paladin z Distance wychodziłby źle.
+  skill: z.enum(TRUE_SKILL_SKILLS),
+  vocation: z.enum(TRUE_SKILL_VOCATIONS),
 });
 
 interface TrueSkillStoreState {
   displayedSkill: string;
   loyaltyPct: LoyaltyBonus;
+  skill: TrueSkillSkill;
+  vocation: TrueSkillVocation;
 }
 
 const initialState: TrueSkillStoreState = {
   displayedSkill: "100",
   loyaltyPct: 5,
+  skill: "sword",
+  vocation: "knight",
 };
 
 let state: TrueSkillStoreState = { ...initialState };
@@ -83,11 +94,25 @@ function setLoyaltyPct(value: LoyaltyBonus): void {
   listeners.forEach((l) => l());
 }
 
+function setSkill(value: TrueSkillSkill): void {
+  if (state.skill === value) return;
+  state = { ...state, skill: value };
+  listeners.forEach((l) => l());
+}
+
+function setVocation(value: TrueSkillVocation): void {
+  if (state.vocation === value) return;
+  state = { ...state, vocation: value };
+  listeners.forEach((l) => l());
+}
+
 interface TrueSkillComputed {
   ok: true;
   baseSkill: number;
   displayedSkill: number;
   loyaltyPct: LoyaltyBonus;
+  skill: TrueSkillSkill;
+  vocation: TrueSkillVocation;
   loyaltyBonus: number;
 }
 
@@ -114,6 +139,8 @@ function useComputed(): TrueSkillOutcome {
   const parsed = formSchema.safeParse({
     displayedSkill: numeric,
     loyaltyPct: store.loyaltyPct,
+    skill: store.skill,
+    vocation: store.vocation,
   });
 
   return React.useMemo<TrueSkillOutcome>(() => {
@@ -132,6 +159,8 @@ function useComputed(): TrueSkillOutcome {
     const result = trueSkill(
       parsed.data.displayedSkill,
       parsed.data.loyaltyPct,
+      parsed.data.skill,
+      parsed.data.vocation,
     );
     if (!result.ok) {
       return {
@@ -144,6 +173,8 @@ function useComputed(): TrueSkillOutcome {
       baseSkill: result.value,
       displayedSkill: parsed.data.displayedSkill,
       loyaltyPct: parsed.data.loyaltyPct,
+      skill: parsed.data.skill,
+      vocation: parsed.data.vocation,
       loyaltyBonus: parsed.data.displayedSkill - result.value,
     };
   }, [parsed, tErrors]);
@@ -164,6 +195,52 @@ export function TrueSkillForm() {
 
   return (
     <CalculatorForm aria-label={t("title")}>
+      {/* Profesja i skill najpierw — one wyznaczają stałe `b` i `c` w formule
+          z TibiaWiki. Bez nich wynik jest tylko przybliżeniem dla Knight/Sword. */}
+      <FormField
+        id="vocation"
+        label={t("fields.vocation.label")}
+        help={t("fields.vocation.help")}
+      >
+        <Select
+          value={store.vocation}
+          onValueChange={(value) => setVocation(value as TrueSkillVocation)}
+        >
+          <SelectTrigger id="vocation">
+            <SelectValue placeholder={t("fields.vocation.placeholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            {TRUE_SKILL_VOCATIONS.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {t(`vocations.${opt}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+
+      <FormField
+        id="skill"
+        label={t("fields.skill.label")}
+        help={t("fields.skill.help")}
+      >
+        <Select
+          value={store.skill}
+          onValueChange={(value) => setSkill(value as TrueSkillSkill)}
+        >
+          <SelectTrigger id="skill">
+            <SelectValue placeholder={t("fields.skill.placeholder")} />
+          </SelectTrigger>
+          <SelectContent>
+            {TRUE_SKILL_SKILLS.map((opt) => (
+              <SelectItem key={opt} value={opt}>
+                {t(`skills.${opt}`)}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </FormField>
+
       <FormField
         id="displayedSkill"
         label={t("fields.displayedSkill.label")}

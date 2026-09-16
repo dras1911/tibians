@@ -732,6 +732,16 @@
           "label": "Loyalty bonus",
           "help": "360 loyalty points = 5%. Pick from {0,5,…,50}.",
           "placeholder": "Pick percent"
+        },
+        "vocation": {
+          "label": "Character vocation",
+          "help": "The vocation determines the „b\" constant in the Tibia formula — which is why the same base skill shows a different value for a Knight and a Paladin.",
+          "placeholder": "Pick a vocation"
+        },
+        "skill": {
+          "label": "Skill type",
+          "help": "Each skill has its own constant and offset in the formula (Magic Level starts at 0, everything else at 10).",
+          "placeholder": "Pick a skill"
         }
       },
       "result": {
@@ -746,6 +756,24 @@
       "errors": {
         "invalidSkill": "Enter an integer ≥ 0",
         "invalidLoyalty": "Invalid loyalty value"
+      },
+      "vocations": {
+        "knight": "Knight / Elite Knight",
+        "paladin": "Paladin / Royal Paladin",
+        "sorcerer": "Sorcerer / Master Sorcerer",
+        "druid": "Druid / Elder Druid",
+        "monk": "Monk / Exalted Monk",
+        "none": "None (Rookgaard)"
+      },
+      "skills": {
+        "sword": "Sword Fighting",
+        "axe": "Axe Fighting",
+        "club": "Club Fighting",
+        "fist": "Fist Fighting",
+        "distance": "Distance Fighting",
+        "shielding": "Shielding",
+        "magic": "Magic Level",
+        "fishing": "Fishing"
       }
     },
     "stamina": {
