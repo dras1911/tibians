@@ -24,3 +24,6 @@ pnpm-debug.log*
 Thumbs.db
 .idea/
 .vscode/
+
+# Playwright MCP — artefakty zrzutów/snapshotow (nie commitujemy)
+.playwright-mcp/
