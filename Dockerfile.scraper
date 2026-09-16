@@ -55,4 +55,9 @@ STOPSIGNAL SIGTERM
 # eksportują SUROWY TypeScript (`main: "./src/index.ts"`), więc `node` bez
 # loadera nie zaimportuje ich w ogóle. Wcześniej CMD wskazywał na
 # `dist/index.js`, który jedynie eksportował funkcje — nic nie startował.
-CMD ["node", "--import", "tsx/esm", "apps/scraper/src/start.ts"]
+#
+# UWAGA na `cd`: `tsx` jest devDependency PAKIETU, więc pnpm linkuje go do
+# `/app/apps/scraper/node_modules/tsx`, a NIE do `/app/node_modules/tsx`.
+# Uruchomienie z `/app` kończyło się `ERR_MODULE_NOT_FOUND: Cannot find
+# package 'tsx'`. Wejście do katalogu pakietu naprawia rozwiązywanie.
+CMD ["sh", "-c", "cd /app/apps/scraper && exec node --import tsx/esm src/start.ts"]

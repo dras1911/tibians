@@ -417,8 +417,6 @@ export async function listAuctions(
 export async function listEndingSoon(
   withinHours: number,
 ): Promise<AuctionRow[]> {
-  const hoursInterval = sql.raw(`${withinHours} hour`);
-
   const rows = await db
     .select(AUCTION_PROJECTION)
     .from(auctions)
@@ -428,7 +426,15 @@ export async function listEndingSoon(
         eq(auctions.status, "active"),
         lte(
           auctions.auctionEnd,
-          sql`NOW() + (${hoursInterval})::interval`,
+          // `INTERVAL` wymaga wartości w apostrofach (`INTERVAL '24 hours'`).
+          // Wcześniej było `sql.raw(`${withinHours} hour`)`, co dawało
+          // `NOW() + (24 hour)::interval` → `syntax error at or near "hour"`
+          // (kod 42601) i wywalało CAŁĄ stronę główną na 500.
+          //
+          // Mnożenie przez `INTERVAL '1 hour'` jest parametryzowane (brak
+          // wstrzykiwania) i poprawne składniowo. Ten sam wzorzec stosuje
+          // `getEndingSoonIds` w scraperze.
+          sql`NOW() + (${withinHours} * INTERVAL '1 hour')`,
         ),
       ),
     )
