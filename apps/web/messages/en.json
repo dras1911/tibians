@@ -2037,5 +2037,48 @@
     "logout": "Sign out",
     "accountMenu": "Account menu",
     "premium": "Premium"
+  },
+  "Privacy": {
+    "title": "Privacy policy",
+    "description": "What data Tibians collects, why, who we share it with, and how you can delete it.",
+    "lastUpdated": "Last updated",
+    "sections": {
+      "scope": {
+        "title": "1. Scope",
+        "body": "This policy covers the Tibians portal at tibian.click. The portal is a community project not affiliated with CipSoft GmbH. By using the service you accept the rules below."
+      },
+      "data": {
+        "title": "2. What data we collect",
+        "body": "Discord account (only if you sign in): user ID, display name and avatar URL. We do not request your email address or server list. Saved characters: stored only in your browser (localStorage) — never sent to our server. Server logs: anonymous technical data (IP address, timestamp, path) needed for security and diagnostics."
+      },
+      "cookies": {
+        "title": "3. Cookies",
+        "body": "We use two cookies: a session cookie (tibians_session) — only when you sign in, cryptographically signed, valid for 30 days; and NEXT_LOCALE — remembers your language choice. We use no advertising or tracking cookies."
+      },
+      "legal": {
+        "title": "4. Legal basis",
+        "body": "Account data is processed under Art. 6(1)(b) GDPR (performance of a contract — providing the sign-in service). Server logs — under Art. 6(1)(f) GDPR (legitimate interest: service security)."
+      },
+      "sharing": {
+        "title": "5. Who we share data with",
+        "body": "No one. We do not sell, rent or share user data with third parties. Technical data may be processed by our hosting provider strictly as required to operate the server."
+      },
+      "retention": {
+        "title": "6. How long we keep data",
+        "body": "Account profile data is kept until you delete it. Server logs — up to 30 days. Saved characters disappear when you clear your browser data."
+      },
+      "rights": {
+        "title": "7. Your rights",
+        "body": "You have the right to access, rectify, erase and restrict processing of your data. To delete your account and all related data, contact us — we act without delay. You may also lodge a complaint with your supervisory authority."
+      },
+      "contact": {
+        "title": "8. Contact",
+        "body": "For data protection matters, write to the address in the footer or reach us through the project Discord. We reply within 7 days."
+      },
+      "trademark": {
+        "title": "9. Trademark",
+        "body": "Tibia is a registered trademark of CipSoft GmbH. Tibia and all products related to Tibia are copyright by CipSoft GmbH. Tibians is not affiliated with CipSoft GmbH and claims no rights to their intellectual property."
+      }
+    }
   }
 }

@@ -166,9 +166,8 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
                   <MobileLink href="/calculators/true-skill" onSelect={() => onOpenChange(false)}>
                     {tCalc("skillsTraining.trueSkill")}
                   </MobileLink>
-                  <MobileLink href="/calculators/stamina" onSelect={() => onOpenChange(false)}>
-                    {tCalc("skillsTraining.stamina")}
-                  </MobileLink>
+                  {/* Stamina pojawiała się TU DWA RAZY (ten sam href) —
+                      usunięto duplikat; zostaje jedna pozycja. */}
                   <MobileLink href="/calculators/stamina" onSelect={() => onOpenChange(false)}>
                     {tCalc("stamina.title")}
                   </MobileLink>

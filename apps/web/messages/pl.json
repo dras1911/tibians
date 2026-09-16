@@ -2037,5 +2037,48 @@
     "logout": "Wyloguj",
     "accountMenu": "Menu konta",
     "premium": "Premium"
+  },
+  "Privacy": {
+    "title": "Polityka prywatności",
+    "description": "Jakie dane zbiera Tibians, po co, komu je przekazujemy i jak możesz je usunąć.",
+    "lastUpdated": "Ostatnia aktualizacja",
+    "sections": {
+      "scope": {
+        "title": "1. Zakres",
+        "body": "Ta polityka dotyczy portalu Tibians dostępnego pod adresem tibian.click. Portal jest projektem community niezwiązanym z CipSoft GmbH. Korzystając z serwisu, akceptujesz zasady opisane poniżej."
+      },
+      "data": {
+        "title": "2. Jakie dane zbieramy",
+        "body": "Konto Discord (tylko jeśli się zalogujesz): identyfikator użytkownika, nazwa wyświetlana i adres awatara. Nie pobieramy adresu e-mail ani listy serwerów. Zapisane postacie: wyłącznie w Twojej przeglądarce (localStorage) — nie wysyłamy ich na serwer. Logi serwera: anonimowe dane techniczne (adres IP, czas, ścieżka) niezbędne do bezpieczeństwa i diagnostyki."
+      },
+      "cookies": {
+        "title": "3. Ciasteczka",
+        "body": "Używamy dwóch ciasteczek: sesyjnego (tibians_session) — tylko gdy się zalogujesz, podpisanego kryptograficznie, ważnego 30 dni; oraz NEXT_LOCALE — zapamiętuje wybrany język. Nie używamy ciasteczek reklamowych ani śledzących."
+      },
+      "legal": {
+        "title": "4. Podstawa prawna",
+        "body": "Dane konta przetwarzamy na podstawie art. 6 ust. 1 lit. b RODO (wykonanie umowy — świadczenie usługi logowania). Logi serwera — na podstawie art. 6 ust. 1 lit. f RODO (uzasadniony interes: bezpieczeństwo serwisu)."
+      },
+      "sharing": {
+        "title": "5. Komu przekazujemy dane",
+        "body": "Nikomu. Nie sprzedajemy, nie wynajmujemy i nie udostępniamy danych użytkowników podmiotom trzecim. Dane techniczne mogą być przetwarzane przez dostawcę hostingu wyłącznie w zakresie niezbędnym do działania serwera."
+      },
+      "retention": {
+        "title": "6. Jak długo przechowujemy dane",
+        "body": "Profil konta przechowujemy do momentu jego usunięcia. Logi serwera — maksymalnie 30 dni. Zapisane postacie znikają wraz z wyczyszczeniem danych przeglądarki."
+      },
+      "rights": {
+        "title": "7. Twoje prawa",
+        "body": "Masz prawo do dostępu do swoich danych, ich sprostowania, usunięcia oraz ograniczenia przetwarzania. Aby usunąć konto i wszystkie powiązane dane, napisz do nas — realizujemy to niezwłocznie. Masz też prawo wniesienia skargi do organu nadzorczego (w Polsce: Prezes UODO)."
+      },
+      "contact": {
+        "title": "8. Kontakt",
+        "body": "W sprawach dotyczących danych osobowych napisz na adres podany w stopce lub przez kanał Discord projektu. Odpowiadamy w ciągu 7 dni."
+      },
+      "trademark": {
+        "title": "9. Znak towarowy",
+        "body": "Tibia jest zarejestrowanym znakiem towarowym CipSoft GmbH. Wszystkie produkty związane z Tibią są własnością CipSoft GmbH. Tibians nie jest powiązany z CipSoft GmbH i nie rości sobie praw do ich własności intelektualnej."
+      }
+    }
   }
 }

@@ -86,15 +86,12 @@ export function Header() {
           href: "/calculators/true-skill",
         },
         {
-          label: tCalc("skillsTraining.stamina"),
-          href: "/calculators/stamina",
-        },
-      ],
-    },
-    {
-      label: tCalc("stamina.title"),
-      items: [
-        {
+          /**
+           * Stamina mieszka TU — wcześniej miała dodatkowo własną grupę
+           * „STAMINA" niżej, więc w menu pojawiała się DWA razy i oba wpisy
+           * prowadziły do tego samego `/calculators/stamina`.
+           * Zachowujemy opis z tamtej grupy, żeby nie stracić kontekstu.
+           */
           label: tCalc("stamina.title"),
           href: "/calculators/stamina",
           description: tCalc("stamina.description"),
