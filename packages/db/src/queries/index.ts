@@ -164,6 +164,12 @@ export async function upsertAuction(
   const { auctionId } = auctionRow;
 
   return db.transaction(async (tx: Tx) => {
+    // Harvest słowników (świat/items/outfits/mounts) — MUSI być PIERWSZY,
+    // bo FK wymagają istniejących wierszy referencyjnych ZANIM wstawimy
+    // cokolwiek: `auctions.world_id → worlds.id` (przy INSERT aukcji) oraz
+    // `auction_items.item_id → items.id` itd. (przy relacjach).
+    await ensureReferenceData(tx, input.reference);
+
     const returned = await tx
       .insert(auctions)
       .values(auctionRow)
@@ -174,11 +180,6 @@ export async function upsertAuction(
       .returning({ inserted: sql<boolean>`(xmax::text::bigint = 0)` });
 
     const isNew = returned[0]?.inserted === true;
-
-    // Harvest słowników (świat/items/outfits/mounts) — MUSI być przed
-    // relacjami, bo FK (auction_items.item_id → items.id itd.) wymaga
-    // istniejących wierszy referencyjnych.
-    await ensureReferenceData(tx, input.reference);
 
     // Relacje: najprostszy poprawny wariant to delete + insert. Unika
     // zgadywania targetów `ON CONFLICT` dla PK z nullable `tier`.

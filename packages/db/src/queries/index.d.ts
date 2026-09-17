@@ -244,13 +244,13 @@ export declare function getUserById(
   db: Db,
   discordId: string,
 ): Promise<{
+  updatedAt: Date;
   discordId: string;
   username: string;
   globalName: string | null;
   avatarUrl: string | null;
   email: string | null;
   createdAt: Date;
-  updatedAt: Date;
   lastLoginAt: Date | null;
 } | null>;
 export type {
