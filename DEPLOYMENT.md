@@ -204,10 +204,10 @@ chmod 600 .env.production
 cd /opt/tibians
 
 # Build + start (pierwszy build ~5-10 min na CX32)
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 
 # Sprawdź status (wszystkie powinny być "healthy" po ~2-3 min)
-docker compose -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
 ```
 
 **Oczekiwany wynik:**
@@ -223,11 +223,11 @@ tibians-tibiadata     Up (healthy)
 ### Jeśli coś nie wstaje
 ```bash
 # Logi konkretnego serwisu
-docker compose -f docker-compose.prod.yml logs -f web
-docker compose -f docker-compose.prod.yml logs -f caddy
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f web
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f caddy
 
 # Caddy czeka na DNS? Sprawdź:
-docker compose -f docker-compose.prod.yml logs caddy | grep -i "acme\|certificate"
+docker compose --env-file .env.production -f docker-compose.prod.yml logs caddy | grep -i "acme\|certificate"
 ```
 
 ---
@@ -238,25 +238,25 @@ docker compose -f docker-compose.prod.yml logs caddy | grep -i "acme\|certificat
 cd /opt/tibians
 
 # 1. Zastosuj schemat (tworzy ~21 tabel + indeksy + materialized view)
-docker compose -f docker-compose.prod.yml exec web \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec web \
   node -e "console.log('migrate via db package')" 2>/dev/null || true
 
 # Właściwa migracja (przez kontener db z tsx):
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians -c "\dt"
 # → powinno być pusto przed migracją
 
 # Uruchom migrację z hosta (wymaga pnpm):
 # ── ALTERNATYWA: użyj kontenera scraper (ma pełne node_modules + tsx)
-docker compose -f docker-compose.prod.yml exec scraper \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec scraper \
   pnpm --filter @tibians/db db:migrate
 
 # 2. Zaseeduj dane referencyjne (imbuementy, valuation rules, calculator config)
-docker compose -f docker-compose.prod.yml exec scraper \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec scraper \
   pnpm --filter @tibians/db db:seed
 
 # Weryfikacja
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians -c "SELECT COUNT(*) FROM imbuements;"
 # → ~23
 ```
@@ -310,7 +310,7 @@ Pierwsze dane pojawiają się w ciągu kilku minut od `docker compose up`.
 
 ```bash
 # Logi startowe (powinno być widać banner)
-docker compose -f docker-compose.prod.yml logs --tail=20 scraper
+docker compose --env-file .env.production -f docker-compose.prod.yml logs --tail=20 scraper
 # → [start] Tibians scraper — bootstrap produkcyjny
 # → [start] scheduler wystartował (Full 15min / EndingSoon 30s / Reference 24h)
 ```
@@ -319,7 +319,7 @@ docker compose -f docker-compose.prod.yml logs --tail=20 scraper
 
 ```bash
 # 1. Ile aukcji w bazie?
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians -c "SELECT status, COUNT(*) FROM auctions GROUP BY status;"
 # → active | ~2500
 
@@ -328,7 +328,7 @@ curl -s https://tibians.tools/api/health | jq '.scrapeFreshnessMinutes'
 # → liczba < 30  (i .scrapeStale == false)
 
 # 3. Historia runów (observability)
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians -c \
   "SELECT run_type, status, auctions_found, errors_count FROM scrape_runs ORDER BY started_at DESC LIMIT 5;"
 ```
@@ -337,10 +337,10 @@ docker compose -f docker-compose.prod.yml exec db \
 
 ```bash
 # tryby: full | endingSoon | reference
-docker compose -f docker-compose.prod.yml exec scraper \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec scraper \
   pnpm --filter @tibians/scraper scrap:auctions
 
-docker compose -f docker-compose.prod.yml exec scraper \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec scraper \
   pnpm --filter @tibians/scraper ref:scrape
 ```
 
@@ -352,15 +352,15 @@ pominięta jako „lock zajęty".
 
 ```bash
 # 1. Błędy w logach
-docker compose -f docker-compose.prod.yml logs scraper | grep -iE "error|fatal"
+docker compose --env-file .env.production -f docker-compose.prod.yml logs scraper | grep -iE "error|fatal"
 
 # 2. Co mówi ostatni run?
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians -c \
   "SELECT run_type, status, errors_count, error_summary FROM scrape_runs ORDER BY started_at DESC LIMIT 3;"
 
 # 3. Czy są zapisane błędy szczegółowe?
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians -c \
   "SELECT error_type, message FROM scrape_errors ORDER BY created_at DESC LIMIT 10;"
 ```
@@ -377,14 +377,14 @@ IP (403/429 — patrz §14), albo brak migracji (§7).
 cd /opt/tibians
 
 # Status wszystkich serwisów
-docker compose -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
 
 # Zasoby (CPU/RAM/dysk)
 docker stats --no-stream
 df -h /
 
 # Logi na żywo
-docker compose -f docker-compose.prod.yml logs -f --tail=50
+docker compose --env-file .env.production -f docker-compose.prod.yml logs -f --tail=50
 ```
 
 ### 10.2 Alert na padnięcie (UptimeRobot / BetterStack — darmowe)
@@ -419,7 +419,7 @@ set -euo pipefail
 cd /opt/tibians
 STAMP=$(date +%Y%m%d-%H%M)
 mkdir -p /opt/tibians/backups
-docker compose -f docker-compose.prod.yml exec -T db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db \
   pg_dump -U tibians -d tibians | gzip > "/opt/tibians/backups/tibians-${STAMP}.sql.gz"
 # Retencja: 14 dni
 find /opt/tibians/backups -name "tibians-*.sql.gz" -mtime +14 -delete
@@ -435,17 +435,17 @@ chmod +x /opt/tibians/backup.sh
 ```bash
 # 1. Rozpakuj najnowszy backup do tymczasowej bazy
 LATEST=$(ls -t /opt/tibians/backups/tibians-*.sql.gz | head -1)
-docker compose -f docker-compose.prod.yml exec -T db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db \
   psql -U tibians -d postgres -c "DROP DATABASE IF EXISTS tibians_restore_test; CREATE DATABASE tibians_restore_test;"
-gunzip -c "$LATEST" | docker compose -f docker-compose.prod.yml exec -T db \
+gunzip -c "$LATEST" | docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db \
   psql -U tibians -d tibians_restore_test
 
 # 2. Sprawdź czy dane są
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d tibians_restore_test -c "SELECT COUNT(*) FROM auctions;"
 
 # 3. Sprzątanie
-docker compose -f docker-compose.prod.yml exec db \
+docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d postgres -c "DROP DATABASE tibians_restore_test;"
 ```
 > Wykonuj ten test **raz w miesiącu**. Backup, którego nie odtworzyłeś, nie jest backupem.
@@ -461,22 +461,22 @@ cd /opt/tibians
 git pull
 
 # 2. Rebuild + restart (bez przestoju dla DB)
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 
 # 3. Migracje (jeśli zmienił się schemat)
-docker compose -f docker-compose.prod.yml exec scraper pnpm --filter @tibians/db db:migrate
+docker compose --env-file .env.production -f docker-compose.prod.yml exec scraper pnpm --filter @tibians/db db:migrate
 
 # 4. Weryfikacja
 sleep 30
 curl -s https://tibians.tools/api/health | jq
-docker compose -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
 ```
 
 **Rollback awaryjny:**
 ```bash
 git log --oneline -5              # znajdź dobry commit
 git checkout <SHA>                 # przełącz
-docker compose -f docker-compose.prod.yml up -d --build
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 ```
 
 ---
@@ -523,7 +523,7 @@ Ekran zgody powie: *„Tibians Tools chce uzyskać dostęp do Twojego konta"*.
 6. `SESSION_SECRET` → `openssl rand -hex 32` (do tego samego pliku)
 7. **Uwaga na Secret**: pokazywany jest jednorazowo. Jeśli go zgubisz →
    „Reset Secret" (stary natychmiast przestaje działać).
-8. `docker compose -f docker-compose.prod.yml up -d --build web`
+8. `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build web`
 
 **Zakresy (scopes)**: `identify` (id, nazwa, avatar). Dodawaj `email` tylko jeśli
 faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
@@ -590,18 +590,18 @@ Self-hosted kontener lub https://plausible.io (płatne).
 ### Diagnostyka krok po kroku
 ```bash
 # 1. Czy kontenery żyją?
-docker compose -f docker-compose.prod.yml ps
+docker compose --env-file .env.production -f docker-compose.prod.yml ps
 
 # 2. Czy sieć wewnętrzna działa?
-docker compose -f docker-compose.prod.yml exec web wget -qO- http://db:5432 2>&1 | head -1
-docker compose -f docker-compose.prod.yml exec web wget -qO- http://tibiadata:8080/readyz
+docker compose --env-file .env.production -f docker-compose.prod.yml exec web wget -qO- http://db:5432 2>&1 | head -1
+docker compose --env-file .env.production -f docker-compose.prod.yml exec web wget -qO- http://tibiadata:8080/readyz
 
 # 3. Czy web widzi bazę?
-docker compose -f docker-compose.prod.yml exec web node -e "console.log(process.env.DATABASE_URL ? 'env OK' : 'env MISSING')"
+docker compose --env-file .env.production -f docker-compose.prod.yml exec web node -e "console.log(process.env.DATABASE_URL ? 'env OK' : 'env MISSING')"
 
 # 4. Pełny restart (zachowuje dane)
-docker compose -f docker-compose.prod.yml down
-docker compose -f docker-compose.prod.yml up -d
+docker compose --env-file .env.production -f docker-compose.prod.yml down
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 ```
 
 ---
@@ -687,7 +687,7 @@ docker compose -f docker-compose.prod.yml up -d
 ```bash
 # ─── Podstawy ────────────────────────────────────────────────
 cd /opt/tibians
-alias dc="docker compose -f docker-compose.prod.yml"
+alias dc="docker compose --env-file .env.production -f docker-compose.prod.yml"
 
 dc ps                    # status
 dc logs -f web           # logi web

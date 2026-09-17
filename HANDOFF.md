@@ -1,0 +1,433 @@
+# HANDOFF.md — Tibians: stan projektu i instrukcja kontynuacji
+
+> **Cel dokumentu**: umożliwić kontynuację pracy w innym programie/agencie
+> **bez zgadywania**. Zawiera stan faktyczny, historię zmian, znane błędy
+> i listę tego, co zostało.
+>
+> **Data**: 2026-09-17
+> **Commit**: `aa2b6ae` (local == remote)
+> **Strona na żywo**: https://tibian.click
+
+---
+
+## 1. Co to jest
+
+**Tibians** — portal community dla graczy Tibii:
+- **Char Bazaar** — przeglądarka aukcji postaci (lista, filtry, detal, porównanie, SSE, statystyki)
+- **14 kalkulatorów** — Exercise Weapons, True Skill, Stamina, Character Value, Imbuement, Blessings, Weekly Tasks, Charms, Experience, Leech, Exp Share, Wheel of Destiny, plannery
+- **Workspace** — panel analizy postaci
+- **Blog, Bosses, Reference** (items/worlds/outfits/mounts/imbuements)
+- **Premium** — mechanizm gotowy, wymaga podłączenia płatności
+
+Tibia jest znakiem towarowym CipSoft GmbH. Projekt nie jest powiązany z CipSoft.
+
+---
+
+## 2. Gdzie to działa
+
+| Element | Wartość |
+|---|---|
+| **Domena** | `tibian.click` (+ `www` → 301 na apex) |
+| **Serwer** | `51.83.128.47` (OVH), Ubuntu 24.04.4 LTS |
+| **Zasoby** | 2 vCPU · 3.8 GB RAM · 38 GB dysku (37% zajęte) · swap 2 GB |
+| **SSH** | `ssh -i ~/.ssh/id_ed25519 ubuntu@51.83.128.47` (klucz BEZ hasła) |
+| **Repo** | https://github.com/dras1911/tibians (publiczne) |
+| **SSL** | Let's Encrypt, automatycznie (Caddy) |
+| **Katalog** | `/opt/tibians` |
+| **Docker** | 29.8.1, Compose v5.5.1 |
+
+### Kontenery (5)
+
+```
+tibians-caddy      — reverse proxy + SSL + HTTP/3
+tibians-web        — Next.js 15
+tibians-scraper    — worker (3 pętle: Full/EndingSoon/Reference)
+tibians-db         — PostgreSQL 17
+tibians-tibiadata  — self-hosted API TibiaData (Go)
+```
+
+---
+
+## 3. Stack techniczny
+
+| Warstwa | Technologia |
+|---|---|
+| Monorepo | pnpm 9.15.9 + Turborepo |
+| Język | TypeScript strict, `exactOptionalPropertyTypes`, zero `any` |
+| Web | Next.js 15 App Router, RSC, next-intl (PL/EN) |
+| Scraper | Node 22 + undici + cheerio |
+| Baza | PostgreSQL 17 + Drizzle ORM |
+| Walidacja | Zod |
+| Testy | Vitest — **1413 testów** |
+| UI | Tailwind 3 + własny design system (`packages/ui`, tokeny OKLCH) |
+| Auth | Discord OAuth2 (własna implementacja, zero zależności) |
+
+**Rozmiar**: 370 plików TS/TSX (232 w `apps/`, 138 w `packages/`).
+
+---
+
+## 4. ⚠️ JAK WDROŻYĆ ZMIANĘ (krytyczne — łatwo się pomylić)
+
+```bash
+# 1. Lokalnie
+git add -A
+git commit -m "..."
+git push origin master
+
+# 2. Na serwerze
+ssh -i ~/.ssh/id_ed25519 ubuntu@51.83.128.47
+cd /opt/tibians
+git pull
+
+# 3. Rebuild TYLKO zmienionego serwisu (nie całego stacku)
+sudo docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build web
+#                                                                                   ^^^^
+#                                                              web | scraper | caddy
+```
+
+### 🔴 PUŁAPKA: `--env-file .env.production` jest OBOWIĄZKOWY
+
+Compose domyślnie czyta `.env`, nie `.env.production`. Bez tej flagi **padnie**:
+
+```
+error while interpolating services.caddy.environment.DOMAIN:
+required variable DOMAIN is missing a value
+```
+
+**Uwaga**: `DEPLOYMENT.md` w repo podaje komendę BEZ tej flagi — to błąd w dokumentacji,
+do poprawienia.
+
+### Weryfikacja po wdrożeniu
+
+```bash
+# Zdrowie (powinno być 200 + db:ok + tibiadata:ok)
+curl -s https://tibian.click/api/health
+
+# Strony
+curl -so /dev/null -w "%{http_code}" https://tibian.click/pl
+```
+
+**⚠️ `HTTP 200` to NIE weryfikacja UI.** Ten błąd popełniono wielokrotnie —
+patrz sekcja 7.
+
+---
+
+## 5. Co DZIAŁA (zweryfikowane)
+
+| Funkcja | Stan | Weryfikacja |
+|---|---|---|
+| 14 kalkulatorów (UI, walidacja, layout) | ✅ | w przeglądarce |
+| **True Skill** (formuła + selektory) | ✅ | Knight/Sword 127+40% → **123,47** |
+| Bazaar: lista, filtry, detal, compare, SSE, statystyki | ✅ UI | 0 aukcji — patrz §6.1 |
+| Workspace, blog, bosses, reference | ✅ | w przeglądarce |
+| **Logowanie Discord** (sesja, OAuth2, 4 trasy) | ✅ kod | brak `CLIENT_ID/SECRET` — patrz §6.5 |
+| i18n PL/EN (parzystość kluczy) | ✅ | — |
+| Strona **Privacy** | ✅ | `/pl/privacy` → 200 |
+| OG images (dynamiczne) | ✅ | 200, `image/png` |
+| SEO: sitemap, robots, hreflang, JSON-LD | ✅ | — |
+| SSL, HTTP/3, security headers | ✅ | — |
+| Deploy: Docker, Caddy, firewall, swap | ✅ | — |
+| Scraper: parsery, scheduler, advisory lock | ✅ kod | **zablokowany przez Cloudflare** — §6.1 |
+| Baza: 26 tabel, migracje, seed | ✅ | 36+22+23 wierszy seeda |
+
+**Testy**: 1413 przechodzi · **typecheck**: 9/9 pakietów · **lint**: 0 błędów
+
+---
+
+## 6. Co NIE DZIAŁA — lista znanych problemów
+
+### 🔴 6.1 Bazaar pusty — Cloudflare blokuje IP serwera
+
+**Objaw**: `0 aktywnych aukcji`, `scrape_runs` pokazuje `auctions_found: 0`.
+
+**Przyczyna** (potwierdzona):
+```
+VPS 51.83.128.47 → tibia.com → HTTP 403
+  cf-ray: ...-WAW · server: cloudflare
+  <title>Attention Required! | Cloudflare</title>
+
+Moje domowe IP → tibia.com → HTTP 200 · 244 786 bajtów aukcji
+```
+
+**To NIE jest blokada JS-challenge, tylko twarda blokada IP.** Kod scrapera jest
+poprawny — z domowego IP pobiera pełną listę.
+
+**Opcje naprawy** (nie wybrano jeszcze):
+| Opcja | Koszt | Skuteczność |
+|---|---|---|
+| Proxy residential/ISP | ~5-15 €/mies. | wysoka |
+| Scraping API (ScrapingBee, ZenRows) | ~30-100 €/mies. | bardzo wysoka |
+| Zmiana VPS (Hetzner itp.) | ~7 €/mies. | niepewna — dużo DC-IP blokowanych |
+| Scraper na domowym IP | 0 € | wysoka, ale wymaga włączonego PC |
+
+**Gdzie grzebać**: `apps/scraper/src/http-client.ts` (dodać obsługę proxy),
+`apps/scraper/src/config.ts`.
+
+### 🔴 6.2 Wycena postaci (Character Value) — wagi z sufitu
+
+**Objaw**: postać kupiona za **2301 TC** wyceniona na **33 937 TC**.
+
+**Przyczyna**: wagi w `packages/db/src/seed/valuation-rules.ts` są **wymyślone**:
+```
+base_level_weight:      50 TC × level  →  232 lvl = 11 600 TC
+feature_soul_war:   12 000 TC
+feature_primal_ordeal: 12 000 TC
+feature_world_transfer: 15 000 TC
+```
+
+**DECYZJA UŻYTKOWNIKA**: wycena ma być liczona **z danych Bazaar** (porównanie
+podobnych postaci: skill, profesja, level), a **nie** z zaszytych wag.
+
+**Blokada**: brak danych Bazaar, dopóki scraper nie działa (§6.1).
+**To zadanie jest ZABLOKOWANE przez 6.1.**
+
+### 🟡 6.3 Duplikat nagłówka sekcji na stronie głównej
+
+**Status**: naprawione dla „Kończące się w ciągu godziny".
+**Do sprawdzenia**: czy analogiczny problem nie występuje w innych miejscach.
+
+### 🟡 6.4 Tekst wychodzi za prawą krawędź
+
+**Objaw** (na zrzucie strony głównej): `(0) brak kończących się aukcji`
+wychodzi poza kontener.
+**Gdzie**: `apps/web/src/components/home/ending-soon-section-live.tsx` —
+nagłówek z `justify-between`, licznik nie ma `min-w-0`/`truncate`.
+
+### 🟡 6.5 Discord — brak danych aplikacji
+
+Kod gotowy, ale brak `DISCORD_CLIENT_ID` / `DISCORD_CLIENT_SECRET` w `.env.production`.
+**Instrukcja**: `DEPLOYMENT.md` §13.2.
+**Uwaga**: `SESSION_SECRET` jest już wygenerowany na serwerze.
+
+### 🟡 6.6 PWA install prompt — do usunięcia
+
+**Opinia użytkownika**: „po co to komuś instalować i robić skrót jak może po prostu
+wejść na stronę, bezsensowne to jest" — **słuszna**.
+
+**Do zrobienia**: usunąć automatyczny prompt, zostawić sam manifest.
+**Gdzie**: `apps/web/src/components/pwa/install-prompt.tsx`.
+
+### 🟡 6.7 Blog — treści „na start" do wymiany + brak panelu
+
+3 posty wygenerowane automatycznie, brzmią sztucznie.
+**Użytkownik chce sam pisać artykuły** i potrzebuje do tego panelu (na końcu).
+
+### 🟢 6.8 `pnpm build` pada na Windows (nie błąd kodu)
+
+`EPERM` przy `output: "standalone"` — symlinki wymagają trybu deweloperskiego.
+**Kompilacja się udaje** (`BUILD_ID` powstaje); pada tylko kopiowanie standalone.
+**W Dockerze/Linuxie nie występuje.**
+
+### 🟢 6.9 Niezweryfikowane
+
+- **Error boundary** (`app/[locale]/error.tsx`) — dev overlay zasłania renderowanie.
+  Do sprawdzenia na produkcji przy okazji wywołania prawdziwego błędu.
+- **Pełny przepływ logowania Discord** — wymaga prawdziwych danych aplikacji.
+
+---
+
+## 7. 🔴 KRYTYCZNA LEKCJA PROCESOWA
+
+**Ten projekt był weryfikowany `HTTP 200` + testami jednostkowymi — i to zawiodło.**
+
+Przykłady realnych błędów, które **przeszły** typecheck i 1412 testów,
+a użytkownik znalazł je **w przeglądarce**:
+
+| Błąd | Dlaczego testy nie złapały |
+|---|---|
+| **Cały CSS nie był podpięty** — portal wyglądał jak surowy HTML | `globals.css` nie był importowany przez nic; curl nie renderuje CSS |
+| **Formuła True Skill** — 123 → 90,71 | Test i implementacja miały **ten sam błąd** |
+| **20 etykiet nawigacji pustych** | next-intl zwracał obiekt zamiast stringa; `tsc` tego nie widzi |
+| **Strona główna 500** | `useAuctionLive` tworzył kontroler w `useState` (czyli też na SSR), a `EventSource` nie istnieje w Node |
+| **`INTERVAL 24 hour`** bez apostrofów | Błąd składni SQL — ujawnia się tylko z prawdziwą bazą |
+| **Wagi wyceny** | Wymyślone liczby; nikt ich nie skonfrontował z rynkiem |
+
+### Zasady dla kontynuującego
+
+1. **`HTTP 200` ≠ działa.** Zawsze rób zrzut ekranu (Playwright) i **popatrz**.
+2. **Test może utrwalać błąd.** Jeśli test i implementacja powstawały razem —
+   porównaj z **zewnętrznym źródłem** (TibiaWiki), nie tylko z testem.
+3. **Sprawdź z prawdziwą bazą.** SQL-owe i SSR-owe błędy nie ujawniają się inaczej.
+4. **Liczby konfrontuj z rzeczywistością.** Wycena 33k za postać za 2,3k to sygnał.
+5. **Przy weryfikacji HTML/a11y**: stringi w odpowiedzi mogą pochodzić z payloadu
+   RSC/i18n, nie z DOM. Sprawdzaj markery DOM (`role="alert"`, klasy) — nie same stringi.
+
+### Playwright — jak czytać źródła zablokowane Cloudflare
+
+`curl` i `webfetch` dostają **403** na `tibia.fandom.com` i `tibia.com`.
+**Playwright przechodzi** (prawdziwa przeglądarka). Tak zdobyto formuły z Wiki:
+
+```
+browser_navigate → https://tibia.fandom.com/wiki/Formulae
+browser_navigate → https://tibia.fandom.com/wiki/Loyalty_System
+browser_evaluate → document.querySelector('.mw-parser-output').innerText
+```
+
+---
+
+## 8. Co ZOSTAŁO — lista zadań (w kolejności ustalonej z użytkownikiem)
+
+### A) ✅ ZROBIONE — True Skill
+Formuła z TibiaWiki, stałe profesji, selektory, testy. Commit `aa2b6ae`.
+
+### B) ⏳ NASTĘPNE — audyt formuł z TibiaWiki
+
+**Materiał źródłowy już zdobyty** (strona `Formulae`). Do porównania:
+
+| Kalkulator | Co sprawdzić | Źródło |
+|---|---|---|
+| **Exercise Weapons / Training** | Stałe A (Magic 1600, Melee 50, Distance 30, Shielding 100, Fishing 20) i `b` per profesja | Formulae §Skills |
+| **Experience** | `50·lvl³ − 150·lvl² + 400·lvl` — porównać z `xp-table.ts` | Formulae §Experience |
+| **Stamina** | Strefy regeneracji; **użytkownik zgłosił, że „nie działa"** — sprawdzić | Formulae (brak) / TibiaWiki Stamina |
+| Leech, Exp Share, Imbuing, Blessings, Charms | Kolejne | Formulae / TibiaWiki |
+
+**Metoda**: dla każdego kalkulatora pokazać użytkownikowi **konkretny wynik liczbowy**
+i **spytać czy się zgadza** z jego doświadczeniem w grze. Inaczej powtórzymy błąd
+True Skill (kod i test z tym samym błędem).
+
+**Uwaga**: użytkownik zgłosił, że **kalkulator Stamina nie działa** — prawdopodobnie
+błąd w kodzie poza duplikatem w menu (duplikat już naprawiony).
+
+### C) ⏳ NA KOŃCU — panel do bloga
+
+Użytkownik chce **sam pisać artykuły** bez dotykania plików `.mdx`.
+Wymagania:
+- logowanie Discordem (już działa)
+- lista postów, edytor, zapis do bazy
+- dostęp tylko dla właściciela (weryfikacja po Discord ID)
+
+**Obecny stan bloga**: pliki MDX w `apps/web/src/content/blog/{pl,en}/*.mdx`
+z frontmatterem:
+```yaml
+---
+title: "..."
+date: "2026-09-14"
+author: "..."
+excerpt: "..."
+tags: [...]
+locale: "pl"
+---
+```
+Loader: `apps/web/src/lib/blog/index.ts`.
+
+### D) ⏳ PO B — wygląd (redesign)
+
+**Kierunek od użytkownika**:
+> „wygląd ma być **nowoczesny ale unikatowy**, nie ma być kopią żadnej strony.
+> Tak aby nie było, że to **wygenerowano przez AI**."
+
+**Konsekwencje** — uciec od generycznego „Tailwind/shadcn look":
+- własna skala typograficzna i rytm odstępów (nie `gap-4` wszędzie)
+- **asymetryczne** layouty (nie wszystko wyśrodkowane)
+- wyrazista tożsamość kolorystyczna (mamy OKLCH w `packages/ui`)
+- gęstość informacji jak w narzędziu, nie jak w landingu
+- detale spójne, ale nie domyślne
+
+**Metoda**: pokazać użytkownikowi **2-3 warianty** do wyboru, nie zgadywać.
+
+### E) ⏳ ZABLOKOWANE — wycena (§6.2) i scraper (§6.1)
+
+---
+
+## 9. Gdzie szukać — mapa plików
+
+| Czego szukasz | Plik |
+|---|---|
+| **Formuły kalkulatorów** | `packages/calc/src/formulas/*.ts` |
+| **True Skill (naprawiona formuła)** | `packages/calc/src/formulas/true-skill.ts` |
+| **Testy formuł** | `packages/calc/src/formulas/__tests__/*.test.ts` |
+| Kalkulatory UI | `apps/web/src/app/[locale]/calculators/*/` |
+| Bazaar UI | `apps/web/src/app/[locale]/bazaar/`, `apps/web/src/components/bazaar/` |
+| Zapytania DB (web) | `apps/web/src/lib/server/auctions.ts` |
+| Zapytania DB (scraper) | `packages/db/src/queries/` |
+| Schemat bazy | `packages/db/src/schema/*.ts` |
+| Migracje | `packages/db/migrations/*.sql` |
+| **Wagi wyceny (do wymiany)** | `packages/db/src/seed/valuation-rules.ts` |
+| Scraper — HTTP | `apps/scraper/src/http-client.ts` |
+| Scraper — scheduler | `apps/scraper/src/scheduler.ts` |
+| Scraper — bootstrap | `apps/scraper/src/start.ts` |
+| Auth | `apps/web/src/lib/auth/{session,discord,use-auth}.ts` |
+| Tłumaczenia | `apps/web/messages/{pl,en}.json` |
+| Design system | `packages/ui/src/{tokens,styles,typography}.css` |
+| Nagłówek / nawigacja | `apps/web/src/components/layout/{header,mobile-sheet}.tsx` |
+| **Instrukcja wdrożenia** | `DEPLOYMENT.md` |
+| **Blueprint scrapera** | `SCRAPER-BOOTSTRAP.md` |
+| Plan projektu (88 zadań) | `.omo/plans/tibians.md` |
+| Notatki z sesji | `.omo/notepads/tibians/{learnings,issues}.md` |
+
+---
+
+## 10. Historia sesji — co zostało naprawione
+
+Poprzednia sesja zakończyła 88-zadaniowy plan z 1413 testami **i portalem,
+który nie działał**. Ta sesja to głównie **naprawa błędów znalezionych
+przez uruchomienie produktu**.
+
+| Commit | Co naprawiono |
+|---|---|
+| `ca7441e` | **Scraper w ogóle nie startował** — brakowało 13 metod `SchedulerDb`, adaptera, bootstrapu. `Dockerfile` wskazywał plik, który tylko eksportował funkcję. |
+| `ca7441e` | Usunięto 108 artefaktów builda zacommitowanych w `src/` + bug aliasu `@tibians/db/seed` w vitest |
+| `9409c49` | **Discord OAuth od zera** — w repo były tylko placeholdery |
+| `c5fc1c3` | **OG images 404** — jeden route handler zamiast ~20 plików |
+| `5f5bd52` | **20 etykiet nawigacji renderowało się puste** (obiekty zamiast stringów) |
+| `17eb32e` | **Strona główna 500** — `EventSource` w SSR |
+| `53060ec` | **Strona główna 500** — `INTERVAL 24 hour` bez apostrofów + `tsx` w złym miejscu |
+| `1695bf1` | **`/bazaar` 500** przy niedostępnej bazie — nieosłonięty `Promise.all` |
+| `7fda70e` | **CAŁY CSS NIE BYŁ PODPIĘTY** — `globals.css` bez importu |
+| `f2e9a59` | Brak faviconu + duplikat nagłówka sekcji |
+| `55ad59d` | **Formuła True Skill** — bonus mnoży PUNKTY, nie poziomy |
+| `94e96f1` | Duplikat Stamina w menu + brak strony Privacy |
+| `aa2b6ae` | Selektory profesji/skilla w True Skill |
+
+Pełna lista: `git log --oneline`
+
+---
+
+## 11. Szybki start dla nowego agenta
+
+```
+1. Przeczytaj TEN plik.
+2. `git clone https://github.com/dras1911/tibians.git && cd tibians`
+3. `pnpm install`
+4. `pnpm typecheck && pnpm test` — powinno być 9/9 i 1413 testów.
+5. Przeczytaj `DEPLOYMENT.md` (wdrożenie) i `SCRAPER-BOOTSTRAP.md` (scraper).
+6. Zapytaj użytkownika, co robimy: B (audyt formuł), C (panel bloga),
+   D (wygląd) — albo coś nowego.
+
+ZASADY:
+- NIE ufaj `HTTP 200`. Rób zrzut ekranu i PATRZ.
+- NIE ufaj testom, jeśli pisał je ten sam agent co kod — porównuj z TibiaWiki.
+- Cloudflare blokuje curl na tibia.com i tibia.fandom.com → użyj Playwrighta.
+- Przy zmianach: commit → push → `git pull` na serwerze →
+  `docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build <serwis>`
+- Sekrety są TYLKO na serwerze (`/opt/tibians/.env.production`, chmod 600).
+```
+
+---
+
+## 12. Czego NIE robić
+
+- ❌ **Nie commituj `.env.production`** — jest w `.gitignore`
+- ❌ **Nie wysyłaj klucza prywatnego SSH** — leży u użytkownika (`~/.ssh/id_ed25519`)
+- ❌ **Nie zmieniaj interfejsu `SchedulerDb`** (`apps/scraper/src/scheduler.ts`) —
+  230 testów scrapera na nim stoi
+- ❌ **Nie włączaj gatingu premium** przed podłączeniem płatności — nikt nie może
+  zostać premium, więc bramka tylko ukryje treść
+- ❌ **Nie usuwaj `rawJson`** przy upsercie aukcji — kolumna NOT NULL
+- ❌ **Nie wstawiaj `pricePerLevel`/`searchVector`** — są GENERATED w Postgresie
+- ❌ **Nie używaj `Test-Path` bez `-LiteralPath`** na Windows —
+  ścieżki z `[locale]` są traktowane jako wildcard
+
+---
+
+## 13. Stan zapisany
+
+```
+Commit:     aa2b6ae (local == remote)
+Testy:      1413 przechodzi
+Typecheck:  9/9 pakietów
+Lint:       0 błędów
+Plan:       75 [x] · 13 [~] · 0 [ ]
+Kontenery:  5/5 działają
+Strona:     https://tibian.click (11/11 stron → 200)
+```
