@@ -475,6 +475,8 @@ Pełna lista: `git log --oneline`
 | 7   | Build web padał: `'users' is not exported from '../schema'`                                        | Webpack (Next) rozwiązywał importy bez rozszerzenia do starego `.js` obok `.ts` w `packages/db/src`                       | Usunięte 88 artefaktów `.js/.d.ts/map` + `resolve.extensions` preferuje `.ts` (`820729c`)                            |
 | 8   | Strona bazaru rzucała `MISSING_MESSAGE: Bazaar.filters.vocation.none`                              | Dodano opcję „None" do UI, ale brakowało klucza tłumaczenia w `messages/{pl,en}.json`                                     | Klucz dodany (PL „Bez profesji", EN „None") (`590575c`)                                                              |
 | 9   | CAŁA baza miała tylko promowane wokacje — np. „Royal Paladin" na level 8 (211/214 aukcji < lvl 20) | Parser awansował bazowe wokacje na liście i w detalu (`normalizeVocation`, `vocationToPromoted`: Paladin → Royal Paladin) | Zachowanie formy z tibia.com (bez awansu) + `VocationPromotedSchema` z formami bazowymi + refine + testy (`9c2a835`) |
+| 10  | Timer końca aukcji NIEWIDOCZNY (ciemny motyw) — „nie widać timera, bo taki kolor tekstu"           | `warning.foreground` w tailwind = `var(--bg-base)` (kolor TŁA!); użycia z `bg-warning/10` → tekst = tło                   | Nowy token `--warning-foreground` (light: ciemny amber, dark: jasny amber) + przepięcie w tailwind (`4f19992`)       |
+| 11  | Link „Otwórz kalkulator True Skill" (detal aukcji) niewidoczny                                     | Ten sam wzorzec: `text-info-foreground` (= `var(--bg-base)`) na `bg-background`                                           | `text-info` — spójnie z sąsiednimi linkami (`e2065b8`)                                                               |
 
 ### Znane drobiazgi (do zrobienia)
 
@@ -541,6 +543,7 @@ Kontenery:  5/5 działają
 MCP:        tibians_db podłączony (read-only, tunel 15432) — patrz §14
 Strona:     https://tibian.click (200)
 Wokacje:    dane naprawiają się po fixie (bazowe formy wracają: Knight/Paladin/…)
+Flagi:      🇪🇺🇺🇸🇧🇷🇦🇺 przy regionach (karty, tabela, hero, lista światów; `lib/regions.ts`)
 ```
 
 ---
