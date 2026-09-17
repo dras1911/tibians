@@ -62,6 +62,7 @@ import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/component
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { RegionFlag } from "@/components/ui/region-flag";
 import {
   Select,
   SelectContent,
@@ -589,6 +590,7 @@ export function AuctionFiltersSidebar({
                   count === 0 && !active && "opacity-40",
                 )}
               >
+                <RegionFlag region={region} />
                 {t(`regions.${region}`)}
                 <span className="numeric ml-1 font-mono text-xs tabular-nums opacity-70">
                   ({format.number(count, { useGrouping: true })})
@@ -635,7 +637,8 @@ export function AuctionFiltersSidebar({
               if (worlds.length === 0) return null;
               return (
                 <div key={region} className="border-b p-2 last:border-b-0">
-                  <p className="mb-1 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                  <p className="mb-1 inline-flex items-center gap-1 px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+                    <RegionFlag region={region} />
                     {t(`regions.${region}`)}
                   </p>
                   <div className="flex flex-col gap-0.5">

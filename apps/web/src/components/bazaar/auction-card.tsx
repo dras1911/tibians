@@ -32,9 +32,9 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
+import { RegionFlag } from "@/components/ui/region-flag";
 import { Link } from "@/i18n/routing";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
-import { REGION_FLAG, REGION_FLAG_FALLBACK } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 import type { AuctionSummary } from "./auction-summary";
@@ -412,9 +412,7 @@ export function AuctionCard({
             className={cn("border", regionTone)}
             title={auction.worldRegion ? tFilters(`regions.${auction.worldRegion}`) : undefined}
           >
-            <span aria-hidden="true" className="mr-1">
-              {REGION_FLAG[auction.worldRegion] ?? REGION_FLAG_FALLBACK}
-            </span>
+            <RegionFlag region={auction.worldRegion} className="mr-1" />
             {auction.world}
             <span className="ml-1 font-mono text-[0.65rem] opacity-70">{auction.worldRegion}</span>
           </Badge>

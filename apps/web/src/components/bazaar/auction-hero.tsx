@@ -27,9 +27,9 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AuctionCountdownCell } from "@/components/bazaar/auction-countdown-cell";
+import { RegionFlag } from "@/components/ui/region-flag";
 import { Link } from "@/i18n/routing";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
-import { REGION_FLAG, REGION_FLAG_FALLBACK } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 import type { AuctionDetail } from "@/lib/server/auction-detail";
@@ -143,7 +143,7 @@ export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
                 <Globe className="h-3.5 w-3.5" aria-hidden="true" />
-                {REGION_FLAG[a.worldRegion] ?? REGION_FLAG_FALLBACK} {a.world}
+                <RegionFlag region={a.worldRegion} /> {a.world}
               </span>
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">

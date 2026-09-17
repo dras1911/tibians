@@ -287,10 +287,10 @@
       "worldPlaceholder": "Search world…",
       "worldEmpty": "No worlds",
       "regions": {
-        "EU": "🇪🇺 Europe",
-        "NA": "🇺🇸 North America",
-        "BR": "🇧🇷 Brazil",
-        "OCE": "🇦🇺 Oceania"
+        "EU": "Europe",
+        "NA": "North America",
+        "BR": "Brazil",
+        "OCE": "Oceania"
       },
       "toggles": {
         "onlyRegion": "Only {region}",

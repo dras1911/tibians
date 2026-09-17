@@ -28,7 +28,7 @@ import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/breadcrumb
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { listWorldsByRegion } from "@/lib/server/reference-pages";
-import { REGION_FLAG, REGION_FLAG_FALLBACK } from "@/lib/regions";
+import { RegionFlag } from "@/components/ui/region-flag";
 import { getWorlds } from "@tibians/shared/tibiadata";
 import { routing } from "@/i18n/routing";
 
@@ -213,7 +213,7 @@ export default async function ReferenceWorldsPage({
                 id={`region-${region}`}
                 className="flex items-center gap-2 text-lg font-semibold tracking-tight text-foreground sm:text-xl"
               >
-                {REGION_FLAG[region] ?? REGION_FLAG_FALLBACK} {t(`regions.${region}.title`)}
+                <RegionFlag region={region} /> {t(`regions.${region}.title`)}
                 <span className="numeric rounded-md border border-border px-2 py-0.5 font-mono text-xs tabular-nums text-muted-foreground">
                   {rows.length}
                 </span>
