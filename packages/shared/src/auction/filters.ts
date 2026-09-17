@@ -124,98 +124,50 @@ export const auctionFiltersSchema = z
 
     /** Boolean flagi „must-have" (arch §5 krok 4 — T42 advanced filters). */
     hasSoulWar: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     hasPrimalOrdeal: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     hasWorldTransfer: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     /** Prey Slot — rozszerzenie T42 + T45 (sugestie 0-wyników). */
     hasPreySlot: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     /** Charm Expansion — rozszerzenie T42 + T45. */
     hasCharmExpansion: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     /** Weekly Task Expansion — rozszerzenie T42 + T45. */
     hasWeeklyTaskExpansion: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     /** Twist of Fate — rozszerzenie T42 + T45. */
     hasTwistOfFate: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     /** `true` = wymaga `imbuementsUnlocked = imbuementsTotal` (23/23). */
     imbuesFull: z
-      .union([
-        z.literal("true"),
-        z.literal("false"),
-        z.literal("1"),
-        z.literal("0"),
-      ])
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
     /** BattlEye (wymuszenie na świecie — wcześniej dostępne tylko w UI). */
-    battleye: z
-      .enum(["protected", "initially protected", "not protected"])
-      .optional(),
+    battleye: z.enum(["protected", "initially protected", "not protected"]).optional(),
 
     /** Filtry dziedziczone z `worlds`. */
     pvpType: z
-      .enum([
-        "Open PvP",
-        "Optional PvP",
-        "Hardcore PvP",
-        "Retro Open PvP",
-        "Retro Hardcore PvP",
-      ])
+      .enum(["Open PvP", "Optional PvP", "Hardcore PvP", "Retro Open PvP", "Retro Hardcore PvP"])
       .optional(),
-    region: z.enum(["EU", "NA", "BR"]).optional(),
+    region: z.enum(["EU", "NA", "BR", "OCE"]).optional(),
 
     /** Sortowanie — domyślnie auctionEnd asc (pilność, arch §5). */
     sortBy: AuctionOrderColumnSchema.default("auctionEnd"),
@@ -226,44 +178,23 @@ export const auctionFiltersSchema = z
   // Cross-validation refinements
   // ─────────────────────────────────────────────────────────────────
   /** levelMin ≤ levelMax. */
-  .refine(
-    (f) =>
-      f.levelMin == null ||
-      f.levelMax == null ||
-      f.levelMin <= f.levelMax,
-    {
-      message: "levelMin nie może być większy niż levelMax",
-      path: ["levelMin"],
-    },
-  )
+  .refine((f) => f.levelMin == null || f.levelMax == null || f.levelMin <= f.levelMax, {
+    message: "levelMin nie może być większy niż levelMax",
+    path: ["levelMin"],
+  })
   /** skillMin ≤ skillMax. */
-  .refine(
-    (f) =>
-      f.skillMin == null ||
-      f.skillMax == null ||
-      f.skillMin <= f.skillMax,
-    {
-      message: "skillMin nie może być większy niż skillMax",
-      path: ["skillMin"],
-    },
-  )
+  .refine((f) => f.skillMin == null || f.skillMax == null || f.skillMin <= f.skillMax, {
+    message: "skillMin nie może być większy niż skillMax",
+    path: ["skillMin"],
+  })
   /** bidMin ≤ bidMax. */
-  .refine(
-    (f) =>
-      f.bidMin == null ||
-      f.bidMax == null ||
-      f.bidMin <= f.bidMax,
-    {
-      message: "bidMin nie może być większy niż bidMax",
-      path: ["bidMin"],
-    },
-  )
+  .refine((f) => f.bidMin == null || f.bidMax == null || f.bidMin <= f.bidMax, {
+    message: "bidMin nie może być większy niż bidMax",
+    path: ["bidMin"],
+  })
   /** Jeśli podano skillType, musi być podany też skillMin lub skillMax. */
   .refine(
-    (f) =>
-      f.skillType === undefined ||
-      f.skillMin !== undefined ||
-      f.skillMax !== undefined,
+    (f) => f.skillType === undefined || f.skillMin !== undefined || f.skillMax !== undefined,
     {
       message: "skillType wymaga podania skillMin lub skillMax",
       path: ["skillType"],

@@ -30,7 +30,7 @@ import {
  *  ENUMS (TEXT-backed — zgodne z istniejącymi danymi scrapera)
  * ════════════════════════════════════════════════════════════════ */
 
-export const regionEnum = pgEnum("region", ["EU", "NA", "BR"]);
+export const regionEnum = pgEnum("region", ["EU", "NA", "BR", "OCE"]);
 
 export const pvpTypeEnum = pgEnum("pvp_type", [
   "Open PvP",

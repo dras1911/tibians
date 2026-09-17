@@ -185,7 +185,9 @@ export interface ReferenceWorldRow {
   // NULL-owalne — harvest aukcji wstawia światy z samym (id, name);
   // pełne dane (region/pvp/battleye) uzupełnia scraper referencji.
   // Fallback TibiaData zawsze wypełnia te pola wartościami.
-  region: "EU" | "NA" | "BR" | null;
+  // UWAGA: strona /reference/worlds grupuje tylko EU/NA/BR — światy OCE
+  // są na razie pomijane w grupowaniu (TODO przy porządkach na reference).
+  region: "EU" | "NA" | "BR" | "OCE" | null;
   pvpType: string | null;
   battleye: string | null;
   isRetro: boolean;

@@ -35,15 +35,10 @@ import {
   getWorldsByRegion,
   getSuggestionCounts,
 } from "@/lib/server/auctions";
-import {
-  auctionFiltersSchema,
-  paginationSchema,
-  totalPagesOf,
-} from "@tibians/shared/auction";
+import { auctionFiltersSchema, paginationSchema, totalPagesOf } from "@tibians/shared/auction";
 import { routing, type Locale } from "@/i18n/routing";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
 
 const PATH = "/bazaar";
 
@@ -77,14 +72,11 @@ export async function generateMetadata({
   // Title ≤ 60 znaków (SEO best practice).
   const title = t("pageTitle");
   const localizedTitle = `${title} · Tibians`;
-  const finalTitle =
-    localizedTitle.length <= 60 ? localizedTitle : title;
+  const finalTitle = localizedTitle.length <= 60 ? localizedTitle : title;
 
   const description = t("pageDescription");
   const finalDescription =
-    description.length <= 155
-      ? description
-      : `${description.slice(0, 152)}…`;
+    description.length <= 155 ? description : `${description.slice(0, 152)}…`;
 
   const canonical = `${SITE_URL}/${locale}${PATH}`;
   const languages: Record<string, string> = {};
@@ -179,7 +171,6 @@ export default async function BazaarPage({
     getFacetCounts(filters),
     getWorldsByRegion(),
   ]).catch((error: unknown) => {
-    // eslint-disable-next-line no-console
     console.error("[bazaar] zapytania DB nie powiodły się — degradacja do stanu pustego:", error);
     return null;
   });
@@ -195,16 +186,18 @@ export default async function BazaarPage({
     battleye: [],
     totalActive: 0,
   };
-  const worldsByRegion = dbResult?.[2] ?? { EU: [], NA: [], BR: [] };
+  const worldsByRegion = dbResult?.[2] ?? {
+    EU: [],
+    NA: [],
+    BR: [],
+    OCE: [],
+  };
 
   const { rows, total } = listResult;
 
   // T45 — wylicz sugestie rozluźniające filtry **tylko** gdy 0 wyników.
   // 3-5 szybkich query COUNT(*) z `buildWhereExcept` (parallel) = ~10ms.
-  const suggestions =
-    total === 0
-      ? await getSuggestionCounts(filters).catch(() => [])
-      : [];
+  const suggestions = total === 0 ? await getSuggestionCounts(filters).catch(() => []) : [];
 
   const totalPages = totalPagesOf(total, pagination.pageSize);
 
@@ -222,14 +215,10 @@ export default async function BazaarPage({
   };
 
   // ── Breadcrumbs ───────────────────────────────────────────────────
-  const breadcrumbItems: BreadcrumbItem[] = [
-    { label: tBazaar("title"), href: "/bazaar" },
-  ];
+  const breadcrumbItems: BreadcrumbItem[] = [{ label: tBazaar("title"), href: "/bazaar" }];
 
   // ── Default view (server-side hint z UA) ──────────────────────────
-  const defaultView = inferDefaultViewFromHeaders(
-    requestHeaders.get("user-agent"),
-  );
+  const defaultView = inferDefaultViewFromHeaders(requestHeaders.get("user-agent"));
 
   // ── Render ────────────────────────────────────────────────────────
   return (
@@ -242,9 +231,7 @@ export default async function BazaarPage({
         <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
           {tBazaar("title")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {t("pageDescription")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">{t("pageDescription")}</p>
       </header>
 
       {/* Lista + sidebar (client island) */}
@@ -316,11 +303,7 @@ function inferDefaultViewFromHeaders(ua: string | null): "cards" | "table" {
  */
 function BazaarClientSkeleton() {
   return (
-    <div
-      role="status"
-      aria-label="Loading Bazaar…"
-      className="grid gap-6 md:grid-cols-[16rem_1fr]"
-    >
+    <div role="status" aria-label="Loading Bazaar…" className="grid gap-6 md:grid-cols-[16rem_1fr]">
       <aside className="hidden md:block">
         <Skeleton className="h-96 w-full rounded-lg" />
       </aside>

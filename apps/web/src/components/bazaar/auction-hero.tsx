@@ -21,19 +21,14 @@
  */
 
 import * as React from "react";
-import {
-  ExternalLink,
-  Globe,
-  Microscope,
-  Bell,
-  Sparkles,
-} from "lucide-react";
+import { ExternalLink, Globe, Microscope, Bell, Sparkles } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AuctionCountdownCell } from "@/components/bazaar/auction-countdown-cell";
 import { Link } from "@/i18n/routing";
+import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
 
 import type { AuctionDetail } from "@/lib/server/auction-detail";
@@ -51,6 +46,7 @@ const REGION_FLAG: Record<string, string> = {
   EU: "🇪🇺",
   NA: "🇺🇸",
   BR: "🇧🇷",
+  OCE: "🇦🇺",
 };
 
 const BATTLEYE_TONE: Record<string, string> = {
@@ -63,21 +59,6 @@ export interface AuctionHeroProps {
   detail: AuctionDetail;
   locale: string;
   className?: string;
-}
-
-/**
- * URL do outfitu Tibia.com (mirror z AuctionCard T40).
- */
-function outfitImageUrl(outfitId: number | null): string | null {
-  if (outfitId === null) return null;
-  return `https://static.tibia.com/images/charactertrade/outfits/${outfitId}_0.gif`;
-}
-
-/**
- * URL do oficjalnej strony aukcji na Tibia.com.
- */
-function tibiaAuctionUrl(auctionId: string): string {
-  return `https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades&page=details&auctionid=${auctionId}`;
 }
 
 export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
@@ -104,8 +85,7 @@ export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
     }
   })();
 
-  const bidLabel =
-    a.bidType === "minimum" ? t("minimumBid") : t("currentBid");
+  const bidLabel = a.bidType === "minimum" ? t("minimumBid") : t("currentBid");
 
   const battleyeClass = BATTLEYE_TONE[a.worldBattleye] ?? "";
 
@@ -151,10 +131,7 @@ export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
               </h1>
               <Badge
                 variant="outline"
-                className={cn(
-                  "border font-semibold",
-                  VOCATION_TONE[a.vocationBase] ?? "",
-                )}
+                className={cn("border font-semibold", VOCATION_TONE[a.vocationBase] ?? "")}
               >
                 {a.vocationPromoted}
               </Badge>
@@ -177,9 +154,7 @@ export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
                 {t("pvpLabel")}:{" "}
-                <span className="font-medium text-foreground">
-                  {a.worldPvpType}
-                </span>
+                <span className="font-medium text-foreground">{a.worldPvpType}</span>
               </span>
               <span aria-hidden="true">·</span>
               <Badge
@@ -200,14 +175,10 @@ export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
         {/* ── Bid + countdown ────────────────────────────────── */}
         <div className="flex shrink-0 flex-col items-start gap-2 md:items-end">
           <div>
-            <p className="text-xs uppercase tracking-wide text-muted-foreground">
-              {bidLabel}
-            </p>
+            <p className="text-xs uppercase tracking-wide text-muted-foreground">{bidLabel}</p>
             <p className="numeric font-mono text-3xl font-bold tabular-nums text-foreground sm:text-4xl">
               {format.number(a.bid, { useGrouping: true })}{" "}
-              <span className="text-sm font-medium text-muted-foreground">
-                {t("bidCurrency")}
-              </span>
+              <span className="text-sm font-medium text-muted-foreground">{t("bidCurrency")}</span>
             </p>
           </div>
           <div className="flex items-center gap-2">

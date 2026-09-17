@@ -56,9 +56,9 @@
         "viewAll": "All ending soon"
       },
       "recentlyUpdated": {
-        "title": "Recently updated",
-        "description": "Auctions most recently refreshed by the scraper (new bids or corrections).",
-        "viewAll": "Full list"
+        "title": "Recently added",
+        "description": "The latest auctions added to our database — freshly listed characters.",
+        "viewAll": "All new"
       },
       "crossSell": {
         "title": "Most popular calculators",
@@ -69,8 +69,8 @@
     "empty": {
       "endingSoonTitle": "No auction ends within an hour",
       "endingSoonDescription": "All active auctions still have over 60 minutes remaining.",
-      "recentTitle": "No fresh updates",
-      "recentDescription": "The scraper has not refreshed any auction yet — check back in a few minutes."
+      "recentTitle": "No new auctions",
+      "recentDescription": "Freshly listed characters will show up here after the next data refresh."
     },
     "live": {
       "live": "LIVE",
@@ -238,6 +238,11 @@
       "actions": "Actions",
       "select": "Select"
     },
+    "battleye": {
+      "protected": "GBE — green BattlEye: world protected",
+      "initially protected": "YBE — yellow BattlEye: world protected since release",
+      "not protected": "RBE — red BattlEye: world not protected"
+    },
     "filters": {
       "title": "Filters",
       "reset": "Clear all",
@@ -281,7 +286,8 @@
       "regions": {
         "EU": "🇪🇺 Europe",
         "NA": "🇺🇸 North America",
-        "BR": "🇧🇷 Brazil"
+        "BR": "🇧🇷 Brazil",
+        "OCE": "🇦🇺 Oceania"
       },
       "toggles": {
         "onlyRegion": "Only {region}",

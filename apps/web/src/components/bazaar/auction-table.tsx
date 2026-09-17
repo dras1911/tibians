@@ -47,18 +47,15 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 import { useDensity, densityRowClass } from "@/components/density-provider";
 import { Link } from "@/i18n/routing";
+import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
 
 import { AuctionCountdownCell } from "./auction-countdown-cell";
 import type { AuctionSummary } from "./auction-summary";
+import { BattlEyeBadge } from "./battleye-badge";
 
 // ─────────────────────────────────────────────────────────────────────
 // Vocation / region tone (spójne z AuctionCard)
@@ -76,12 +73,8 @@ const REGION_TONE: Record<AuctionSummary["worldRegion"], string> = {
   EU: "bg-region-eu/15 text-region-eu border-region-eu/40",
   NA: "bg-region-na/15 text-region-na border-region-na/40",
   BR: "bg-region-br/15 text-region-br border-region-br/40",
+  OCE: "bg-region-oce/15 text-region-oce border-region-oce/40",
 };
-
-function outfitImageUrl(outfitId: number | null): string | null {
-  if (outfitId === null) return null;
-  return `https://static.tibia.com/images/charactertrade/outfits/${outfitId}_0.gif`;
-}
 
 // ─────────────────────────────────────────────────────────────────────
 // AuctionTable
@@ -127,9 +120,7 @@ export function AuctionTable({
           return (
             <Checkbox
               checked={checked}
-              onCheckedChange={(value) =>
-                onCompareToggle?.(id, value === true)
-              }
+              onCheckedChange={(value) => onCompareToggle?.(id, value === true)}
               aria-label={t("select")}
               className="h-4 w-4"
             />
@@ -205,9 +196,7 @@ export function AuctionTable({
         enableSorting: true,
         header: () => <SortableHeader label={t("level")} />,
         cell: ({ row }) => (
-          <span className="numeric font-mono font-semibold tabular-nums">
-            {row.original.level}
-          </span>
+          <span className="numeric font-mono font-semibold tabular-nums">{row.original.level}</span>
         ),
       },
       // ── Vocation (sortable po bazowej) ──────────────────────────
@@ -242,6 +231,7 @@ export function AuctionTable({
               className={cn("border text-[0.65rem]", REGION_TONE[a.worldRegion])}
             >
               {a.world}
+              <span className="ml-1 font-mono text-[0.6rem] opacity-70">{a.worldRegion}</span>
             </Badge>
           );
         },
@@ -253,9 +243,7 @@ export function AuctionTable({
         enableSorting: true,
         header: () => <SortableHeader label={t("pvp")} />,
         cell: ({ row }) => (
-          <span className="text-xs text-muted-foreground">
-            {row.original.worldPvpType}
-          </span>
+          <span className="text-xs text-muted-foreground">{row.original.worldPvpType}</span>
         ),
       },
       // ── BattlEye ────────────────────────────────────────────────
@@ -264,22 +252,7 @@ export function AuctionTable({
         accessorFn: (row) => row.worldBattleye,
         enableSorting: true,
         header: () => <SortableHeader label={t("battleye")} />,
-        cell: ({ row }) => (
-          <span
-            className={cn(
-              "inline-flex h-6 w-6 items-center justify-center rounded-full text-xs font-bold",
-              row.original.worldBattleye === "protected"
-                ? "bg-success/15 text-success"
-                : row.original.worldBattleye === "initially protected"
-                  ? "bg-warning/15 text-warning-foreground"
-                  : "bg-danger/15 text-danger",
-            )}
-            aria-label={row.original.worldBattleye}
-            title={row.original.worldBattleye}
-          >
-            BE
-          </span>
-        ),
+        cell: ({ row }) => <BattlEyeBadge value={row.original.worldBattleye} size="sm" />,
       },
       // ── Bid (sortable, numeric, Intl) ─────────────────────────
       {
@@ -328,11 +301,7 @@ export function AuctionTable({
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Button asChild variant="ghost" size="icon" className="h-9 w-9">
-                      <a
-                        href={`https://www.tibia.com/charactertrade/?auctionid=${id}`}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                      >
+                      <a href={tibiaAuctionUrl(id)} target="_blank" rel="noopener noreferrer">
                         <ExternalLink className="h-4 w-4" />
                       </a>
                     </Button>
@@ -373,16 +342,10 @@ export function AuctionTable({
               {headerGroup.headers.map((header) => {
                 const sorted = header.column.getIsSorted();
                 return (
-                  <TableHead
-                    key={header.id}
-                    className={cn("h-11", densityRowClass(density))}
-                  >
+                  <TableHead key={header.id} className={cn("h-11", densityRowClass(density))}>
                     {header.isPlaceholder
                       ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext(),
-                        )}
+                      : flexRender(header.column.columnDef.header, header.getContext())}
                     {sorted ? (
                       <span className="ml-1 inline-block">
                         {sorted === "asc" ? (
@@ -401,15 +364,9 @@ export function AuctionTable({
         <TableBody>
           {table.getRowModel().rows.length ? (
             table.getRowModel().rows.map((row) => (
-              <TableRow
-                key={row.id}
-                className={cn(densityRowClass(density), "hover:bg-muted/40")}
-              >
+              <TableRow key={row.id} className={cn(densityRowClass(density), "hover:bg-muted/40")}>
                 {row.getVisibleCells().map((cell) => (
-                  <TableCell
-                    key={cell.id}
-                    className={cn(densityRowClass(density))}
-                  >
+                  <TableCell key={cell.id} className={cn(densityRowClass(density))}>
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>
                 ))}

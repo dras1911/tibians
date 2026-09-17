@@ -57,10 +57,7 @@ import {
 import { ActiveFiltersBar } from "./active-filters-bar";
 import { BazaarLiveIndicator } from "./bazaar-live-indicator";
 import { PresetDropdown } from "./preset-dropdown";
-import {
-  EmptyResults,
-  type EmptyResultsSuggestion,
-} from "./empty-results";
+import { EmptyResults, type EmptyResultsSuggestion } from "./empty-results";
 import { VirtualizedAuctionGrid } from "./virtualized-grid";
 import { useBazaarFilters } from "@/lib/hooks/use-bazaar-filters";
 
@@ -72,9 +69,10 @@ import { useBazaarFilters } from "@/lib/hooks/use-bazaar-filters";
 /**
  * Kanoniczny URL sortKey → AuctionSortKey dla API (arch §7.3).
  */
-export function sortKeyToUrlParams(
-  key: BazaarSortKey,
-): { sortBy: string; sortDir: "asc" | "desc" } {
+export function sortKeyToUrlParams(key: BazaarSortKey): {
+  sortBy: string;
+  sortDir: "asc" | "desc";
+} {
   switch (key) {
     case "ending":
       return { sortBy: "auctionEnd", sortDir: "asc" };
@@ -97,9 +95,7 @@ export function sortKeyToUrlParams(
   }
 }
 
-function readSortKeyFromSearchParams(
-  searchParams: URLSearchParams,
-): BazaarSortKey {
+function readSortKeyFromSearchParams(searchParams: URLSearchParams): BazaarSortKey {
   const sortBy = searchParams.get("sortBy") ?? "auctionEnd";
   const sortDir = searchParams.get("sortDir") ?? "asc";
 
@@ -146,7 +142,7 @@ export interface BazaarClientProps {
   /** Facet counts z servera. */
   facetCounts: FacetCounts;
   /** Światy pogrupowane po regionie. */
-  worldsByRegion: Record<"EU" | "NA" | "BR", string[]>;
+  worldsByRegion: Record<"EU" | "NA" | "BR" | "OCE", string[]>;
   /** Tryb domyślny widoku (serwer decyduje na podstawie UA). */
   defaultView: BazaarView;
   /**
@@ -195,10 +191,7 @@ function BazaarClientInner({
   const { filters, setFilters, reset } = useBazaarFilters();
 
   // URL state — sortowanie (nie jest w useBazaarFilters, bo to nie filtr).
-  const sortKey = React.useMemo(
-    () => readSortKeyFromSearchParams(searchParams),
-    [searchParams],
-  );
+  const sortKey = React.useMemo(() => readSortKeyFromSearchParams(searchParams), [searchParams]);
 
   // Local state: widok (karty vs tabela) — localStorage jako persistence.
   const [view, setView] = React.useState<BazaarView>(defaultView);
@@ -207,9 +200,7 @@ function BazaarClientInner({
   const [filtersOpen, setFiltersOpen] = React.useState(false);
 
   // Porównanie — prosty lifted state (T62 docelowo server-side).
-  const [comparedIds, setComparedIds] = React.useState<ReadonlySet<string>>(
-    () => new Set(),
-  );
+  const [comparedIds, setComparedIds] = React.useState<ReadonlySet<string>>(() => new Set());
 
   // ── Patch URL (sort / page / pageSize) — `replace()` żeby nie zaśmiecać
   // historii (arch §5). Filtry idą przez `setFilters` z debounce.
@@ -246,17 +237,14 @@ function BazaarClientInner({
     [replaceUrl],
   );
 
-  const handleCompareToggle = React.useCallback(
-    (id: string, selected: boolean) => {
-      setComparedIds((prev) => {
-        const next = new Set(prev);
-        if (selected) next.add(id);
-        else next.delete(id);
-        return next;
-      });
-    },
-    [],
-  );
+  const handleCompareToggle = React.useCallback((id: string, selected: boolean) => {
+    setComparedIds((prev) => {
+      const next = new Set(prev);
+      if (selected) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  }, []);
 
   // ── Bridge: useBazaarFilters.setFilters resetuje `?page` do 1 przy
   // zmianie filtrów (analogicznie do starego handlera w BazaarClient).
@@ -362,10 +350,7 @@ function BazaarClientInner({
 
         {/* Mobile sheet */}
         <Sheet open={filtersOpen} onOpenChange={setFiltersOpen}>
-          <SheetContent
-            side="left"
-            className="w-full max-w-md overflow-y-auto sm:max-w-md"
-          >
+          <SheetContent side="left" className="w-full max-w-md overflow-y-auto sm:max-w-md">
             <SheetHeader>
               <SheetTitle>{tFilters("title")}</SheetTitle>
               <SheetDescription>
@@ -415,9 +400,7 @@ function BazaarClientInner({
                 />
                 <PaginationButton
                   disabled={page >= totalPages}
-                  onClick={() =>
-                    replaceUrl({ page: Math.min(totalPages, page + 1) })
-                  }
+                  onClick={() => replaceUrl({ page: Math.min(totalPages, page + 1) })}
                   label={tPag("next")}
                 />
               </div>

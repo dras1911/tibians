@@ -101,13 +101,9 @@ export interface AuctionSummary {
 
   // Relacja JOIN worlds
   world: string;
-  worldRegion: "EU" | "NA" | "BR";
+  worldRegion: "EU" | "NA" | "BR" | "OCE";
   worldPvpType:
-    | "Open PvP"
-    | "Optional PvP"
-    | "Hardcore PvP"
-    | "Retro Open PvP"
-    | "Retro Hardcore PvP";
+    "Open PvP" | "Optional PvP" | "Hardcore PvP" | "Retro Open PvP" | "Retro Hardcore PvP";
   worldBattleye: "protected" | "initially protected" | "not protected";
 }
 
@@ -165,10 +161,7 @@ export function toAuctionSummary(row: AuctionRow): AuctionSummary {
     blessingsActive: row.blessingsActive,
 
     estimatedValue: row.estimatedValue,
-    pricePerLevel:
-      row.pricePerLevel !== null
-        ? Number.parseFloat(row.pricePerLevel)
-        : null,
+    pricePerLevel: row.pricePerLevel !== null ? Number.parseFloat(row.pricePerLevel) : null,
 
     world: row.worldName,
     worldRegion: row.worldRegion,

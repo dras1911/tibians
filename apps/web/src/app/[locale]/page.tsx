@@ -32,12 +32,10 @@
 
 import * as React from "react";
 import type { Metadata } from "next";
-import { RefreshCcw, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import {
-  AuctionSection,
-} from "@/components/home/auction-section";
+import { AuctionSection } from "@/components/home/auction-section";
 import { CrossSellSection } from "@/components/home/cross-sell-section";
 import { EndingSoonSectionLive } from "@/components/home/ending-soon-section-live";
 import { HeroSection } from "@/components/home/hero-section";
@@ -50,8 +48,7 @@ import {
 } from "@/lib/server/auctions";
 import { routing } from "@/i18n/routing";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
 
 // ───────────────────────────────────────────────────────────────────────
 // ISR cache tag + 5 min fallback (arch §8.2)
@@ -113,22 +110,17 @@ export async function generateMetadata({
 // Page
 // ───────────────────────────────────────────────────────────────────────
 
-export default async function HomePage({
-  params,
-}: {
-  params: Promise<{ locale: string }>;
-}) {
+export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
   const { locale } = await params;
   setRequestLocale(locale);
 
   // Równoległy fetch wszystkich danych home (arch §8.2).
-  const [stats, freshness, endingSoonRows, recentlyUpdatedRows] =
-    await Promise.all([
-      getMarketStats(),
-      getHomeFreshness(),
-      listEndingSoon(1), // < 1h
-      getRecentlyUpdated(6),
-    ]);
+  const [stats, freshness, endingSoonRows, recentlyUpdatedRows] = await Promise.all([
+    getMarketStats(),
+    getHomeFreshness(),
+    listEndingSoon(1), // < 1h
+    getRecentlyUpdated(6),
+  ]);
 
   // Konwersja AuctionRow → AuctionSummary (client-safe).
   const endingSoon = toAuctionSummaries(endingSoonRows);
@@ -158,10 +150,7 @@ export default async function HomePage({
   return (
     <div className="container py-8 md:py-12">
       {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <HeroSection
-        totalActive={stats.totalActive}
-        freshness={freshness}
-      />
+      <HeroSection totalActive={stats.totalActive} freshness={freshness} />
 
       {/* ── Sekcja "Kończące się w ciągu godziny" — LIVE SSE (T59) ────── */}
       <div className="mt-12">
@@ -181,9 +170,9 @@ export default async function HomePage({
           sectionId="recently-updated"
           title={tHome("sections.recentlyUpdated.title")}
           description={tHome("sections.recentlyUpdated.description")}
-          icon={RefreshCcw}
+          icon={Sparkles}
           auctions={recentlyUpdated}
-          viewAllHref="/bazaar?sort=newest"
+          viewAllHref="/bazaar?sortBy=firstSeenAt&sortDir=desc"
           viewAllLabel={tHome("sections.recentlyUpdated.viewAll")}
           emptyTitle={tHome("empty.recentTitle")}
           emptyDescription={tHome("empty.recentDescription")}
@@ -209,6 +198,3 @@ export default async function HomePage({
     </div>
   );
 }
-
-// Suppress unused-import warning dla Sparkles (zarezerwowane do przyszłych wariacji)
-void Sparkles;

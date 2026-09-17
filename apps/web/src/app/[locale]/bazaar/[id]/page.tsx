@@ -43,13 +43,13 @@ import { BidHistoryChart } from "@/components/bazaar/bid-history-chart";
 import { EstimatedValue } from "@/components/bazaar/estimated-value";
 import { SimilarAuctions } from "@/components/bazaar/similar-auctions";
 import { Link } from "@/i18n/routing";
+import { outfitImageUrl } from "@/lib/tibia";
 import { getAuctionDetail } from "@/lib/server/auction-detail";
 import { getAuctionById, getSimilarAuctions } from "@/lib/server/auctions";
 import { toAuctionSummary } from "@/components/bazaar/auction-summary";
 import { routing, type Locale } from "@/i18n/routing";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
 
 /**
  * ISR cache tag + 1 min fallback (arch §8.2). Webhook T38 może wymusić
@@ -104,8 +104,7 @@ export async function generateMetadata({
     : `Auction #${id}`;
 
   const localizedTitle = `${rawTitle} · Tibians`;
-  const finalTitle =
-    localizedTitle.length <= 60 ? localizedTitle : rawTitle.slice(0, 60);
+  const finalTitle = localizedTitle.length <= 60 ? localizedTitle : rawTitle.slice(0, 60);
 
   const rawDescription = a
     ? t("pageDescription", {
@@ -117,9 +116,7 @@ export async function generateMetadata({
       })
     : `Auction #${id} details.`;
   const finalDescription =
-    rawDescription.length <= 155
-      ? rawDescription
-      : `${rawDescription.slice(0, 152)}…`;
+    rawDescription.length <= 155 ? rawDescription : `${rawDescription.slice(0, 152)}…`;
 
   const canonical = `${SITE_URL}/${locale}/bazaar/${id}`;
   const languages: Record<string, string> = {};
@@ -139,16 +136,17 @@ export async function generateMetadata({
           siteName: "Tibians",
           locale: locale === "pl" ? "pl_PL" : "en_US",
           type: "website",
-          images: a.outfitId !== null
-            ? [
-                {
-                  url: `https://static.tibia.com/images/charactertrade/outfits/${a.outfitId}_0.gif`,
-                  width: 96,
-                  height: 96,
-                  alt: a.name,
-                },
-              ]
-            : undefined,
+          images:
+            a.outfitId !== null
+              ? [
+                  {
+                    url: outfitImageUrl(a.outfitId),
+                    width: 96,
+                    height: 96,
+                    alt: a.name,
+                  },
+                ]
+              : undefined,
         }
       : undefined,
     twitter: a
@@ -190,9 +188,7 @@ export default async function AuctionDetailPage({
   if (detail === null) {
     // renderujemy własny 404 w obrębie layoutu — bez `notFound()` żeby
     // zachować nawigację PL/EN.
-    return (
-      <AuctionNotFound locale={locale as Locale} id={id} />
-    );
+    return <AuctionNotFound locale={locale as Locale} id={id} />;
   }
 
   const a = detail.auction;
@@ -201,9 +197,7 @@ export default async function AuctionDetailPage({
   // Sekcja "Podobne aukcje" (T52) — fetch AuctionRow do getSimilarAuctions
   // oraz 4 kart AuctionSummary do renderingu.
   const currentRow = await getAuctionById(BigInt(id));
-  const similarRows = currentRow !== null
-    ? await getSimilarAuctions(currentRow, { limit: 4 })
-    : [];
+  const similarRows = currentRow !== null ? await getSimilarAuctions(currentRow, { limit: 4 }) : [];
   const similarSummaries = similarRows.map(toAuctionSummary);
   const currentSummary = currentRow !== null ? toAuctionSummary(currentRow) : null;
 
@@ -221,19 +215,14 @@ export default async function AuctionDetailPage({
     "@type": "Product",
     name: a.name,
     description: `${a.vocationPromoted} level ${a.level} on ${a.world}`,
-    image:
-      a.outfitId !== null
-        ? `https://static.tibia.com/images/charactertrade/outfits/${a.outfitId}_0.gif`
-        : undefined,
+    image: a.outfitId !== null ? outfitImageUrl(a.outfitId) : undefined,
     url: canonical,
     offers: {
       "@type": "Offer",
       price: a.bid,
       priceCurrency: "TC",
       availability:
-        a.status === "active"
-          ? "https://schema.org/InStock"
-          : "https://schema.org/OutOfStock",
+        a.status === "active" ? "https://schema.org/InStock" : "https://schema.org/OutOfStock",
       validThrough: a.auctionEnd,
       url: `https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades&page=details&auctionid=${a.id}`,
     },
@@ -287,20 +276,13 @@ export default async function AuctionDetailPage({
 
       {/* Sekcja tabów: Skills / Items / Outfits / Charms / Gems */}
       <div className="mt-8">
-        <AuctionDetailTabs
-          detail={detail}
-          locale={locale}
-          auctionId={a.id}
-        />
+        <AuctionDetailTabs detail={detail} locale={locale} auctionId={a.id} />
       </div>
 
       {/* Sekcja "Podobne aukcje" (T52) — arch §5 krok 7 stopka */}
       {currentSummary !== null ? (
         <div className="mt-10">
-          <SimilarAuctions
-            currentAuction={currentSummary}
-            similar={similarSummaries}
-          />
+          <SimilarAuctions currentAuction={currentSummary} similar={similarSummaries} />
         </div>
       ) : null}
 
@@ -319,13 +301,7 @@ export default async function AuctionDetailPage({
 // AuctionNotFound — fallback gdy aukcja nie istnieje / DB error
 // ───────────────────────────────────────────────────────────────────────
 
-async function AuctionNotFound({
-  locale,
-  id,
-}: {
-  locale: Locale;
-  id: string;
-}) {
+async function AuctionNotFound({ locale, id }: { locale: Locale; id: string }) {
   const t = await getTranslations({
     locale,
     namespace: "Bazaar.detail",
@@ -339,9 +315,7 @@ async function AuctionNotFound({
     <div className="container py-12 md:py-16">
       <Card className="mx-auto max-w-xl border-dashed">
         <CardHeader>
-          <CardTitle className="text-center text-xl">
-            {t("notFoundTitle")}
-          </CardTitle>
+          <CardTitle className="text-center text-xl">{t("notFoundTitle")}</CardTitle>
           <CardDescription className="text-center">
             {t("notFoundDescription", { id })}
           </CardDescription>

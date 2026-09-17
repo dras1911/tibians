@@ -52,14 +52,7 @@ export interface AuctionMountEntry {
 }
 
 export type SkillLoyaltyKey =
-  | "magic"
-  | "club"
-  | "fist"
-  | "sword"
-  | "axe"
-  | "distance"
-  | "shielding"
-  | "fishing";
+  "magic" | "club" | "fist" | "sword" | "axe" | "distance" | "shielding" | "fishing";
 
 export interface AuctionSkillLoyaltyEntry {
   skill: SkillLoyaltyKey;
@@ -144,13 +137,9 @@ export interface AuctionDetail {
     pricePerLevel: number | null;
 
     world: string;
-    worldRegion: "EU" | "NA" | "BR";
+    worldRegion: "EU" | "NA" | "BR" | "OCE";
     worldPvpType:
-      | "Open PvP"
-      | "Optional PvP"
-      | "Hardcore PvP"
-      | "Retro Open PvP"
-      | "Retro Hardcore PvP";
+      "Open PvP" | "Optional PvP" | "Hardcore PvP" | "Retro Open PvP" | "Retro Hardcore PvP";
     worldBattleye: "protected" | "initially protected" | "not protected";
 
     firstSeenAt: string;
@@ -232,10 +221,7 @@ function auctionRowToDetail(row: AuctionRow): AuctionDetail["auction"] {
 
     estimatedValue: row.estimatedValue,
     valueConfidence: row.valueConfidence,
-    pricePerLevel:
-      row.pricePerLevel !== null
-        ? Number.parseFloat(row.pricePerLevel)
-        : null,
+    pricePerLevel: row.pricePerLevel !== null ? Number.parseFloat(row.pricePerLevel) : null,
 
     world: row.worldName,
     worldRegion: row.worldRegion,
@@ -260,55 +246,52 @@ function auctionRowToDetail(row: AuctionRow): AuctionDetail["auction"] {
  *
  * @param id — ID aukcji (bigint, decimal > Number.MAX_SAFE_INTEGER w Tibia).
  */
-export async function getAuctionDetail(
-  id: bigint,
-): Promise<AuctionDetail | null> {
+export async function getAuctionDetail(id: bigint): Promise<AuctionDetail | null> {
   const row = await getAuctionById(id);
   if (row === null) {
     return null;
   }
 
-  const [itemsRows, outfitsRows, mountsRows, loyaltyRows, historyRows] =
-    await Promise.all([
-      db
-        .select({
-          itemId: auctionItems.itemId,
-          quantity: auctionItems.quantity,
-          tier: auctionItems.tier,
-        })
-        .from(auctionItems)
-        .where(eq(auctionItems.auctionId, id))
-        .orderBy(asc(auctionItems.itemId)),
-      db
-        .select({
-          outfitId: auctionOutfits.outfitId,
-          addons: auctionOutfits.addons,
-        })
-        .from(auctionOutfits)
-        .where(eq(auctionOutfits.auctionId, id))
-        .orderBy(asc(auctionOutfits.outfitId)),
-      db
-        .select({ mountId: auctionMounts.mountId })
-        .from(auctionMounts)
-        .where(eq(auctionMounts.auctionId, id))
-        .orderBy(asc(auctionMounts.mountId)),
-      db
-        .select({
-          skill: auctionSkillLoyalty.skill,
-          baseValue: auctionSkillLoyalty.baseValue,
-          loyaltyPct: auctionSkillLoyalty.loyaltyPct,
-        })
-        .from(auctionSkillLoyalty)
-        .where(eq(auctionSkillLoyalty.auctionId, id)),
-      db
-        .select({
-          recordedAt: auctionPriceHistory.recordedAt,
-          bid: auctionPriceHistory.bid,
-        })
-        .from(auctionPriceHistory)
-        .where(eq(auctionPriceHistory.auctionId, id))
-        .orderBy(asc(auctionPriceHistory.recordedAt)),
-    ]);
+  const [itemsRows, outfitsRows, mountsRows, loyaltyRows, historyRows] = await Promise.all([
+    db
+      .select({
+        itemId: auctionItems.itemId,
+        quantity: auctionItems.quantity,
+        tier: auctionItems.tier,
+      })
+      .from(auctionItems)
+      .where(eq(auctionItems.auctionId, id))
+      .orderBy(asc(auctionItems.itemId)),
+    db
+      .select({
+        outfitId: auctionOutfits.outfitId,
+        addons: auctionOutfits.addons,
+      })
+      .from(auctionOutfits)
+      .where(eq(auctionOutfits.auctionId, id))
+      .orderBy(asc(auctionOutfits.outfitId)),
+    db
+      .select({ mountId: auctionMounts.mountId })
+      .from(auctionMounts)
+      .where(eq(auctionMounts.auctionId, id))
+      .orderBy(asc(auctionMounts.mountId)),
+    db
+      .select({
+        skill: auctionSkillLoyalty.skill,
+        baseValue: auctionSkillLoyalty.baseValue,
+        loyaltyPct: auctionSkillLoyalty.loyaltyPct,
+      })
+      .from(auctionSkillLoyalty)
+      .where(eq(auctionSkillLoyalty.auctionId, id)),
+    db
+      .select({
+        recordedAt: auctionPriceHistory.recordedAt,
+        bid: auctionPriceHistory.bid,
+      })
+      .from(auctionPriceHistory)
+      .where(eq(auctionPriceHistory.auctionId, id))
+      .orderBy(asc(auctionPriceHistory.recordedAt)),
+  ]);
 
   return {
     auction: auctionRowToDetail(row),

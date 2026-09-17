@@ -33,26 +33,16 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Link } from "@/i18n/routing";
+import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
 
 import type { AuctionSummary } from "./auction-summary";
+import { BattlEyeBadge } from "./battleye-badge";
 import { LivePriceFlash } from "./live-price-flash";
 
 // ─────────────────────────────────────────────────────────────────────
-// URL outfitu TibiaWiki (arch §13 + T25) — fallback gdy DB nie ma
-// rekordu (referencje z task 32 scrape'owane co 24h).
+// URL outfitu — helper z @/lib/tibia (jedno źródło dla całego bazaar UI).
 // ─────────────────────────────────────────────────────────────────────
-
-/**
- * Buduje URL do statycznego assetu Tibia.com.
- * Tibia hostuje outfit GIF'y pod `https://static.tibia.com/images/charactertrade/outfits/{id}_{addon}.gif`.
- * My używamy id bez addona (0=base), bo outfitId to FK do outfits.id.
- * Fallback: TibiaWiki CachedImages (gdy tibia.com nie zwróci 200).
- */
-function outfitImageUrl(outfitId: number | null): string | null {
-  if (outfitId === null) return null;
-  return `https://static.tibia.com/images/charactertrade/outfits/${outfitId}_0.gif`;
-}
 
 // ─────────────────────────────────────────────────────────────────────
 // Countdown — lokalny tykający komponent (arch §8.2: zero requestów)
@@ -118,14 +108,9 @@ function Countdown({ endsAt }: { endsAt: string }) {
 
   const endMs = React.useMemo(() => Date.parse(endsAt), [endsAt]);
 
-  const computeRemaining = React.useCallback(
-    (now: number) => Math.max(0, endMs - now),
-    [endMs],
-  );
+  const computeRemaining = React.useCallback((now: number) => Math.max(0, endMs - now), [endMs]);
 
-  const [remainingMs, setRemainingMs] = React.useState<number>(() =>
-    computeRemaining(Date.now()),
-  );
+  const [remainingMs, setRemainingMs] = React.useState<number>(() => computeRemaining(Date.now()));
 
   React.useEffect(() => {
     setRemainingMs(computeRemaining(Date.now()));
@@ -168,10 +153,7 @@ function Countdown({ endsAt }: { endsAt: string }) {
         isEnded
           ? "border-border bg-muted text-muted-foreground"
           : isUrgent
-            ? cn(
-                "border-danger/40 bg-danger/10 text-danger",
-                animatePulse && "animate-pulse",
-              )
+            ? cn("border-danger/40 bg-danger/10 text-danger", animatePulse && "animate-pulse")
             : "border-warning/40 bg-warning/10 text-warning-foreground",
       )}
       aria-live="off"
@@ -179,7 +161,9 @@ function Countdown({ endsAt }: { endsAt: string }) {
       title={formatted}
     >
       {isUrgent ? (
-        <span aria-hidden="true" className="text-base leading-none">🔥</span>
+        <span aria-hidden="true" className="text-base leading-none">
+          🔥
+        </span>
       ) : (
         <Timer className="h-3.5 w-3.5" aria-hidden="true" />
       )}
@@ -235,6 +219,7 @@ const REGION_TONE: Record<AuctionSummary["worldRegion"], string> = {
   EU: "bg-region-eu/15 text-region-eu border-region-eu/40",
   NA: "bg-region-na/15 text-region-na border-region-na/40",
   BR: "bg-region-br/15 text-region-br border-region-br/40",
+  OCE: "bg-region-oce/15 text-region-oce border-region-oce/40",
 };
 
 // ─────────────────────────────────────────────────────────────────────
@@ -275,6 +260,7 @@ export function AuctionCard({
   className,
 }: AuctionCardProps) {
   const t = useTranslations("Bazaar.card");
+  const tFilters = useTranslations("Bazaar.filters");
   const format = useFormatter();
 
   // Heurystyczne tagi (cache'owane per-render, czysta funkcja).
@@ -291,9 +277,7 @@ export function AuctionCard({
   // W trybie history pokazujemy `finalPrice` zamiast `bid` (T58,
   // plan task 58 — readonly: "z `finalPrice` zamiast `bid`").
   const isHistory = mode === "history";
-  const displayPrice = isHistory
-    ? (auction.finalPrice ?? auction.bid)
-    : auction.bid;
+  const displayPrice = isHistory ? (auction.finalPrice ?? auction.bid) : auction.bid;
   const bidLabel = isHistory
     ? t("finalPrice")
     : auction.bidType === "current"
@@ -354,10 +338,7 @@ export function AuctionCard({
           </h3>
 
           <div className="mt-1 flex flex-wrap items-center gap-1.5">
-            <Badge
-              variant="outline"
-              className={cn("border font-medium", vocationTone)}
-            >
+            <Badge variant="outline" className={cn("border font-medium", vocationTone)}>
               {auction.vocationPromoted}
             </Badge>
             <Badge variant="outline" className="font-mono tabular-nums">
@@ -381,21 +362,15 @@ export function AuctionCard({
           <Badge
             variant="outline"
             className={cn("border", regionTone)}
+            title={auction.worldRegion ? tFilters(`regions.${auction.worldRegion}`) : undefined}
           >
             {auction.world}
+            <span className="ml-1 font-mono text-[0.65rem] opacity-70">{auction.worldRegion}</span>
           </Badge>
           <Badge variant="secondary" className="text-xs">
             {auction.worldPvpType}
           </Badge>
-          <Badge
-            variant={
-              auction.worldBattleye === "protected" ? "success" : "outline"
-            }
-            className="text-xs"
-            title={auction.worldBattleye}
-          >
-            BE
-          </Badge>
+          <BattlEyeBadge value={auction.worldBattleye} />
         </div>
 
         {/* ── Skills grid (arch §5 krok 5: 8 skilli) ──────────────── */}
@@ -470,9 +445,7 @@ export function AuctionCard({
         {/* ── Bid + estimated value ────────────────────────────────── */}
         <div className="flex items-end justify-between gap-3 border-t pt-3">
           <div>
-            <p className="text-xs uppercase tracking-wider text-muted-foreground">
-              {bidLabel}
-            </p>
+            <p className="text-xs uppercase tracking-wider text-muted-foreground">{bidLabel}</p>
             <p className="numeric mt-0.5 font-mono text-2xl font-bold tabular-nums text-foreground">
               {/* T56 — LivePriceFlash: highlight bid przy zmianie (SSE/polling).
                   Wyłączony w trybie "history" (finalPrice się nie zmienia).
@@ -481,10 +454,7 @@ export function AuctionCard({
               {isHistory || !showLiveFlash ? (
                 <>{formattedBid} </>
               ) : (
-                <LivePriceFlash
-                  value={displayPrice}
-                  className="font-mono text-2xl font-bold"
-                >
+                <LivePriceFlash value={displayPrice} className="font-mono text-2xl font-bold">
                   {formattedBid}
                 </LivePriceFlash>
               )}
@@ -499,9 +469,7 @@ export function AuctionCard({
               <p
                 className={cn(
                   "numeric mt-0.5 font-mono text-base font-semibold tabular-nums",
-                  auction.estimatedValue > auction.bid
-                    ? "text-danger"
-                    : "text-success",
+                  auction.estimatedValue > auction.bid ? "text-danger" : "text-success",
                 )}
               >
                 {format.number(auction.estimatedValue, { useGrouping: true })}{" "}
@@ -525,11 +493,7 @@ export function AuctionCard({
           {isHistory ? null : (
             <>
               <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
-                <a
-                  href={`https://www.tibia.com/charactertrade/?auctionid=${auction.id}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={tibiaAuctionUrl(auction.id)} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                   {t("openExternal")}
                 </a>
@@ -547,21 +511,15 @@ export function AuctionCard({
               >
                 <Checkbox
                   checked={isCompared}
-                  onCheckedChange={(value) =>
-                    handleCompareChange(value === true)
-                  }
-                  aria-label={
-                    isCompared ? t("unselectCompare") : t("compare")
-                  }
+                  onCheckedChange={(value) => handleCompareChange(value === true)}
+                  aria-label={isCompared ? t("unselectCompare") : t("compare")}
                   className="h-4 w-4"
                 />
                 <Scale className="h-4 w-4" aria-hidden="true" />
                 <span className="hidden sm:inline">
                   {isCompared ? t("unselectCompare") : t("compare")}
                 </span>
-                {isCompared ? (
-                  <Check className="h-4 w-4 text-success" aria-hidden="true" />
-                ) : null}
+                {isCompared ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : null}
               </label>
             </>
           )}

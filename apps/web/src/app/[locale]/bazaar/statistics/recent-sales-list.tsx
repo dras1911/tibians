@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Link } from "@/i18n/routing";
+import { tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
 
 // ─────────────────────────────────────────────────────────────────────
@@ -58,20 +59,13 @@ export interface RecentSalesListProps {
  * Lokalizowany przez `Intl.RelativeTimeFormat` (next-intl `useFormatter`
  * używa tego samego API pod spodem).
  */
-function relativeTime(
-  target: Date,
-  now: Date,
-  format: ReturnType<typeof useFormatter>,
-): string {
+function relativeTime(target: Date, now: Date, format: ReturnType<typeof useFormatter>): string {
   const diffSec = Math.round((target.getTime() - now.getTime()) / 1000);
   const absSec = Math.abs(diffSec);
   if (absSec < 60) return format.relativeTime(diffSec, { unit: "second" });
-  if (absSec < 3600)
-    return format.relativeTime(Math.round(diffSec / 60), { unit: "minute" });
-  if (absSec < 86400)
-    return format.relativeTime(Math.round(diffSec / 3600), { unit: "hour" });
-  if (absSec < 86400 * 30)
-    return format.relativeTime(Math.round(diffSec / 86400), { unit: "day" });
+  if (absSec < 3600) return format.relativeTime(Math.round(diffSec / 60), { unit: "minute" });
+  if (absSec < 86400) return format.relativeTime(Math.round(diffSec / 3600), { unit: "hour" });
+  if (absSec < 86400 * 30) return format.relativeTime(Math.round(diffSec / 86400), { unit: "day" });
   return format.relativeTime(Math.round(diffSec / (86400 * 30)), {
     unit: "month",
   });
@@ -88,12 +82,8 @@ export function RecentSalesList({ sales, className }: RecentSalesListProps) {
     return (
       <Card className={cn("border-dashed", className)}>
         <CardContent className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-          <p className="text-sm font-medium text-foreground">
-            {t("emptyTitle")}
-          </p>
-          <p className="text-xs text-muted-foreground">
-            {t("emptyDescription")}
-          </p>
+          <p className="text-sm font-medium text-foreground">{t("emptyTitle")}</p>
+          <p className="text-xs text-muted-foreground">{t("emptyDescription")}</p>
         </CardContent>
       </Card>
     );
@@ -156,11 +146,7 @@ export function RecentSalesList({ sales, className }: RecentSalesListProps) {
                 className="hidden h-11 w-11 p-0 sm:inline-flex"
                 aria-label={t("openExternal")}
               >
-                <a
-                  href={`https://www.tibia.com/charactertrade/?auctionid=${sale.auctionId}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
+                <a href={tibiaAuctionUrl(sale.auctionId)} target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="h-4 w-4" aria-hidden="true" />
                 </a>
               </Button>
@@ -214,18 +200,12 @@ function SaleDate({ sale }: { sale: RecentSaleSummary }) {
 function SalePrice({ sale }: { sale: RecentSaleSummary }) {
   const format = useFormatter();
   if (sale.finalPrice === null) {
-    return (
-      <span className="numeric font-mono text-sm text-muted-foreground">
-        —
-      </span>
-    );
+    return <span className="numeric font-mono text-sm text-muted-foreground">—</span>;
   }
   return (
     <span className="numeric whitespace-nowrap font-mono text-base font-semibold tabular-nums text-foreground">
       {format.number(sale.finalPrice, { useGrouping: true })}
-      <span className="ml-1 text-xs font-medium text-muted-foreground">
-        TC
-      </span>
+      <span className="ml-1 text-xs font-medium text-muted-foreground">TC</span>
     </span>
   );
 }

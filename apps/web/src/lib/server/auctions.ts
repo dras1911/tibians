@@ -20,7 +20,7 @@
 // Server-only — importowane wyłącznie przez route handlers (Node runtime).
 // NIE importuj tego pliku z komponentów klienta.
 
-import { and, asc, desc, eq, gte, lte, ne, sql, SQL } from "drizzle-orm";
+import { and, asc, desc, eq, gt, gte, lte, ne, sql, SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@tibians/db";
@@ -102,13 +102,9 @@ export interface AuctionRow {
   archivedAt: Date | null;
   // world (joined)
   worldName: string;
-  worldRegion: "EU" | "NA" | "BR";
+  worldRegion: "EU" | "NA" | "BR" | "OCE";
   worldPvpType:
-    | "Open PvP"
-    | "Optional PvP"
-    | "Hardcore PvP"
-    | "Retro Open PvP"
-    | "Retro Hardcore PvP";
+    "Open PvP" | "Optional PvP" | "Hardcore PvP" | "Retro Open PvP" | "Retro Hardcore PvP";
   worldBattleye: "protected" | "initially protected" | "not protected";
 }
 
@@ -168,14 +164,10 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
     conditions.push(eq(auctions.hasPreySlot, filters.hasPreySlot));
   }
   if (filters.hasCharmExpansion !== undefined) {
-    conditions.push(
-      eq(auctions.hasCharmExpansion, filters.hasCharmExpansion),
-    );
+    conditions.push(eq(auctions.hasCharmExpansion, filters.hasCharmExpansion));
   }
   if (filters.hasWeeklyTaskExpansion !== undefined) {
-    conditions.push(
-      eq(auctions.hasWeeklyTaskExp, filters.hasWeeklyTaskExpansion),
-    );
+    conditions.push(eq(auctions.hasWeeklyTaskExp, filters.hasWeeklyTaskExpansion));
   }
   if (filters.hasTwistOfFate !== undefined) {
     conditions.push(eq(auctions.hasTwistOfFate, filters.hasTwistOfFate));
@@ -205,9 +197,7 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
 
   if (filters.search) {
     // plainto_tsquery jest bezpieczny (escapuje tokeny) — nie ma SQL injection
-    conditions.push(
-      sql`${auctions.searchVector} @@ plainto_tsquery('simple', ${filters.search})`,
-    );
+    conditions.push(sql`${auctions.searchVector} @@ plainto_tsquery('simple', ${filters.search})`);
   }
 
   if (conditions.length === 0) return undefined;
@@ -219,15 +209,7 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
  * Arch. §7.1 pkt 1: skille są denormalizowanymi kolumnami.
  */
 function skillColumn(
-  skill:
-    | "magic"
-    | "club"
-    | "fist"
-    | "sword"
-    | "axe"
-    | "distance"
-    | "shielding"
-    | "fishing",
+  skill: "magic" | "club" | "fist" | "sword" | "axe" | "distance" | "shielding" | "fishing",
 ) {
   switch (skill) {
     case "magic":
@@ -253,9 +235,7 @@ function skillColumn(
  * Mapowanie `sortBy` (AuctionOrderColumn) → kolumna sortowania.
  * Wszystkie dozwolone wartości to gorące filtry (arch §7.2 wydajność).
  */
-function orderColumn(
-  col: z.infer<typeof auctionFiltersSchema>["sortBy"],
-) {
+function orderColumn(col: z.infer<typeof auctionFiltersSchema>["sortBy"]) {
   switch (col) {
     case "auctionEnd":
       return auctions.auctionEnd;
@@ -382,8 +362,7 @@ export async function listAuctions(
   const whereCondition = buildWhereConditions(filters);
 
   const sortCol = orderColumn(filters.sortBy);
-  const orderByExpr =
-    filters.sortDir === "asc" ? asc(sortCol) : desc(sortCol);
+  const orderByExpr = filters.sortDir === "asc" ? asc(sortCol) : desc(sortCol);
 
   const countQuery = db
     .select({ count: sql<number>`COUNT(*)::int` })
@@ -400,10 +379,7 @@ export async function listAuctions(
     .limit(pagination.pageSize)
     .offset((pagination.page - 1) * pagination.pageSize);
 
-  const [countResult, rowsResult] = await Promise.all([
-    countQuery,
-    listQuery,
-  ]);
+  const [countResult, rowsResult] = await Promise.all([countQuery, listQuery]);
 
   const total = countResult[0]?.count ?? 0;
   const rows = rowsResult as unknown as AuctionRow[];
@@ -414,9 +390,7 @@ export async function listAuctions(
 /**
  * Ending Soon — aukcje kończące się w ciągu `withinHours` godzin.
  */
-export async function listEndingSoon(
-  withinHours: number,
-): Promise<AuctionRow[]> {
+export async function listEndingSoon(withinHours: number): Promise<AuctionRow[]> {
   const rows = await db
     .select(AUCTION_PROJECTION)
     .from(auctions)
@@ -424,6 +398,11 @@ export async function listEndingSoon(
     .where(
       and(
         eq(auctions.status, "active"),
+        // Tylko aukcje, które NAPRAWDĘ się nie skończyły — status w DB
+        // może być chwilę nieaktualny (scraper archiwizuje z opóźnieniem
+        // do 15 min), a sekcja "Kończące się w ciągu godziny" nie może
+        // pokazywać kart ze znaczkiem "Zakończona".
+        gt(auctions.auctionEnd, sql`NOW()`),
         lte(
           auctions.auctionEnd,
           // `INTERVAL` wymaga wartości w apostrofach (`INTERVAL '24 hours'`).
@@ -447,9 +426,7 @@ export async function listEndingSoon(
  * Detale aukcji z relacjami (joins do worlds dla region/pvpType/battleye).
  * Zwraca `null` jeśli aukcja o danym ID nie istnieje.
  */
-export async function getAuctionById(
-  id: bigint,
-): Promise<AuctionRow | null> {
+export async function getAuctionById(id: bigint): Promise<AuctionRow | null> {
   const result = await db
     .select(AUCTION_PROJECTION)
     .from(auctions)
@@ -828,28 +805,17 @@ export async function getMarketStats(): Promise<MarketStats> {
   return {
     totalActive: status.total_active,
     totalFinished: status.total_finished,
-    avgLevel:
-      status.avg_level !== null
-        ? Math.round(parseFloat(status.avg_level))
-        : null,
+    avgLevel: status.avg_level !== null ? Math.round(parseFloat(status.avg_level)) : null,
 
     recentFinishedCount: finishedAgg.recent_count,
     avgLevelFinished:
-      finishedAgg.avg_level !== null
-        ? Math.round(parseFloat(finishedAgg.avg_level))
-        : null,
+      finishedAgg.avg_level !== null ? Math.round(parseFloat(finishedAgg.avg_level)) : null,
     medianLevel:
-      finishedAgg.median_level !== null
-        ? Math.round(parseFloat(finishedAgg.median_level))
-        : null,
+      finishedAgg.median_level !== null ? Math.round(parseFloat(finishedAgg.median_level)) : null,
     avgBidFinished:
-      finishedAgg.avg_bid !== null
-        ? Math.round(parseFloat(finishedAgg.avg_bid))
-        : null,
+      finishedAgg.avg_bid !== null ? Math.round(parseFloat(finishedAgg.avg_bid)) : null,
     medianBidFinished:
-      finishedAgg.median_bid !== null
-        ? Math.round(parseFloat(finishedAgg.median_bid))
-        : null,
+      finishedAgg.median_bid !== null ? Math.round(parseFloat(finishedAgg.median_bid)) : null,
 
     topVocations,
     topWorlds,
@@ -949,10 +915,7 @@ export async function getFinishedAuctions(
     .limit(pagination.pageSize)
     .offset((pagination.page - 1) * pagination.pageSize);
 
-  const [countResult, rowsResult] = await Promise.all([
-    countQuery,
-    listQuery,
-  ]);
+  const [countResult, rowsResult] = await Promise.all([countQuery, listQuery]);
 
   const total = Number(countResult[0]?.count ?? 0);
   const rows = rowsResult as unknown as AuctionRow[];
@@ -996,12 +959,7 @@ export async function getRecentSales(limit: number): Promise<RecentSale[]> {
     })
     .from(auctions)
     .innerJoin(worlds, eq(auctions.worldId, worlds.id))
-    .where(
-      and(
-        eq(auctions.status, "sold"),
-        sql`${auctions.finalPrice} IS NOT NULL`,
-      ),
-    )
+    .where(and(eq(auctions.status, "sold"), sql`${auctions.finalPrice} IS NOT NULL`))
     .orderBy(desc(auctions.auctionEnd))
     .limit(limit);
 
@@ -1016,9 +974,7 @@ export async function getRecentSales(limit: number): Promise<RecentSale[]> {
  * REFRESH MATERIALIZED VIEW CONCURRENTLY mv_facet_counts (arch §7.2 + §10).
  */
 export async function refreshFacetCounts(): Promise<void> {
-  await db.execute(
-    sql`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_facet_counts`,
-  );
+  await db.execute(sql`REFRESH MATERIALIZED VIEW CONCURRENTLY mv_facet_counts`);
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -1031,9 +987,7 @@ export async function refreshFacetCounts(): Promise<void> {
  * Używane przez `AuctionFiltersSidebar` do searchable multi-select.
  * Cache'owane przez Next.js (60s) — referencje rzadko się zmieniają.
  */
-export async function getWorldsByRegion(): Promise<
-  Record<"EU" | "NA" | "BR", string[]>
-> {
+export async function getWorldsByRegion(): Promise<Record<"EU" | "NA" | "BR" | "OCE", string[]>> {
   const rows = await db
     .select({
       name: worlds.name,
@@ -1043,9 +997,14 @@ export async function getWorldsByRegion(): Promise<
     .where(eq(worlds.isActive, true))
     .orderBy(worlds.region, worlds.name);
 
-  const result: Record<"EU" | "NA" | "BR", string[]> = { EU: [], NA: [], BR: [] };
+  const result: Record<"EU" | "NA" | "BR" | "OCE", string[]> = {
+    EU: [],
+    NA: [],
+    BR: [],
+    OCE: [],
+  };
   for (const r of rows) {
-    if (r.region === "EU" || r.region === "NA" || r.region === "BR") {
+    if (r.region === "EU" || r.region === "NA" || r.region === "BR" || r.region === "OCE") {
       result[r.region].push(r.name);
     }
   }
@@ -1079,10 +1038,7 @@ export interface FacetCountsServer {
  * świat bez dedykowanego filtra w query.
  */
 type FilterField = keyof AuctionFilters | "battleye";
-function buildWhereExcept(
-  filters: AuctionFilters,
-  except: FilterField,
-): SQL | undefined {
+function buildWhereExcept(filters: AuctionFilters, except: FilterField): SQL | undefined {
   const cloned = { ...filters };
   if (except === "search") cloned.search = undefined;
   else if (except === "vocation") cloned.vocation = undefined;
@@ -1112,9 +1068,7 @@ function buildWhereExcept(
   return buildWhereConditions(cloned);
 }
 
-export async function getFacetCounts(
-  filters: AuctionFilters,
-): Promise<FacetCountsServer> {
+export async function getFacetCounts(filters: AuctionFilters): Promise<FacetCountsServer> {
   const totalQuery = db
     .select({ count: sql<number>`COUNT(*)::int` })
     .from(auctions)
@@ -1192,22 +1146,26 @@ export async function getFacetCounts(
   ]);
 
   return {
-    vocation: (vocR as unknown as { value: string; count: number }[]).map(
-      (r) => ({ value: String(r.value), count: Number(r.count) }),
-    ),
-    region: (regR as unknown as { value: string; count: number }[]).map(
-      (r) => ({ value: String(r.value), count: Number(r.count) }),
-    ),
+    vocation: (vocR as unknown as { value: string; count: number }[]).map((r) => ({
+      value: String(r.value),
+      count: Number(r.count),
+    })),
+    region: (regR as unknown as { value: string; count: number }[]).map((r) => ({
+      value: String(r.value),
+      count: Number(r.count),
+    })),
     world: (wR as unknown as { value: string; count: number }[]).map((r) => ({
       value: String(r.value),
       count: Number(r.count),
     })),
-    pvpType: (pvpR as unknown as { value: string; count: number }[]).map(
-      (r) => ({ value: String(r.value), count: Number(r.count) }),
-    ),
-    battleye: (beR as unknown as { value: string; count: number }[]).map(
-      (r) => ({ value: String(r.value), count: Number(r.count) }),
-    ),
+    pvpType: (pvpR as unknown as { value: string; count: number }[]).map((r) => ({
+      value: String(r.value),
+      count: Number(r.count),
+    })),
+    battleye: (beR as unknown as { value: string; count: number }[]).map((r) => ({
+      value: String(r.value),
+      count: Number(r.count),
+    })),
     totalActive: Number(totalR[0]?.count ?? 0),
   };
 }
@@ -1275,9 +1233,7 @@ function nextBidMaxStep(currentMax: number): number {
  * to **index scan** ~3-8 ms przy 2500 aktywnych aukcjach. 5 takich
  * query w parallelu = max ~10 ms (overlap I/O).
  */
-export async function getSuggestionCounts(
-  filters: AuctionFilters,
-): Promise<SuggestionCount[]> {
+export async function getSuggestionCounts(filters: AuctionFilters): Promise<SuggestionCount[]> {
   // Określ które filtry są aktywne (żeby nie generować "removeX" dla
   // nieaktywnego filtra — nie ma to sensu UX).
   const hasWorld = filters.world !== undefined;
@@ -1429,7 +1385,7 @@ export async function getSuggestionCounts(
     .filter((r) => r.count > 0)
     .sort((a, b) => b.count - a.count)
     .slice(0, 5) // UI: max 5 sugestii
-    .map< SuggestionCount>((r) => ({
+    .map<SuggestionCount>((r) => ({
       id: r.id,
       count: r.count,
       patch: r.patch,
@@ -1518,10 +1474,7 @@ export async function getSimilarAuctions(
         eq(auctions.vocationBase, excludeAuction.vocationBase),
         eq(worlds.pvpType, excludeAuction.worldPvpType),
         gte(auctions.level, Math.max(8, excludeAuction.level - levelRange)),
-        lte(
-          auctions.level,
-          excludeAuction.level + levelRange,
-        ),
+        lte(auctions.level, excludeAuction.level + levelRange),
         gte(auctions.bid, bidMin),
         lte(auctions.bid, bidMax),
       ),
@@ -1537,14 +1490,16 @@ export async function getSimilarAuctions(
 // ───────────────────────────────────────────────────────────────────────
 
 /**
- * Top `limit` aukcji posortowanych po `last_seen_at DESC` — aukcje
- * najświeżej zaktualizowane przez scraper.
+ * Top `limit` NAJNOWSZYCH aktywnych aukcji posortowanych po
+ * `first_seen_at DESC` — świeżo dodane do naszej bazy (nowe wystawienia
+ * na Bazaarze).
  *
- * Używane przez home dashboard (T53) — sekcja "Ostatnio zaktualizowane".
+ * Używane przez home dashboard (T53) — sekcja "Ostatnio dodane".
+ * Wcześniej sortowane po `last_seen_at` (każdy scrape dotyka wszystkich
+ * aukcji → sortowanie było praktycznie losowe i mylące).
  *
- * Implementacja (arch §7.1): `last_seen_at` jest denormalizowaną
- * kolumną z defaultNow() — partial index `idx_au_active_end` łapie
- * status='active' szybko, a sort po timestamp jest Index Scan.
+ * Implementacja (arch §7.1): `first_seen_at` jest denormalizowaną
+ * kolumną z defaultNow() — ustawianą tylko przy pierwszym insercie.
  */
 export async function getRecentlyUpdated(limit: number): Promise<AuctionRow[]> {
   const rows = await db
@@ -1552,7 +1507,7 @@ export async function getRecentlyUpdated(limit: number): Promise<AuctionRow[]> {
     .from(auctions)
     .innerJoin(worlds, eq(auctions.worldId, worlds.id))
     .where(eq(auctions.status, "active"))
-    .orderBy(desc(auctions.lastSeenAt))
+    .orderBy(desc(auctions.firstSeenAt))
     .limit(limit);
 
   return rows as unknown as AuctionRow[];
@@ -1590,12 +1545,7 @@ export async function getHomeFreshness(): Promise<HomeFreshness> {
       startedAt: scrapeRuns.startedAt,
     })
     .from(scrapeRuns)
-    .where(
-      and(
-        eq(scrapeRuns.runType, "full"),
-        eq(scrapeRuns.status, "success"),
-      ),
-    )
+    .where(and(eq(scrapeRuns.runType, "full"), eq(scrapeRuns.status, "success")))
     .orderBy(desc(scrapeRuns.startedAt))
     .limit(1);
 
@@ -1610,10 +1560,7 @@ export async function getHomeFreshness(): Promise<HomeFreshness> {
     };
   }
 
-  const minutesSince = Math.max(
-    0,
-    Math.floor((Date.now() - latest.finishedAt.getTime()) / 60_000),
-  );
+  const minutesSince = Math.max(0, Math.floor((Date.now() - latest.finishedAt.getTime()) / 60_000));
 
   return {
     lastSuccessfulScrapeAt: latest.finishedAt.toISOString(),

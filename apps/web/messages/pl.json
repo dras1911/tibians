@@ -56,9 +56,9 @@
         "viewAll": "Wszystkie kończące się"
       },
       "recentlyUpdated": {
-        "title": "Ostatnio zaktualizowane",
-        "description": "Aukcje najświeżej zaktualizowane przez scraper (nowe oferty lub korekty).",
-        "viewAll": "Cała lista"
+        "title": "Ostatnio dodane",
+        "description": "Aukcje, które trafiły do naszej bazy najpóźniej — świeżo wystawione postacie.",
+        "viewAll": "Wszystkie nowe"
       },
       "crossSell": {
         "title": "Najpopularniejsze kalkulatory",
@@ -69,8 +69,8 @@
     "empty": {
       "endingSoonTitle": "Żadna aukcja nie kończy się w ciągu godziny",
       "endingSoonDescription": "Wszystkie aktywne aukcje mają jeszcze ponad 60 minut do końca.",
-      "recentTitle": "Brak świeżych aktualizacji",
-      "recentDescription": "Scraper nie zaktualizował jeszcze żadnej aukcji — wróć za kilka minut."
+      "recentTitle": "Brak nowych aukcji",
+      "recentDescription": "Nowo wystawione postacie pojawią się tutaj po najbliższym odświeżeniu danych."
     },
     "live": {
       "live": "LIVE",
@@ -238,6 +238,11 @@
       "actions": "Akcje",
       "select": "Zaznacz"
     },
+    "battleye": {
+      "protected": "GBE — zielone BattlEye: świat chroniony",
+      "initially protected": "YBE — żółte BattlEye: świat chroniony od początku istnienia",
+      "not protected": "RBE — czerwone BattlEye: świat bez ochrony"
+    },
     "filters": {
       "title": "Filtry",
       "reset": "Wyczyść wszystkie",
@@ -281,7 +286,8 @@
       "regions": {
         "EU": "🇪🇺 Europa",
         "NA": "🇺🇸 Ameryka Pn.",
-        "BR": "🇧🇷 Brazylia"
+        "BR": "🇧🇷 Brazylia",
+        "OCE": "🇦🇺 Oceania"
       },
       "toggles": {
         "onlyRegion": "Tylko {region}",

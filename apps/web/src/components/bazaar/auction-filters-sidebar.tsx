@@ -227,7 +227,7 @@ const PVP_TYPES: PvPTypeFilter[] = [
 
 const BATTLEYE_TYPES: BattlEyeFilter[] = ["protected", "initially protected", "not protected"];
 
-const REGIONS: RegionFilter[] = ["EU", "NA", "BR"];
+const REGIONS: RegionFilter[] = ["EU", "NA", "BR", "OCE"];
 
 // ─────────────────────────────────────────────────────────────────────
 // Helpers
@@ -358,7 +358,12 @@ export function AuctionFiltersSidebar({
   const [worldSearch, setWorldSearch] = React.useState("");
   const filteredWorldsByRegion = React.useMemo(() => {
     const q = worldSearch.trim().toLowerCase();
-    const result: Record<RegionFilter, string[]> = { EU: [], NA: [], BR: [] };
+    const result: Record<RegionFilter, string[]> = {
+      EU: [],
+      NA: [],
+      BR: [],
+      OCE: [],
+    };
     for (const region of REGIONS) {
       const worlds = worldsByRegion[region] ?? [];
       result[region] = worlds.filter((w) => (q === "" ? true : w.toLowerCase().includes(q)));

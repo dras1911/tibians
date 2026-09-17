@@ -65,14 +65,10 @@ export interface EndingAuction {
   hasWorldTransfer: boolean;
   goldTotal: string;
   worldName: string;
-  worldRegion: "EU" | "NA" | "BR";
+  worldRegion: "EU" | "NA" | "BR" | "OCE";
 }
 
-export type AuctionLiveStatus =
-  | "connecting"
-  | "live"
-  | "polling"
-  | "error";
+export type AuctionLiveStatus = "connecting" | "live" | "polling" | "error";
 
 export interface SsePayload {
   auctions: EndingAuction[];
@@ -182,9 +178,7 @@ function resolveEventSourceCtor(): EventSourceConstructor | null {
   const adapter: EventSourceConstructor = (url: string): EventSourceLike => {
     // `as unknown as new (url: string) => EventSourceLike` — bo natywny
     // EventSource ma szerszą sygnaturę konstruktora niż nasz typ.
-    const NativeCtor = ctor as unknown as new (
-      url: string,
-    ) => EventSourceLike;
+    const NativeCtor = ctor as unknown as new (url: string) => EventSourceLike;
     const native = new NativeCtor(url);
     return native;
   };
@@ -194,9 +188,7 @@ function resolveEventSourceCtor(): EventSourceConstructor | null {
 function resolveFetch(): FetchLike {
   const f = globalThis.fetch;
   if (typeof f !== "function") {
-    throw new Error(
-      "[useAuctionLive] fetch is not available in this environment.",
-    );
+    throw new Error("[useAuctionLive] fetch is not available in this environment.");
   }
   return f.bind(globalThis) as FetchLike;
 }
@@ -216,8 +208,7 @@ export class AuctionLiveController {
   private listeners = new Set<Listener>();
   private es: EventSourceLike | null = null;
   private pollHandle: ReturnType<SchedulerLike["setInterval"]> | null = null;
-  private reconnectHandle: ReturnType<SchedulerLike["setTimeout"]> | null =
-    null;
+  private reconnectHandle: ReturnType<SchedulerLike["setTimeout"]> | null = null;
   private attempt = 0;
   private enabled: boolean;
   private disposed = false;
@@ -361,9 +352,7 @@ export class AuctionLiveController {
     // przechodzi do `startPolling()` — czyli zachowanie „SSE z fallbackiem"
     // działa także w środowiskach bez SSE.
     if (this.eventSourceCtor === null) {
-      throw new Error(
-        "[useAuctionLive] EventSource unavailable — using polling fallback",
-      );
+      throw new Error("[useAuctionLive] EventSource unavailable — using polling fallback");
     }
 
     this.setState({ status: "connecting" });
@@ -456,10 +445,7 @@ export class AuctionLiveController {
   }
 
   private scheduleReconnect(): void {
-    const delay = Math.min(
-      RECONNECT_BASE_MS * 2 ** this.attempt,
-      RECONNECT_MAX_MS,
-    );
+    const delay = Math.min(RECONNECT_BASE_MS * 2 ** this.attempt, RECONNECT_MAX_MS);
     this.attempt += 1;
 
     if (this.reconnectHandle !== null) {
@@ -485,9 +471,7 @@ export class AuctionLiveController {
 // useAuctionLive
 // ───────────────────────────────────────────────────────────────────────
 
-export function useAuctionLive(
-  options: UseAuctionLiveOptions = {},
-): UseAuctionLiveResult {
+export function useAuctionLive(options: UseAuctionLiveOptions = {}): UseAuctionLiveResult {
   const [controller] = React.useState<AuctionLiveController>(
     () => new AuctionLiveController(options),
   );
@@ -501,11 +485,7 @@ export function useAuctionLive(
     [controller],
   );
 
-  const state = React.useSyncExternalStore(
-    subscribe,
-    getSnapshot,
-    getSnapshot,
-  );
+  const state = React.useSyncExternalStore(subscribe, getSnapshot, getSnapshot);
 
   React.useEffect(() => {
     controller?.setEnabled(options.enabled ?? true);

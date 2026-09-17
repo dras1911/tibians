@@ -22,6 +22,13 @@
       "when": 1789662358537,
       "tag": "0002_workable_norrin_radd",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1789673719290,
+      "tag": "0003_graceful_zaladane",
+      "breakpoints": true
     }
   ]
 }

@@ -122,9 +122,12 @@ export default async function ReferenceWorldsPage({
       for (const w of rawList) {
         if (typeof w.name !== "string" || w.name.length === 0) continue;
         const location = (w.location ?? "").toLowerCase();
+        // Oceania: brak grupy na /reference/worlds (grupy EU/NA/BR) —
+        // pomijamy, żeby nie kłamać przypisaniem do innego regionu.
+        if (location.startsWith("oce")) continue;
         const region: "EU" | "NA" | "BR" = location.startsWith("eu")
           ? "EU"
-          : location.startsWith("br")
+          : location.startsWith("south")
             ? "BR"
             : "NA";
         grouped[region].push({
@@ -272,7 +275,7 @@ function WorldCard({
 }: {
   world: {
     name: string;
-    region: "EU" | "NA" | "BR" | null;
+    region: "EU" | "NA" | "BR" | "OCE" | null;
     pvpType: string | null;
     battleye: string | null;
     isRetro: boolean;

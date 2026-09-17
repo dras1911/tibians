@@ -21,7 +21,14 @@ import {
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   Command,
@@ -51,11 +58,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import {
   Select,
@@ -87,12 +90,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
 // useDensity is no longer imported here after T5 — the density toggle is
 // documented in the showcase section below but the actual interactive
 // control lives in `components/density-provider.tsx`.
@@ -164,14 +162,9 @@ function Section({
       <header className="mb-4 flex items-end justify-between gap-4 border-b pb-3">
         <div>
           <h2 className="text-2xl font-semibold tracking-tight">{title}</h2>
-          {description ? (
-            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
-          ) : null}
+          {description ? <p className="mt-1 text-sm text-muted-foreground">{description}</p> : null}
         </div>
-        <a
-          href={`#${id}`}
-          className="text-xs text-muted-foreground hover:text-foreground"
-        >
+        <a href={`#${id}`} className="text-xs text-muted-foreground hover:text-foreground">
           #{id}
         </a>
       </header>
@@ -190,7 +183,7 @@ interface SampleRow {
   vocation: "Knight" | "Paladin" | "Druid" | "Sorcerer" | "Monk";
   level: number;
   bid: number;
-  region: "EU" | "NA" | "BR";
+  region: "EU" | "NA" | "BR" | "OCE";
 }
 
 const SAMPLE_DATA: SampleRow[] = [
@@ -237,22 +230,19 @@ export default function DevUIShowcasePage() {
               <CardContent className="text-sm text-muted-foreground">
                 Przełącznik light/dark/system zapisuje preferencję w{" "}
                 <code className="font-mono">localStorage</code> i ustawia{" "}
-                <code className="font-mono">&lt;html class=&quot;dark&quot;&gt;</code>{" "}
-                inline skryptem przed pierwszym paintem (zero FOUC).
+                <code className="font-mono">&lt;html class=&quot;dark&quot;&gt;</code> inline
+                skryptem przed pierwszym paintem (zero FOUC).
               </CardContent>
             </Card>
             <Card>
               <CardHeader>
                 <CardTitle>Density</CardTitle>
-                <CardDescription>
-                  compact 40 px · comfortable 52 px (arch §6.3)
-                </CardDescription>
+                <CardDescription>compact 40 px · comfortable 52 px (arch §6.3)</CardDescription>
               </CardHeader>
               <CardContent className="text-sm text-muted-foreground">
-                <code className="font-mono">useDensity()</code> z tego
-                workspace&apos;a przełącza{" "}
-                <code className="font-mono">&lt;html data-density&gt;</code> —
-                tabele i rzędy reagują automatycznie.
+                <code className="font-mono">useDensity()</code> z tego workspace&apos;a przełącza{" "}
+                <code className="font-mono">&lt;html data-density&gt;</code> — tabele i rzędy
+                reagują automatycznie.
               </CardContent>
             </Card>
             <Card>
@@ -320,7 +310,11 @@ export default function DevUIShowcasePage() {
               <Label htmlFor="search">Szukaj</Label>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
-                <Input id="search" placeholder="Szukaj gracza, przedmiotu, vocation…" className="pl-9" />
+                <Input
+                  id="search"
+                  placeholder="Szukaj gracza, przedmiotu, vocation…"
+                  className="pl-9"
+                />
               </div>
             </div>
             <div className="space-y-2">
@@ -400,7 +394,11 @@ export default function DevUIShowcasePage() {
           </div>
         </Section>
 
-        <Section id="badges" title="Badges" description="Semantic tokens (success/warning/danger/info) + obrona neutralnych wariantów.">
+        <Section
+          id="badges"
+          title="Badges"
+          description="Semantic tokens (success/warning/danger/info) + obrona neutralnych wariantów."
+        >
           <div className="flex flex-wrap gap-2">
             <Badge>Default</Badge>
             <Badge variant="secondary">Secondary</Badge>
@@ -415,7 +413,11 @@ export default function DevUIShowcasePage() {
           </div>
         </Section>
 
-        <Section id="card" title="Card" description="Kontener dla bloków informacyjnych. Hover podnosi cień (token shadow-md).">
+        <Section
+          id="card"
+          title="Card"
+          description="Kontener dla bloków informacyjnych. Hover podnosi cień (token shadow-md)."
+        >
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
             <Card>
               <CardHeader>
@@ -463,7 +465,11 @@ export default function DevUIShowcasePage() {
           </div>
         </Section>
 
-        <Section id="tabs" title="Tabs" description="Panel-switching. Tło aktywnej zakładki to --background (nie --card).">
+        <Section
+          id="tabs"
+          title="Tabs"
+          description="Panel-switching. Tło aktywnej zakładki to --background (nie --card)."
+        >
           <Tabs defaultValue="skills">
             <TabsList>
               <TabsTrigger value="skills">Skills</TabsTrigger>
@@ -482,7 +488,11 @@ export default function DevUIShowcasePage() {
           </Tabs>
         </Section>
 
-        <Section id="dropdown" title="Dropdown menu" description="Menu akcji z Radix — keyboard navigation, focus mgmt, type-ahead.">
+        <Section
+          id="dropdown"
+          title="Dropdown menu"
+          description="Menu akcji z Radix — keyboard navigation, focus mgmt, type-ahead."
+        >
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
               <Button variant="outline">
@@ -512,7 +522,11 @@ export default function DevUIShowcasePage() {
           </DropdownMenu>
         </Section>
 
-        <Section id="popover" title="Popover" description="Lekki popup — np. zaawansowane filtry Bazaar.">
+        <Section
+          id="popover"
+          title="Popover"
+          description="Lekki popup — np. zaawansowane filtry Bazaar."
+        >
           <Popover>
             <PopoverTrigger asChild>
               <Button variant="outline">
@@ -536,7 +550,11 @@ export default function DevUIShowcasePage() {
           </Popover>
         </Section>
 
-        <Section id="dialog" title="Dialog" description="Modal z portalem — overlay, focus trap, ESC zamyka.">
+        <Section
+          id="dialog"
+          title="Dialog"
+          description="Modal z portalem — overlay, focus trap, ESC zamyka."
+        >
           <Dialog>
             <DialogTrigger asChild>
               <Button>Otwórz dialog</Button>
@@ -545,13 +563,13 @@ export default function DevUIShowcasePage() {
               <DialogHeader>
                 <DialogTitle>Potwierdź akcję</DialogTitle>
                 <DialogDescription>
-                  Ten dialog używa <code className="font-mono">--background</code> jako tła
-                  i <code className="font-mono">--border-default</code> jako ramki.
+                  Ten dialog używa <code className="font-mono">--background</code> jako tła i{" "}
+                  <code className="font-mono">--border-default</code> jako ramki.
                 </DialogDescription>
               </DialogHeader>
               <p className="text-sm text-muted-foreground">
-                Dialog blokuje fokus wewnątrz, zamyka się na ESC lub klik w overlay.
-                Animacje z <code className="font-mono">tailwindcss-animate</code>.
+                Dialog blokuje fokus wewnątrz, zamyka się na ESC lub klik w overlay. Animacje z{" "}
+                <code className="font-mono">tailwindcss-animate</code>.
               </p>
               <DialogFooter>
                 <Button variant="outline">Anuluj</Button>
@@ -561,7 +579,11 @@ export default function DevUIShowcasePage() {
           </Dialog>
         </Section>
 
-        <Section id="sheet" title="Sheet" description="Slide-in panel — używany przez mobile menu (T5).">
+        <Section
+          id="sheet"
+          title="Sheet"
+          description="Slide-in panel — używany przez mobile menu (T5)."
+        >
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="outline">
@@ -596,7 +618,11 @@ export default function DevUIShowcasePage() {
           </Sheet>
         </Section>
 
-        <Section id="tooltip" title="Tooltip" description="Dymek — używany dla skrótów i hintów w tabeli Bazaar.">
+        <Section
+          id="tooltip"
+          title="Tooltip"
+          description="Dymek — używany dla skrótów i hintów w tabeli Bazaar."
+        >
           <div className="flex flex-wrap gap-3">
             <Tooltip>
               <TooltipTrigger asChild>
@@ -631,7 +657,11 @@ export default function DevUIShowcasePage() {
           </div>
         </Section>
 
-        <Section id="command" title="Command palette" description="Szybkie wyszukiwanie (⌘K / Ctrl+K). cmdk pod spodem.">
+        <Section
+          id="command"
+          title="Command palette"
+          description="Szybkie wyszukiwanie (⌘K / Ctrl+K). cmdk pod spodem."
+        >
           <Command className="rounded-lg border shadow-md">
             <CommandInput placeholder="Szukaj aukcji, kalkulatora, vocation…" />
             <CommandList>
@@ -663,7 +693,11 @@ export default function DevUIShowcasePage() {
           </Command>
         </Section>
 
-        <Section id="table" title="Table (shadcn)" description="Statyczny przykład. Wysokość wierszy kontrolowana przez density.">
+        <Section
+          id="table"
+          title="Table (shadcn)"
+          description="Statyczny przykład. Wysokość wierszy kontrolowana przez density."
+        >
           <div className="rounded-md border">
             <Table>
               <TableCaption>Przykładowe aukcje (statyczne)</TableCaption>
@@ -690,9 +724,7 @@ export default function DevUIShowcasePage() {
                         {row.vocation}
                       </span>
                     </TableCell>
-                    <TableCell className="text-right font-mono tabular-nums">
-                      {row.level}
-                    </TableCell>
+                    <TableCell className="text-right font-mono tabular-nums">{row.level}</TableCell>
                     <TableCell className="text-right font-mono tabular-nums">
                       {row.bid.toLocaleString("pl-PL")}
                     </TableCell>
@@ -704,7 +736,11 @@ export default function DevUIShowcasePage() {
           </div>
         </Section>
 
-        <Section id="data-table" title="DataTable (TanStack)" description="Gotowy wrapper dla listy Bazaar (T39+). Sortowanie po kliknięciu nagłówka; puste stany = skeleton (arch §6.4).">
+        <Section
+          id="data-table"
+          title="DataTable (TanStack)"
+          description="Gotowy wrapper dla listy Bazaar (T39+). Sortowanie po kliknięciu nagłówka; puste stany = skeleton (arch §6.4)."
+        >
           <div className="rounded-md border">
             <DataTable
               caption="Aukcje Bazaar"
@@ -712,9 +748,7 @@ export default function DevUIShowcasePage() {
                 {
                   accessorKey: "name",
                   header: "Postać",
-                  cell: (info) => (
-                    <span className="font-medium">{info.getValue() as string}</span>
-                  ),
+                  cell: (info) => <span className="font-medium">{info.getValue() as string}</span>,
                 },
                 {
                   accessorKey: "vocation",
@@ -737,9 +771,7 @@ export default function DevUIShowcasePage() {
                   accessorKey: "level",
                   header: "Level",
                   cell: (info) => (
-                    <span className="font-mono tabular-nums">
-                      {info.getValue() as number}
-                    </span>
+                    <span className="font-mono tabular-nums">{info.getValue() as number}</span>
                   ),
                 },
                 {
@@ -757,12 +789,16 @@ export default function DevUIShowcasePage() {
             />
           </div>
           <p className="mt-3 text-xs text-muted-foreground">
-            Kliknij nagłówek kolumny aby posortować. Wiersze przełączają się
-            między 40 px (compact) a 52 px (comfortable).
+            Kliknij nagłówek kolumny aby posortować. Wiersze przełączają się między 40 px (compact)
+            a 52 px (comfortable).
           </p>
         </Section>
 
-        <Section id="scroll-separator" title="Scroll area & Separator" description="Własny scrollbar (Radix). Separator dziedziczy --border.">
+        <Section
+          id="scroll-separator"
+          title="Scroll area & Separator"
+          description="Własny scrollbar (Radix). Separator dziedziczy --border."
+        >
           <ScrollArea className="h-48 w-full rounded-md border p-4">
             <div className="space-y-3">
               {Array.from({ length: 16 }).map((_, i) => (
@@ -833,7 +869,11 @@ export default function DevUIShowcasePage() {
           </div>
         </Section>
 
-        <Section id="page-layout" title="PageLayout wrapper" description="Header slot + sidebar + main + footer (arch §4.2). Używany przez każdą stronę po T5.">
+        <Section
+          id="page-layout"
+          title="PageLayout wrapper"
+          description="Header slot + sidebar + main + footer (arch §4.2). Używany przez każdą stronę po T5."
+        >
           <div className="overflow-hidden rounded-lg border">
             <div className="flex h-10 items-center justify-between border-b bg-muted px-4 text-xs">
               <span className="font-mono">header slot</span>

@@ -1,5 +1,7 @@
 import type { Config } from "tailwindcss";
 
+import tailwindcssAnimate from "tailwindcss-animate";
+
 /**
  * Tailwind config — colors are mapped 1:1 to OKLCH tokens exported by
  * `@tibians/ui/styles.css`. **Never** hardcode hex/oklch() values here;
@@ -15,10 +17,7 @@ import type { Config } from "tailwindcss";
  */
 const config: Config = {
   darkMode: ["class"],
-  content: [
-    "./src/**/*.{ts,tsx,js,jsx,mdx}",
-    "../../packages/ui/src/**/*.{ts,tsx,js,jsx,mdx,css}",
-  ],
+  content: ["./src/**/*.{ts,tsx,js,jsx,mdx}", "../../packages/ui/src/**/*.{ts,tsx,js,jsx,mdx,css}"],
   theme: {
     container: {
       center: true,
@@ -88,6 +87,11 @@ const config: Config = {
         "voc-druid": "var(--voc-druid)",
         "voc-sorcerer": "var(--voc-sorcerer)",
         "voc-monk": "var(--voc-monk)",
+        // Region accents — badge świata na kartach/tabeli (bg-region-eu/15 itd.)
+        "region-eu": "var(--region-eu)",
+        "region-na": "var(--region-na)",
+        "region-br": "var(--region-br)",
+        "region-oce": "var(--region-oce)",
       },
       borderRadius: {
         lg: "var(--radius-lg)",
@@ -155,7 +159,7 @@ const config: Config = {
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [tailwindcssAnimate],
 };
 
 export default config;
