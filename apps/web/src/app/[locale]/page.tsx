@@ -177,6 +177,7 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           emptyTitle={tHome("empty.recentTitle")}
           emptyDescription={tHome("empty.recentDescription")}
           maxItems={6}
+          cardTimeDisplay="added"
         />
       </div>
 

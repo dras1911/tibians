@@ -36,6 +36,8 @@ export interface AuctionSummary {
   name: string;
   /** Level 8..2500. */
   level: number;
+  /** Kiedy aukcja pierwszy raz trafiła do naszej bazy (ISO) — do „dodano X temu". */
+  firstSeenAt?: string;
   /** Bazowa klasa (Knight/Paladin/Druid/Sorcerer/Monk). */
   vocation: string;
   /** Promowana klasa (np. "Elite Knight"). */
@@ -121,6 +123,7 @@ export function toAuctionSummary(row: AuctionRow): AuctionSummary {
     id: row.auctionId.toString(),
     name: row.characterName,
     level: row.level,
+    firstSeenAt: row.firstSeenAt.toISOString(),
     vocation: row.vocationBase,
     vocationPromoted: row.vocation,
     sex: row.sex,

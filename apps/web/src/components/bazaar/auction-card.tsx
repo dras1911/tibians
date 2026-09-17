@@ -26,7 +26,7 @@
 
 import * as React from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, CheckCircle2, ExternalLink, Gavel, Scale, Timer } from "lucide-react";
+import { Check, CheckCircle2, ExternalLink, Gavel, Scale, Sparkles, Timer } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -173,6 +173,43 @@ function Countdown({ endsAt }: { endsAt: string }) {
 }
 
 // ─────────────────────────────────────────────────────────────────────
+// AddedAgo — znacznik „dodano X temu" (dla sekcji „Ostatnio dodane").
+// Countdown do końca nie ma tam sensu — liczy się świeżość dodania.
+// ─────────────────────────────────────────────────────────────────────
+
+function AddedAgo({ addedAt }: { addedAt: string }) {
+  const t = useTranslations("Bazaar.card");
+  const [now, setNow] = React.useState<number>(() => Date.now());
+
+  React.useEffect(() => {
+    // Odświeżanie co minutę wystarcza (i tak pokazujemy minuty/godziny).
+    const interval = setInterval(() => setNow(Date.now()), 60_000);
+    return () => clearInterval(interval);
+  }, []);
+
+  const addedMs = React.useMemo(() => Date.parse(addedAt), [addedAt]);
+  const minutes = Math.max(0, Math.floor((now - addedMs) / 60_000));
+
+  const label =
+    minutes < 60
+      ? t("addedAgoMinutes", { count: minutes })
+      : minutes < 24 * 60
+        ? t("addedAgoHours", { count: Math.floor(minutes / 60) })
+        : t("addedAgoDays", { count: Math.floor(minutes / (24 * 60)) });
+
+  return (
+    <div
+      className="numeric inline-flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 px-2.5 py-1 text-xs font-medium text-success"
+      aria-label={label}
+      title={label}
+    >
+      <Sparkles className="h-3.5 w-3.5" aria-hidden="true" />
+      <span>{label}</span>
+    </div>
+  );
+}
+
+// ─────────────────────────────────────────────────────────────────────
 // Heurystyczne tagi (arch §5 krok 5: "Dużo charmów, Soul War, ...")
 // ─────────────────────────────────────────────────────────────────────
 
@@ -237,6 +274,13 @@ export interface AuctionCardProps {
    *     statyczny znacznik "Zakończona" z datą zakończenia.
    */
   mode?: "active" | "history";
+  /**
+   * Znacznik czasu w prawym górnym rogu karty:
+   *   - `"countdown"` (default) — odliczanie do końca aukcji.
+   *   - `"added"` — „dodano X temu" (sekcja „Ostatnio dodane"; wymaga
+   *     `auction.firstSeenAt` — bez niego spada z powrotem na countdown).
+   */
+  timeDisplay?: "countdown" | "added";
   /** Wywoływane przez parent przy zaznaczeniu do porównania (T40). */
   onCompareToggle?: (id: string, selected: boolean) => void;
   /** Czy aktualnie zaznaczona (kontrolowany checkbox). */
@@ -254,6 +298,7 @@ export interface AuctionCardProps {
 export function AuctionCard({
   auction,
   mode = "active",
+  timeDisplay = "countdown",
   onCompareToggle,
   isCompared = false,
   showLiveFlash = true,
@@ -350,6 +395,8 @@ export function AuctionCard({
         <div className="flex shrink-0 flex-col items-end gap-1">
           {isHistory ? (
             <EndedBadge endedAt={auction.auctionEnd} />
+          ) : timeDisplay === "added" && auction.firstSeenAt ? (
+            <AddedAgo addedAt={auction.firstSeenAt} />
           ) : (
             <Countdown endsAt={auction.auctionEnd} />
           )}

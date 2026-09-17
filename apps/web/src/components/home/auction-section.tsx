@@ -54,6 +54,12 @@ export interface AuctionSectionProps {
    * stronie głównej (własny nagłówek + nagłówek `AuctionSection`).
    */
   hideHeader?: boolean;
+  /**
+   * Znacznik czasu na kartach (przekazywany do `AuctionCard`):
+   *   - `"countdown"` (default) — odliczanie do końca (sekcje „kończące się").
+   *   - `"added"` — „dodano X temu" (sekcja „Ostatnio dodane").
+   */
+  cardTimeDisplay?: "countdown" | "added";
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -72,15 +78,13 @@ export function AuctionSection({
   emptyDescription,
   maxItems = 4,
   hideHeader = false,
+  cardTimeDisplay = "countdown",
 }: AuctionSectionProps) {
   const shown = auctions.slice(0, maxItems);
   const titleId = `${sectionId}-title`;
 
   return (
-    <section
-      aria-labelledby={titleId}
-      className="space-y-4"
-    >
+    <section aria-labelledby={titleId} className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         {hideHeader === true ? null : (
           <div>
@@ -104,10 +108,7 @@ export function AuctionSection({
           )}
         >
           {viewAllLabel}
-          <ArrowRight
-            className="ml-1 inline h-3.5 w-3.5"
-            aria-hidden="true"
-          />
+          <ArrowRight className="ml-1 inline h-3.5 w-3.5" aria-hidden="true" />
         </Link>
       </header>
 
@@ -123,13 +124,14 @@ export function AuctionSection({
             "grid-cols-1",
             maxItems >= 2 ? "sm:grid-cols-2" : null,
             maxItems >= 3 ? "lg:grid-cols-3" : null,
-            maxItems >= 4 ? "lg:grid-cols-4" : null,
-            maxItems >= 6 ? "xl:grid-cols-6" : null,
+            // 4 karty → 4 kolumny; 6 kart → 3 kolumny (2 rzędy po 3 — karty
+            // są wtedy wystarczająco szerokie, żeby nazwa postaci się mieściła).
+            maxItems === 4 ? "lg:grid-cols-4" : null,
           )}
         >
           {shown.map((auction) => (
             <li key={auction.id} className="min-w-0">
-              <AuctionCard auction={auction} />
+              <AuctionCard auction={auction} timeDisplay={cardTimeDisplay} />
             </li>
           ))}
         </ul>
