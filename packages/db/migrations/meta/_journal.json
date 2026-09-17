@@ -15,6 +15,13 @@
       "when": 1789472950018,
       "tag": "0001_needy_dreaming_celestial",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1789662358537,
+      "tag": "0002_workable_norrin_radd",
+      "breakpoints": true
     }
   ]
 }

@@ -33,11 +33,16 @@ export const KNOWN_LIST_PAGES = [1, 2, 25, 50, 75, 101, 107] as const;
 /**
  * ID aukcji (z tibia.com `?auctionid=`), dla których mamy fixture HTML detalu.
  *
- * Uwaga: fixture HTML to MIRROR struktury tibia.com (R1 — sieć jest
- * niedostępna w CI). ID odnosi się do realnej aukcji na tibia.com, więc
- * `refresh-fixtures.sh` może w przyszłości podmienić mirror na żywą kopię.
+ * OD 2026-09-17 fixture'y detalu to ŻYWE KOPIE 1:1 (pobrane przez
+ * FlareSolverr+WARP; patrz `__fixtures__/README.md`). Konwencja nazw:
+ * `auction-detail-live-{id}.html`. Dobór pokrywa spektrum:
+ *   2259395 — RP 402 (aktywna, „rich": store items, USP, questy)
+ *   2252245 — K 15 (zakończona „Winning Bid", minimalna progresja)
+ *   2258972 — EK 865 (Primal Ordeal, Charm/Weekly, hash-world Havera)
+ *   2255748 — EK 93 (aktywna, stacki potionów, bogate USP)
+ *   2258274 — MS 131 (brak sekcji SpecialCharacterFeatures — edge case)
  */
-export const KNOWN_AUCTION_IDS = [2173376] as const;
+export const KNOWN_AUCTION_IDS = [2259395, 2252245, 2258972, 2255748, 2258274] as const;
 
 /** Liczba aukcji oczekiwana na pełnej stronie listy (25/25). */
 export const AUCTIONS_PER_PAGE = 25;
@@ -61,7 +66,7 @@ export function listFixtureFile(page: number): string {
   return `auction-list-page-${page}.html`;
 }
 
-/** Mapa: ID aukcji → nazwa pliku fixture. */
+/** Mapa: ID aukcji → nazwa pliku fixture (żywa kopia 1:1 od 2026-09-17). */
 export function detailFixtureFile(auctionId: number | bigint): string {
-  return `auction-detail-${auctionId}.html`;
+  return `auction-detail-live-${auctionId}.html`;
 }

@@ -37,11 +37,13 @@ import { resetBudget, resetBudgetConfig } from "./r11-budget.js";
 // ──────────────────────────────────────────────────────────────────────────
 
 /** Generuje minimalną stronę listy z `n` aukcjami + `totalPages=1`. */
-function makeListPage(opts: {
-  count: number;
-  totalPages?: number;
-  auctionIdPrefix?: bigint;
-} = { count: 0 }): string {
+function makeListPage(
+  opts: {
+    count: number;
+    totalPages?: number;
+    auctionIdPrefix?: bigint;
+  } = { count: 0 },
+): string {
   const { count, totalPages = 1, auctionIdPrefix = 100n } = opts;
   const tps = Math.max(totalPages, 1);
   const blocks: string[] = [];
@@ -67,23 +69,42 @@ function makeListPage(opts: {
   return `<html><body>${blocks.join("\n")}<table><tr><td class="PageNavigation">${pageLinks}</td></tr></table></body></html>`;
 }
 
-/** Minimalna strona detalu — generuje pełny `Auction` z domyślnymi wartościami. */
+/**
+ * Minimalna strona detalu — AKTUALNY layout tibia.com (parser v2):
+ * `.AuctionCharacterName` + header pól, `.ShortAuctionData*`, `.AuctionTimer`,
+ * `.CharacterDetailsBlock`. Musi przechodzić guard parsera (inaczej upsert
+ * nie następuje i testy „loop" nie mają czego liczyć).
+ */
 function makeDetailPage(opts: { id: bigint | number; level?: number }): string {
   const { id, level = 250 } = opts;
   return `<html><body>
     <div class="AuctionHeader">
-      <p><b>Name:</b> TestChar${id}</p>
-      <p><b>Level:</b> ${level}</p>
-      <p><b>Vocation:</b> Elite Knight</p>
-      <p><b>Sex:</b> Male</p>
-      <p><b>World:</b> Antica</p>
+      <div class="AuctionCharacterName">TestChar${id}</div>
+      Level: ${level} | Vocation: Elite Knight | Male | World: Antica<br>
     </div>
-    <p><b>Current bid</b> 1500</p>
-    <p><b>Auction Start:</b> 01.01.2026&nbsp;00:00:00</p>
-    <p><b>Auction End:</b> 02.01.2026&nbsp;00:00:00</p>
-    <div class="SkillsContainer">
-      <span class="Skill">Magic Level</span>: <span>100</span>
-      <span class="Skill">Sword Fighting</span>: <span>110</span>
+    <div class="AuctionBody">
+      <div class="AuctionBodyBlock AuctionDisplay">
+        <img class="AuctionOutfitImage" src="https://static.tibia.com/images/charactertrade/outfits/962_3.gif">
+      </div>
+      <div class="ShortAuctionDataBidRow">
+        <div class="ShortAuctionDataLabel">Current Bid:</div>
+        <div class="ShortAuctionDataValue"><b>1500</b></div>
+      </div>
+      <div class="ShortAuctionDataLabel">Auction Start:</div>
+      <div class="ShortAuctionDataValue">Sep 16 2026, 10:06 CEST</div>
+      <div class="ShortAuctionDataLabel">Auction End:</div>
+      <div class="ShortAuctionDataValue">Sep 17 2026, 19:00 CEST</div>
+      <div class="AuctionTimer" data-timestamp="1789664400"></div>
+      <div class="CharacterDetailsBlock">
+        <div class="CaptionInnerContainer"><span class="Text">General</span></div>
+        <table class="TableContent">
+          <tr><td class="LabelColumn"><b>Magic Level</b></td><td class="LevelColumn">100</td></tr>
+          <tr><td class="LabelColumn"><b>Sword Fighting</b></td><td class="LevelColumn">110</td></tr>
+        </table>
+        <table class="TableContent">
+          <tr><td><span class="LabelV">Blessings:</span><div>7/7</div></td></tr>
+        </table>
+      </div>
     </div>
   </body></html>`;
 }
@@ -203,22 +224,24 @@ function makeMockDb(overrides: Partial<SchedulerDb> = {}): MockDb {
     async finishScrapeRun(id, payload) {
       calls.finishScrapeRun += 1;
       const runs =
-        (db as unknown as {
-          _runs: Map<
-            bigint,
-            {
-              id: bigint;
-              status: string;
-              pagesFetched: number;
-              auctionsFound: number;
-              auctionsNew: number;
-              auctionsUpd: number;
-              auctionsArch: number;
-              errorsCount: number;
-              errorSummary?: Record<string, unknown> | undefined;
-            }
-          >;
-        })._runs ?? new Map();
+        (
+          db as unknown as {
+            _runs: Map<
+              bigint,
+              {
+                id: bigint;
+                status: string;
+                pagesFetched: number;
+                auctionsFound: number;
+                auctionsNew: number;
+                auctionsUpd: number;
+                auctionsArch: number;
+                errorsCount: number;
+                errorSummary?: Record<string, unknown> | undefined;
+              }
+            >;
+          }
+        )._runs ?? new Map();
       const record: {
         id: bigint;
         status: string;
@@ -283,19 +306,14 @@ function makeMockDb(overrides: Partial<SchedulerDb> = {}): MockDb {
     // ── Calibration (T57) — domyślnie: 0 próbek, no-op persist. ─────
     async fetchCalibrationSamples(opts) {
       calls.fetchCalibrationSamples += 1;
-      const fallback = (): Awaited<
-        ReturnType<SchedulerDb["fetchCalibrationSamples"]>
-      > => [];
-      return (
-        overrides.fetchCalibrationSamples ??
-        (async () => fallback())
-      )({ windowHours: opts.windowHours });
+      const fallback = (): Awaited<ReturnType<SchedulerDb["fetchCalibrationSamples"]>> => [];
+      return (overrides.fetchCalibrationSamples ?? (async () => fallback()))({
+        windowHours: opts.windowHours,
+      });
     },
     async recordCalibrationRun(input) {
       calls.recordCalibrationRun += 1;
-      return (
-        overrides.recordCalibrationRun ?? (async () => undefined)
-      )(input);
+      return (overrides.recordCalibrationRun ?? (async () => undefined))(input);
     },
     async end() {
       // no-op
@@ -430,9 +448,7 @@ describe("createScheduler — EndingSoon loop (30 s)", () => {
     const db = makeMockDb({
       getEndingSoonIds: async () => endingSoonIds,
     });
-    const fake = makeFakeRequester(
-      endingSoonIds.map((id) => ({ body: makeDetailPage({ id }) })),
-    );
+    const fake = makeFakeRequester(endingSoonIds.map((id) => ({ body: makeDetailPage({ id }) })));
     const handle = createScheduler(db, makeFastClient(fake), { logger: makeSilentLogger() });
 
     await handle.runOnce("endingSoon");
@@ -472,7 +488,9 @@ describe("createScheduler — Reference loop (24 h)", () => {
     // Testujemy WIRING (nie logikę kalibracji — ta jest w calibration.test.ts).
     const db = makeMockDb();
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("forced network failure")) as unknown as typeof fetch;
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error("forced network failure")) as unknown as typeof fetch;
 
     try {
       const handle = createScheduler(db, undefined, { logger: makeSilentLogger() });
@@ -504,7 +522,9 @@ describe("createScheduler — Reference loop (24 h)", () => {
     // (która ma własne testy w scrapers/reference-data.test.ts).
     const db = makeMockDb();
     const originalFetch = globalThis.fetch;
-    globalThis.fetch = vi.fn().mockRejectedValue(new Error("forced network failure")) as unknown as typeof fetch;
+    globalThis.fetch = vi
+      .fn()
+      .mockRejectedValue(new Error("forced network failure")) as unknown as typeof fetch;
 
     try {
       const handle = createScheduler(db, undefined, { logger: makeSilentLogger() });
@@ -512,11 +532,14 @@ describe("createScheduler — Reference loop (24 h)", () => {
 
       expect(db.calls.createScrapeRun).toBe(1);
       expect(db.calls.finishScrapeRun).toBe(1);
-      const runs = (db as unknown as { _runTypes: Array<{ id: bigint; runType: string }> })._runTypes;
+      const runs = (db as unknown as { _runTypes: Array<{ id: bigint; runType: string }> })
+        ._runTypes;
       expect(runs?.[0]?.runType).toBe("reference");
       // Upsert NIE został wywołany (fetch error → brak danych do upsert).
       // Scheduler raportuje to jako 'failed'.
-      const finished = (db as unknown as { _runs: Map<bigint, { status: string; errorsCount: number }> })._runs;
+      const finished = (
+        db as unknown as { _runs: Map<bigint, { status: string; errorsCount: number }> }
+      )._runs;
       const firstRun = [...finished.values()][0];
       expect(firstRun?.status).toBe("failed");
     } finally {
@@ -560,7 +583,14 @@ describe("createScheduler — Error handling", () => {
 
     expect(db.calls.createScrapeRun).toBe(1);
     expect(db.calls.finishScrapeRun).toBe(1);
-    const runs = (db as unknown as { _runs: Map<bigint, { status: string; errorsCount: number; errorSummary?: Record<string, unknown> }> })._runs;
+    const runs = (
+      db as unknown as {
+        _runs: Map<
+          bigint,
+          { status: string; errorsCount: number; errorSummary?: Record<string, unknown> }
+        >;
+      }
+    )._runs;
     const firstRun = [...runs.values()][0];
     expect(firstRun?.status).toBe("failed");
     expect(firstRun?.errorsCount).toBe(1);
@@ -581,10 +611,7 @@ describe("createScheduler — R11 budget coordination", () => {
     const handle = createScheduler(db, makeFastClient(fake), { logger: makeSilentLogger() });
 
     const promise = handle.runOnce("full");
-    const result = await Promise.race([
-      promise,
-      sleep(1500).then(() => "throttled" as const),
-    ]);
+    const result = await Promise.race([promise, sleep(1500).then(() => "throttled" as const)]);
 
     // Jeśli budget nie został przekroczony, pętla kończy się normalnie.
     // Tu mamy 6 requestów z limitem 2 → throttle blokuje → test musi skończyć

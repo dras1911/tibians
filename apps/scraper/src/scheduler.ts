@@ -70,21 +70,16 @@ import type {
  * Trzymanie typu w sync z T34 to koszt niewielki — to enum 5 wartości.
  */
 export type ScrapeRunType = "full" | "ending_soon" | "detail" | "history" | "reference";
-import {
-  tryAdvisoryLock,
-  type AdvisoryLockClient,
-} from "./advisory-lock.js";
+import { tryAdvisoryLock, type AdvisoryLockClient } from "./advisory-lock.js";
 import type { HttpClient } from "./http-client.js";
 import { defaultHttpClient } from "./http-client.js";
 import { SCRAPER_CONFIG, TIBIA_URLS } from "./config.js";
 import { runCalibration } from "./calibration.js";
-import {
-  compareAuctionLists,
-  parseAuctionList,
-} from "./scrapers/auction-list.js";
+import { compareAuctionLists, parseAuctionList } from "./scrapers/auction-list.js";
 import {
   isAuctionDetailSuccessful,
   parseAuctionDetail,
+  type AuctionDetailReference,
 } from "./scrapers/auction-detail.js";
 import {
   scrapeReferenceData,
@@ -117,7 +112,9 @@ export const defaultLogger: Logger = {
  * Pakiet payloadu do upsertAuction (T34 interface).
  *
  * Łączy Auction (denormalizowane kolumny auctions) + relacje 1:N
- * (items / outfits / mounts / usps / skillLoyalties).
+ * (items / outfits / mounts / usps / skillLoyalties) + harvest słowników
+ * (`reference` — świat + items/outfits/mounts z nazwami; warstwa DB robi
+ * `ensure` tych wierszy przed relacjami, żeby FK nie blokowały insertu).
  */
 export interface UpsertAuctionInput {
   auction: Auction;
@@ -126,6 +123,7 @@ export interface UpsertAuctionInput {
   mounts: readonly AuctionMount[];
   usps: readonly AuctionUsp[];
   skillLoyalties: readonly AuctionSkillLoyalty[];
+  reference?: AuctionDetailReference | undefined;
 }
 
 /** Wynik upsert (informacja czy był "new" / "updated" — do scrape_runs). */
@@ -158,10 +156,7 @@ export interface SchedulerDb {
   upsertMounts(mounts: readonly Mount[]): Promise<number>;
 
   // ── scrape_runs (obserwowalność — arch §7.2) ─────────────────────────
-  createScrapeRun(input: {
-    runType: ScrapeRunType;
-    startedAt: Date;
-  }): Promise<bigint>;
+  createScrapeRun(input: { runType: ScrapeRunType; startedAt: Date }): Promise<bigint>;
   finishScrapeRun(
     id: bigint,
     input: {
@@ -197,9 +192,7 @@ export interface SchedulerDb {
    */
   fetchCalibrationSamples(opts: {
     windowHours: number;
-  }): Promise<
-    readonly import("./calibration.js").CalibrationSample[]
-  >;
+  }): Promise<readonly import("./calibration.js").CalibrationSample[]>;
   /**
    * Persistuj raport kalibracji do `scrape_runs` (runType='calibration').
    *
@@ -227,10 +220,7 @@ export interface SchedulerDb {
  * W testach: mock zwraca `Promise.resolve()` i zapisuje wywołanie do tablicy.
  */
 export interface RevalidateWebhook {
-  revalidate(payload: {
-    paths?: readonly string[];
-    tags?: readonly string[];
-  }): Promise<void>;
+  revalidate(payload: { paths?: readonly string[]; tags?: readonly string[] }): Promise<void>;
 }
 
 /** Identyfikator logiczny pętli (używany w stats + runOnce). */
@@ -387,12 +377,7 @@ export function createScheduler(
   const externalSignal = options.signal;
   if (externalSignal) {
     if (externalSignal.aborted) internalAbort.abort();
-    else
-      externalSignal.addEventListener(
-        "abort",
-        () => internalAbort.abort(),
-        { once: true },
-      );
+    else externalSignal.addEventListener("abort", () => internalAbort.abort(), { once: true });
   }
 
   // Zbiory timerów + in-flight promise'ów (do graceful shutdown).
@@ -536,7 +521,9 @@ export function createScheduler(
       for (let page = 2; page <= parsed.totalPages; page += 1) {
         if (isAborted()) break;
         try {
-          const pageHtml = await httpClient.fetchHtml(listUrlFor(page), { signal: internalAbort.signal });
+          const pageHtml = await httpClient.fetchHtml(listUrlFor(page), {
+            signal: internalAbort.signal,
+          });
           if (isAborted()) break;
           const pageParsed = parseAuctionList(pageHtml);
           allSummaries.push(...pageParsed.auctions);
@@ -575,7 +562,9 @@ export function createScheduler(
       for (const { id, kind } of toFetch) {
         if (isAborted()) break;
         try {
-          const detailHtml = await httpClient.fetchHtml(detailUrlFor(id), { signal: internalAbort.signal });
+          const detailHtml = await httpClient.fetchHtml(detailUrlFor(id), {
+            signal: internalAbort.signal,
+          });
           if (isAborted()) break;
           const detail = parseAuctionDetail(detailHtml, id);
           if (isAuctionDetailSuccessful(detail)) {
@@ -586,6 +575,7 @@ export function createScheduler(
               mounts: detail.mounts,
               usps: detail.usps,
               skillLoyalties: detail.skillLoyalties,
+              reference: detail.reference,
             });
             if (kind === "new") auctionsNew += 1;
             else auctionsUpd += 1;
@@ -711,7 +701,9 @@ export function createScheduler(
       for (const id of ids) {
         if (isAborted()) break;
         try {
-          const detailHtml = await httpClient.fetchHtml(detailUrlFor(id), { signal: internalAbort.signal });
+          const detailHtml = await httpClient.fetchHtml(detailUrlFor(id), {
+            signal: internalAbort.signal,
+          });
           if (isAborted()) break;
           const detail = parseAuctionDetail(detailHtml, id);
           if (isAuctionDetailSuccessful(detail)) {
@@ -722,6 +714,7 @@ export function createScheduler(
               mounts: detail.mounts,
               usps: detail.usps,
               skillLoyalties: detail.skillLoyalties,
+              reference: detail.reference,
             });
             upserted += 1;
           } else {
@@ -815,8 +808,7 @@ export function createScheduler(
           stats.reference.calibrationsRun += 1;
         } catch (err) {
           errorsCount += 1;
-          errorSummary.calibration =
-            err instanceof Error ? err.message : String(err);
+          errorSummary.calibration = err instanceof Error ? err.message : String(err);
           logger.warn("Reference loop: runCalibration failed", {
             error: err instanceof Error ? err.message : String(err),
           });
@@ -883,12 +875,8 @@ export function createScheduler(
     if (started || stopped) return;
     started = true;
     intervals_.add(scheduleLoop("full", intervals.fullMs, runFullIteration));
-    intervals_.add(
-      scheduleLoop("endingSoon", intervals.endingSoonMs, runEndingSoonIteration),
-    );
-    intervals_.add(
-      scheduleLoop("reference", intervals.referenceMs, runReferenceIteration),
-    );
+    intervals_.add(scheduleLoop("endingSoon", intervals.endingSoonMs, runEndingSoonIteration));
+    intervals_.add(scheduleLoop("reference", intervals.referenceMs, runReferenceIteration));
     stats.intervalsActive = intervals_.size;
     logger.info("Scheduler started", {
       intervals,
@@ -909,7 +897,10 @@ export function createScheduler(
     // 2. Czekaj na in-flight (z budżetem 5 s — plan §36 AC "Graceful shutdown < 5 s").
     const inflightSnapshot = Array.from(inFlight);
     if (inflightSnapshot.length > 0) {
-      logger.info(`Scheduler stopping — awaiting ${inflightSnapshot.length} in-flight iteration(s)`, {});
+      logger.info(
+        `Scheduler stopping — awaiting ${inflightSnapshot.length} in-flight iteration(s)`,
+        {},
+      );
       const withTimeout = Promise.race([
         Promise.all(inflightSnapshot),
         new Promise<void>((resolve) =>
@@ -1025,7 +1016,9 @@ function failedMetrics(stage: string, err: unknown): RunMetrics {
 }
 
 /** Klasyfikuj błąd sieciowy do kategorii `scrape_errors.error_type`. */
-function classifyError(err: unknown): "timeout" | "rate_limit" | "parse" | "http_4xx" | "http_5xx" | "db" | "other" {
+function classifyError(
+  err: unknown,
+): "timeout" | "rate_limit" | "parse" | "http_4xx" | "http_5xx" | "db" | "other" {
   if (err == null) return "other";
   if (typeof err === "object" && "status" in err) {
     const status = (err as { status: unknown }).status;

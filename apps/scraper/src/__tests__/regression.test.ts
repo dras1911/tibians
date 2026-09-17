@@ -14,9 +14,11 @@
  *   - matryca fixture × parser: każda kombinacja przechodzi bez crasha.
  *   - higiena: fixture'y nie zawierają wrażliwych danych (tokeny/cookie).
  *
- * Uwaga o realnych stronach listy (1/50/101/107): to pełne, żywe kopie
- * tibia.com (~190-250 KB). Strony 2/25/75 i detale to "mirrory strukturalne"
- * (README w __fixtures__ §1-2) — identyczna struktura HTML, syntetyczna treść.
+ * Uwaga o fixture'ach:
+ *   - listy 1/50/101/107 + WSZYSTKIE detale (od 2026-09-17) to pełne, żywe
+ *     kopie tibia.com (`*-live-*`, ~190-550 KB),
+ *   - listy 2/25/75 to historyczne mirrory strukturalne (identyczna
+ *     struktura HTML, syntetyczna treść) — wystarczające dla parsera listy.
  */
 
 import { describe, expect, it } from "vitest";
@@ -61,10 +63,7 @@ function countOccurrences(haystack: string, needle: string): number {
  *  - `rawJson.html` (pełna kopia HTML) → hash — snapshot nie może mieć 240 KB,
  *  - klucze w kolejności zgodnej ze schemą (deterministycznej).
  */
-function serializeDetailResult(
-  result: AuctionDetailResult,
-  html: string,
-): string {
+function serializeDetailResult(result: AuctionDetailResult, html: string): string {
   const auction =
     result.auction === null
       ? null
@@ -74,9 +73,7 @@ function serializeDetailResult(
             result.auction.rawJson === undefined
               ? undefined
               : {
-                  source:
-                    (result.auction.rawJson as { source?: string }).source ??
-                    "unknown",
+                  source: (result.auction.rawJson as { source?: string }).source ?? "unknown",
                   htmlHash: rawJsonHash(html),
                 },
         };
@@ -116,32 +113,102 @@ interface ListAnchor {
 
 const LIST_ANCHORS: Readonly<Record<number, ListAnchor>> = {
   1: {
-    count: 25, currentPage: 1, totalPages: 107,
-    first: { id: 2252233n, name: "Good Zin", level: 58, vocation: "Exalted Monk", bid: 85, bidType: "current", world: "Nevia" },
+    count: 25,
+    currentPage: 1,
+    totalPages: 107,
+    first: {
+      id: 2252233n,
+      name: "Good Zin",
+      level: 58,
+      vocation: "Exalted Monk",
+      bid: 85,
+      bidType: "current",
+      world: "Nevia",
+    },
   },
   2: {
-    count: 25, currentPage: 2, totalPages: 107,
-    first: { id: 2257000n, name: "Anastriana Whitmore", level: 227, vocation: "Exalted Monk", bid: 8830, bidType: "current", world: "" },
+    count: 25,
+    currentPage: 2,
+    totalPages: 107,
+    first: {
+      id: 2257000n,
+      name: "Anastriana Whitmore",
+      level: 227,
+      vocation: "Exalted Monk",
+      bid: 8830,
+      bidType: "current",
+      world: "",
+    },
   },
   25: {
-    count: 25, currentPage: 25, totalPages: 107,
-    first: { id: 2259000n, name: "Eowyn Grimbane", level: 1674, vocation: "Elite Knight", bid: 9020, bidType: "minimum", world: "" },
+    count: 25,
+    currentPage: 25,
+    totalPages: 107,
+    first: {
+      id: 2259000n,
+      name: "Eowyn Grimbane",
+      level: 1674,
+      vocation: "Elite Knight",
+      bid: 9020,
+      bidType: "minimum",
+      world: "",
+    },
   },
   50: {
-    count: 25, currentPage: 50, totalPages: 107,
-    first: { id: 2251961n, name: "Mendigo Sobrio", level: 397, vocation: "Elite Knight", bid: 57, bidType: "minimum", world: "Kalibra" },
+    count: 25,
+    currentPage: 50,
+    totalPages: 107,
+    first: {
+      id: 2251961n,
+      name: "Mendigo Sobrio",
+      level: 397,
+      vocation: "Elite Knight",
+      bid: 57,
+      bidType: "minimum",
+      world: "Kalibra",
+    },
   },
   75: {
-    count: 25, currentPage: 75, totalPages: 107,
-    first: { id: 2261000n, name: "Zephyr Undersong", level: 751, vocation: "Royal Paladin", bid: 13760, bidType: "current", world: "" },
+    count: 25,
+    currentPage: 75,
+    totalPages: 107,
+    first: {
+      id: 2261000n,
+      name: "Zephyr Undersong",
+      level: 751,
+      vocation: "Royal Paladin",
+      bid: 13760,
+      bidType: "current",
+      world: "",
+    },
   },
   101: {
-    count: 25, currentPage: 101, totalPages: 107,
-    first: { id: 2250105n, name: "Solstitium", level: 301, vocation: "Elite Knight", bid: 57, bidType: "minimum", world: "Gentebra" },
+    count: 25,
+    currentPage: 101,
+    totalPages: 107,
+    first: {
+      id: 2250105n,
+      name: "Solstitium",
+      level: 301,
+      vocation: "Elite Knight",
+      bid: 57,
+      bidType: "minimum",
+      world: "Gentebra",
+    },
   },
   107: {
-    count: 14, currentPage: 107, totalPages: 107,
-    first: { id: 2253441n, name: "Alfstar", level: 35, vocation: "Master Sorcerer", bid: 57, bidType: "minimum", world: "Pacera" },
+    count: 14,
+    currentPage: 107,
+    totalPages: 107,
+    first: {
+      id: 2253441n,
+      name: "Alfstar",
+      level: 35,
+      vocation: "Master Sorcerer",
+      bid: 57,
+      bidType: "minimum",
+      world: "Pacera",
+    },
   },
 };
 
@@ -164,7 +231,7 @@ describe("T33 — inwentarz fixture'ów", () => {
     }
   });
 
-  it("wszystkie nowe mirrory i detale mają < 50 KB; realne listy (1/50/101/107) są wyjątkiem", () => {
+  it("wszystkie mirrory listy mają < 50 KB; realne kopie (listy + detale live) są wyjątkiem", () => {
     const realPages = new Set([1, 50, 101, 107]);
     for (const page of KNOWN_LIST_PAGES) {
       const size = readFileSync(resolve(FIXTURES_DIR, listFixtureFile(page)), "utf8").length;
@@ -172,7 +239,11 @@ describe("T33 — inwentarz fixture'ów", () => {
         expect(size, `${listFixtureFile(page)} > 50 KB`).toBeLessThan(50_000);
       }
     }
-    for (const file of fixtureNames().filter((f) => f.startsWith("auction-detail-"))) {
+    // Detale od 2026-09-17 są ŻYWYMI kopiami (~190-550 KB) — celowo duże.
+    // Tylko ewentualne archiwalne mirrory musiałyby być małe; obecnie brak.
+    for (const file of fixtureNames().filter(
+      (f) => f.startsWith("auction-detail-") && !f.startsWith("auction-detail-live-"),
+    )) {
       const size = readFileSync(resolve(FIXTURES_DIR, file), "utf8").length;
       expect(size, `${file} > 50 KB`).toBeLessThan(50_000);
     }
@@ -218,7 +289,9 @@ describe("T33 — per-fixture: lista aukcji (auction-list-page-N.html)", () => {
       }
       // Dodatkowo: end date w ISO UTC i outfit z static.tibia.com (struktura).
       expect(first?.auctionEnd).toMatch(/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}\.\d{3}Z$/);
-      expect(first?.outfitUrl).toMatch(/^https:\/\/static\.tibia\.com\/images\/charactertrade\/outfits\/\d+_\d\.gif$/);
+      expect(first?.outfitUrl).toMatch(
+        /^https:\/\/static\.tibia\.com\/images\/charactertrade\/outfits\/\d+_\d\.gif$/,
+      );
     });
   }
 
@@ -226,9 +299,7 @@ describe("T33 — per-fixture: lista aukcji (auction-list-page-N.html)", () => {
     const ids1 = new Set(
       parseAuctionList(loadFixture(listFixtureFile(1))).auctions.map((a) => a.auctionId),
     );
-    const ids2 = parseAuctionList(loadFixture(listFixtureFile(2))).auctions.map(
-      (a) => a.auctionId,
-    );
+    const ids2 = parseAuctionList(loadFixture(listFixtureFile(2))).auctions.map((a) => a.auctionId);
     expect(ids2.length).toBe(25);
     for (const id of ids2) {
       expect(ids1.has(id), `strona 2 nie może zawierać aukcji ${id} ze strony 1`).toBe(false);
@@ -252,42 +323,43 @@ describe("T33 — per-fixture: lista aukcji (auction-list-page-N.html)", () => {
 // 3. Per-fixture asercje: detale aukcji
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("T33 — per-fixture: detail aukcji", () => {
-  it("auction-detail-2173376: stabilne wartości znanej aukcji (mutation guard)", () => {
+describe("T33 — per-fixture: detail aukcji (żywe kopie)", () => {
+  it("auction-detail-live-2259395: stabilne wartości znanej aukcji (mutation guard)", () => {
     const result = parseAuctionDetail(
-      loadFixture(detailFixtureFile(2173376)),
-      2173376n,
-      new Date("2026-09-08T12:00:00.000Z"),
+      loadFixture(detailFixtureFile(2259395)),
+      2259395n,
+      new Date("2026-09-17T12:00:00.000Z"),
     );
     expect(result.auction).not.toBeNull();
     const a = result.auction!;
-    expect(a.id).toBe(2173376n);
-    expect(a.name).toBe("Migzen The Exalted");
-    expect(a.level).toBe(619);
-    expect(a.vocation).toBe("Monk");
-    expect(a.vocationPromoted).toBe("Exalted Monk");
-    expect(a.bid).toBe(25501);
-    expect(a.bidType).toBe("current");
+    expect(a.id).toBe(2259395n);
+    expect(a.name).toBe("Lancelot royal archer");
+    expect(a.level).toBe(402);
+    expect(a.vocation).toBe("Paladin");
+    expect(a.vocationPromoted).toBe("Royal Paladin");
+    expect(a.bid).toBe(2500);
+    expect(a.bidType).toBe("minimum");
     expect(a.worldId).toBe(1); // Antica
+    expect(a.auctionEnd).toBe("2026-09-17T17:00:00.000Z"); // data-timestamp
   });
 
-  it("auction-detail-empty: minimalna aukcja parsuje (bez relacji 1:N)", () => {
-    const result = parseAuctionDetail(loadFixture("auction-detail-empty.html"), 99999n);
+  it("auction-detail-live-2252245: minimalna postać parsuje się poprawnie", () => {
+    const result = parseAuctionDetail(loadFixture(detailFixtureFile(2252245)), 2252245n);
     expect(result.parseError).toBeNull();
-    expect(result.auction?.name).toBe("Min Tester");
-    expect(result.auction?.level).toBe(50);
-    expect(result.auction?.bidType).toBe("minimum");
-    expect(result.items).toEqual([]);
-    expect(result.outfits).toEqual([]);
-    expect(result.mounts).toEqual([]);
-    expect(result.usps).toEqual([]);
+    expect(result.auction?.name).toBe("Misericuerdia");
+    expect(result.auction?.level).toBe(15);
+    expect(result.auction?.status).toBe("finished"); // „currently processed"
+    expect(result.auction?.bidType).toBe("current"); // „Winning Bid"
+    expect(result.items).toHaveLength(22);
+    expect(result.mounts).toHaveLength(1);
   });
 
-  it("auction-detail-en: bid EN z przecinkiem (1,234,567 → 1234567)", () => {
-    const result = parseAuctionDetail(loadFixture("auction-detail-en.html"), 11111n);
+  it("auction-detail-live-2258274: brak sekcji USP = pusta lista, nie crash", () => {
+    const result = parseAuctionDetail(loadFixture(detailFixtureFile(2258274)), 2258274n);
     expect(result.auction).not.toBeNull();
-    expect(result.auction?.bid).toBe(1234567);
-    expect(result.auction?.worldId).toBe(11); // Astera
+    expect(result.usps).toEqual([]);
+    expect(result.warnings).toContain("usps: none extracted");
+    expect(result.reference.world).toEqual({ id: 31, name: "Celesta" });
   });
 });
 
@@ -295,61 +367,59 @@ describe("T33 — per-fixture: detail aukcji", () => {
 // 4. Nowe fixture'y T33: boundary + completeness + error handling
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("T33 — auction-detail-new-player.html (boundary: level 8)", () => {
+describe("T33 — live-2252245 (boundary: świeża postać K 15)", () => {
   const result = parseAuctionDetail(
-    loadFixture("auction-detail-new-player.html"),
-    7770001n,
-    new Date("2026-09-08T12:00:00.000Z"),
+    loadFixture(detailFixtureFile(2252245)),
+    2252245n,
+    new Date("2026-09-17T12:00:00.000Z"),
   );
 
-  it("parsuje level 8 (minimalny w Bazaar) z poprawną tożsamością", () => {
+  it("parsuje niski level z poprawną tożsamością", () => {
     expect(result.parseError).toBeNull();
     const a = result.auction;
     expect(a).not.toBeNull();
-    expect(a?.level).toBe(8); // boundary — schema pozwala min 8
-    expect(a?.name).toBe("Fledgling Rook");
+    expect(a?.level).toBe(15);
+    expect(a?.name).toBe("Misericuerdia");
     expect(a?.vocation).toBe("Knight");
-    expect(a?.worldId).toBe(1);
+    expect(a?.worldId).toBe(122); // Ombra
   });
 
-  it("świeża postać: 'Minimum bid', brak progresji i premium", () => {
+  it("świeża postać: brak progresji premium, minimalne liczby", () => {
     const a = result.auction;
-    expect(a?.bidType).toBe("minimum");
-    expect(a?.bid).toBe(50);
     expect(a?.charmPoints).toBe(0);
     expect(a?.imbuementsUnlocked).toBe(0);
-    expect(a?.questsCompleted).toBe(0);
+    expect(a?.questsCompleted).toBe(1);
     expect(a?.bossPoints).toBe(0);
     expect(a?.blessingsActive).toBe(0);
     expect(a?.hasSoulWar).toBe(false);
     expect(a?.hasPreySlot).toBe(false);
     expect(a?.hasTwistOfFate).toBe(false);
-    expect(a?.goldTotal).toBe(100n);
+    expect(a?.goldTotal).toBe(10040n);
   });
 
-  it("puste relacje 1:N (items/mounts/usps) przy świeżej postaci", () => {
-    expect(result.items).toEqual([]);
-    expect(result.mounts).toEqual([]);
-    expect(result.usps).toEqual([]);
+  it("relacje 1:N obecne mimo niskiego levelu (22 itemy, 12 outfitów)", () => {
+    expect(result.items).toHaveLength(22);
+    expect(result.outfits).toHaveLength(12);
+    expect(result.mounts).toHaveLength(1);
+    expect(result.usps).toHaveLength(2);
   });
 });
 
-describe("T33 — auction-detail-vip.html (completeness: wszystkie flagi premium)", () => {
+describe("T33 — live-2258972 (completeness: flagi premium + pełna progresja)", () => {
   const result = parseAuctionDetail(
-    loadFixture("auction-detail-vip.html"),
-    7770002n,
-    new Date("2026-09-08T12:00:00.000Z"),
+    loadFixture(detailFixtureFile(2258972)),
+    2258972n,
+    new Date("2026-09-17T12:00:00.000Z"),
   );
 
-  it("parsuje pełną aukcję VIP bez warningów", () => {
+  it("parsuje pełną aukcję premium", () => {
     expect(result.parseError).toBeNull();
     expect(result.auction).not.toBeNull();
-    expect(result.warnings).toEqual([]);
   });
 
-  it("wszystkie flagi premium = true (Prey/Charm/Weekly/Twist/SoulWar/Primal/Transfer)", () => {
+  it("flagi premium: Primal/Charm/Weekly/Prey/Twist/Transfer = true; Soul War = false", () => {
     const a = result.auction!;
-    expect(a.hasSoulWar).toBe(true);
+    expect(a.hasSoulWar).toBe(false); // brak quest-line „Soul War"
     expect(a.hasPrimalOrdeal).toBe(true);
     expect(a.hasWorldTransfer).toBe(true);
     expect(a.hasPreySlot).toBe(true);
@@ -361,62 +431,66 @@ describe("T33 — auction-detail-vip.html (completeness: wszystkie flagi premium
 
   it("pełna progresja i zasoby", () => {
     const a = result.auction!;
-    expect(a.level).toBe(640);
-    expect(a.vocation).toBe("Sorcerer");
-    expect(a.vocationPromoted).toBe("Master Sorcerer");
-    expect(a.bid).toBe(48000);
-    expect(a.skillMagic).toBe(128);
-    expect(a.charmPoints).toBe(9500);
-    expect(a.imbuementsUnlocked).toBe(19);
-    expect(a.imbuementsTotal).toBe(23);
-    expect(a.questsCompleted).toBe(35);
-    expect(a.gemsLesser).toBe(30);
-    expect(a.gemsRegular).toBe(5);
+    expect(a.level).toBe(865);
+    expect(a.vocation).toBe("Knight");
+    expect(a.vocationPromoted).toBe("Elite Knight");
+    expect(a.bid).toBe(17351);
+    expect(a.skillClub).toBe(119);
+    expect(a.charmPoints).toBe(7695);
+    expect(a.charmPointsUnused).toBe(495);
+    expect(a.imbuementsUnlocked).toBe(24);
+    expect(a.imbuementsTotal).toBe(24);
+    expect(a.questsCompleted).toBe(23);
+    expect(a.animusMasteries).toBe(31);
+    expect(a.gemsLesser).toBe(0);
+    expect(a.gemsRegular).toBe(3);
     expect(a.gemsGreater).toBe(2);
-    expect(a.goldTotal).toBe(12500000n);
-    expect(a.tcInvested).toBe(15000);
-    expect(a.storeOutfitsCount).toBe(8);
-    expect(a.storeMountsCount).toBe(5);
-    expect(a.storeItemsCount).toBe(42);
+    expect(a.goldTotal).toBe(0n);
+    expect(a.tcInvested).toBeNull(); // nowy layout nie publikuje
+    expect(a.storeOutfitsCount).toBe(1);
+    expect(a.storeMountsCount).toBe(0);
+    expect(a.storeItemsCount).toBe(15);
     expect(a.hirelingsCount).toBe(2);
   });
 });
 
-describe("T33 — auction-detail-malformed.html (error handling)", () => {
-  it("parser NIE rzuca na uszkodzonym HTML — zwraca parseError + warnings", () => {
-    const html = loadFixture("auction-detail-malformed.html");
+describe("T33 — strony nie-detal (error handling)", () => {
+  it("parser NIE rzuca na śmieciowym HTML — zwraca parseError + warnings", () => {
+    const html = "<html><body><h1>hello</h1></body></html>";
     expect(() => parseAuctionDetail(html, 7770003n)).not.toThrow();
     const result = parseAuctionDetail(html, 7770003n);
-    // Uszkodzony: nieznana vocation → Zod odrzuca całość (auction=null).
     expect(result.auction).toBeNull();
     expect(result.parseError).not.toBeNull();
-    expect(result.parseError).toMatch(/vocation/i);
-    expect(result.warnings.length).toBeGreaterThan(5);
+    expect(result.parseError).toContain("not an auction detail page");
+    expect(result.warnings.length).toBeGreaterThan(2);
   });
 
   it("warnings informują o konkretnych brakujących polach", () => {
-    const result = parseAuctionDetail(loadFixture("auction-detail-malformed.html"), 7770003n);
+    const result = parseAuctionDetail("<html><body></body></html>", 7770003n);
     expect(result.warnings.some((w) => w.includes("identity.name"))).toBe(true);
     expect(result.warnings.some((w) => w.includes("identity.level"))).toBe(true);
-    expect(result.warnings.some((w) => w.includes("Zod validation failed"))).toBe(true);
+    expect(result.warnings.some((w) => w.includes("not an auction detail page"))).toBe(true);
+  });
+
+  it("strona listy (nie detal) jest odrzucana przez guard CharacterDetailsBlock", () => {
+    const listHtml = loadFixture(listFixtureFile(1));
+    const result = parseAuctionDetail(listHtml, 7770004n);
+    expect(result.auction).toBeNull();
+    expect(result.parseError).toContain("not an auction detail page");
   });
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// 5. Snapshot JSON — pełny wynik dla kluczowej aukcji 2173376
+// 5. Snapshot JSON — pełny wynik dla kluczowej aukcji live 2259395
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("T33 — snapshot AuctionDetailResult (auction-detail-2173376)", () => {
+describe("T33 — snapshot AuctionDetailResult (auction-detail-live-2259395)", () => {
   it("serializowany wynik parsowania jest stabilny (JSON snapshot)", () => {
-    const html = loadFixture(detailFixtureFile(2173376));
-    const result = parseAuctionDetail(
-      html,
-      2173376n,
-      new Date("2026-09-08T12:00:00.000Z"),
-    );
+    const html = loadFixture(detailFixtureFile(2259395));
+    const result = parseAuctionDetail(html, 2259395n, new Date("2026-09-17T12:00:00.000Z"));
     expect(result.parseError).toBeNull();
     // Determinizm: dwa parsowania tego samego fixture dają identyczny JSON.
-    const r2 = parseAuctionDetail(html, 2173376n, new Date("2026-09-08T12:00:00.000Z"));
+    const r2 = parseAuctionDetail(html, 2259395n, new Date("2026-09-17T12:00:00.000Z"));
     expect(serializeDetailResult(result, html)).toBe(serializeDetailResult(r2, html));
     expect(serializeDetailResult(result, html)).toMatchSnapshot();
   });
@@ -447,14 +521,20 @@ describe("T33 — mutation tests (parser reaguje na zmiany, zero hardcode)", () 
     expect(target?.auctionId).toBe(2257000n);
   });
 
-  it("detail: zmiana bidu w kopii fixture 2173376 → parsowany bid się zmienia", () => {
-    const html = loadFixture(detailFixtureFile(2173376));
-    expect(countOccurrences(html, "25 501")).toBe(1);
+  it("detail: zmiana bidu w kopii fixture live-2259395 → parsowany bid się zmienia", () => {
+    const html = loadFixture(detailFixtureFile(2259395));
+    // Unikalny needle: „Minimum Bid:" + wartość w tej samej komórce.
+    const needle =
+      'ShortAuctionDataLabel">Minimum Bid:</div><div class="ShortAuctionDataValue"><b>2,500';
+    expect(countOccurrences(html, needle)).toBe(1);
 
-    const mutated = html.replace("25 501", "33 000");
-    const result = parseAuctionDetail(mutated, 2173376n);
+    const mutated = html.replace(
+      needle,
+      'ShortAuctionDataLabel">Minimum Bid:</div><div class="ShortAuctionDataValue"><b>3,300',
+    );
+    const result = parseAuctionDetail(mutated, 2259395n);
     expect(result.auction).not.toBeNull();
-    expect(result.auction?.bid).toBe(33000); // nie 25501 → brak hardcode
+    expect(result.auction?.bid).toBe(3300); // nie 2500 → brak hardcode
   });
 
   it("list: zmiana klasy CSS (symulacja redesignu Tibii) → parser wykrywa brak aukcji", () => {
@@ -469,16 +549,20 @@ describe("T33 — mutation tests (parser reaguje na zmiany, zero hardcode)", () 
     expect(result.auctions.length).toBe(0);
   });
 
-  it("detail: zmiana klasy skilli (symulacja redesignu) → skille wracają do domyślnych", () => {
-    const vipHtml = loadFixture("auction-detail-vip.html");
-    const baseline = parseAuctionDetail(vipHtml, 7770002n);
-    expect(baseline.auction?.skillMagic).toBe(128);
+  it("detail: zmiana klasy nagłówka (symulacja redesignu) → guard zwraca parseError", () => {
+    const html = loadFixture(detailFixtureFile(2259395));
+    const baseline = parseAuctionDetail(html, 2259395n);
+    expect(baseline.auction?.name).toBe("Lancelot royal archer");
 
-    const mutated = vipHtml.replaceAll('<span class="Skill">', '<span class="SkillRenamed">');
-    const result = parseAuctionDetail(mutated, 7770002n);
-    expect(result.auction).not.toBeNull();
-    expect(result.auction?.skillMagic).toBe(0); // default — ekstrakcja skilli padła
-    expect(result.warnings.some((w) => w.includes("skills"))).toBe(true);
+    const mutated = html.replaceAll(
+      'class="AuctionCharacterName"',
+      'class="AuctionCharacterNameRenamed"',
+    );
+    const result = parseAuctionDetail(mutated, 2259395n);
+    // Redesign nagłówka = nie umiemy zidentyfikować postaci → jawny błąd
+    // (lepszy niż cichy wiersz-śmieć w bazie).
+    expect(result.auction).toBeNull();
+    expect(result.parseError).toContain("not an auction detail page");
   });
 });
 
@@ -489,12 +573,11 @@ describe("T33 — mutation tests (parser reaguje na zmiany, zero hardcode)", () 
 describe("T33 — matryca fixture × parser", () => {
   /** Oczekiwany rezultat per fixture detalu (R1: żaden nie crashuje). */
   const DETAIL_OUTCOMES: Readonly<Record<string, boolean>> = {
-    "auction-detail-2173376.html": true,
-    "auction-detail-empty.html": true,
-    "auction-detail-en.html": true,
-    "auction-detail-malformed.html": false, // oczekiwany parseError (auction=null)
-    "auction-detail-new-player.html": true,
-    "auction-detail-vip.html": true,
+    "auction-detail-live-2259395.html": true,
+    "auction-detail-live-2252245.html": true,
+    "auction-detail-live-2258972.html": true,
+    "auction-detail-live-2255748.html": true,
+    "auction-detail-live-2258274.html": true,
   };
 
   /** Parse z jawnym komunikatem zamiast gołego throw (czytelny FAIL). */
@@ -516,15 +599,14 @@ describe("T33 — matryca fixture × parser", () => {
 
   it("każdy fixture detalu × parseAuctionDetail: oczekiwany outcome, zero crashy", () => {
     const detailFiles = fixtureNames().filter((f) => f.startsWith("auction-detail-"));
-    expect(detailFiles.length).toBeGreaterThanOrEqual(6);
+    expect(detailFiles.length).toBeGreaterThanOrEqual(5);
 
     for (const file of detailFiles) {
       const html = loadFixture(file);
-      // ID: z nazwy pliku (auction-detail-2173376 → 2173376) lub deterministyczny.
-      const idMatch = /auction-detail-(\d+)\.html/.exec(file);
+      // ID: z nazwy pliku (auction-detail-live-2259395 → 2259395).
+      const idMatch = /auction-detail-(?:live-)?(\d+)\.html/.exec(file);
       const parsedId = idMatch?.[1];
-      const auctionId =
-        parsedId !== undefined && parsedId !== "" ? BigInt(parsedId) : 999999999n;
+      const auctionId = parsedId !== undefined && parsedId !== "" ? BigInt(parsedId) : 999999999n;
 
       const result = parseDetailSafe(html, auctionId, file);
 
@@ -560,7 +642,9 @@ describe("T33 — higiena fixture'ów (bez secrets)", () => {
     /set-cookie:/i,
     /\b(authorization|auth[_-]?token|access[_-]?token|refresh[_-]?token|api[_-]?key|csrf[_-]?token)\b/i,
     /\b(password|secret)\s*[:=]\s*\S+/i,
-    /https?:\/\/[^\s"']*(?:password|secret|token|cookie)[^\s"']*/i,
+    // URL z wrażliwym PARAMETREM (nie łapiemy nazw plików typu
+    // „achievement-secret-symbol.gif" — stąd wymóg `=` po parametrze).
+    /https?:\/\/[^\s"']*(?:password|secret|token|cookie|api[_-]?key)=/i,
   ];
 
   it("żaden fixture nie zawiera tokenów sesji, cookie ani kluczy API", () => {
@@ -578,11 +662,15 @@ describe("T33 — higiena fixture'ów (bez secrets)", () => {
     // Realne kopie list zawierają prawdziwe imiona z tibia.com (publiczne).
     // Sprawdzamy tylko, że mirrory T33 nie zawierają prawdziwych danych
     // z list 1/50 (krzyżowo — treść jest niezależna).
-    const realNames = parseAuctionList(loadFixture(listFixtureFile(1)))
-      .auctions.map((a) => a.characterName);
+    const realNames = parseAuctionList(loadFixture(listFixtureFile(1))).auctions.map(
+      (a) => a.characterName,
+    );
     const mirrorHtml = loadFixture(listFixtureFile(2));
     for (const name of realNames) {
-      expect(mirrorHtml.includes(name), `mirror strony 2 nie może zawierać imienia '${name}' ze strony 1`).toBe(false);
+      expect(
+        mirrorHtml.includes(name),
+        `mirror strony 2 nie może zawierać imienia '${name}' ze strony 1`,
+      ).toBe(false);
     }
   });
 });

@@ -1,148 +1,868 @@
 // Vitest Snapshot v1, https://vitest.dev/guide/snapshot.html
 
-exports[`T33 — snapshot AuctionDetailResult (auction-detail-2173376) > serializowany wynik parsowania jest stabilny (JSON snapshot) 1`] = `
+exports[`T33 — snapshot AuctionDetailResult (auction-detail-live-2259395) > serializowany wynik parsowania jest stabilny (JSON snapshot) 1`] = `
 "{
   "auction": {
-    "id": "2173376n",
-    "name": "Migzen The Exalted",
-    "level": 619,
-    "vocation": "Monk",
-    "vocationPromoted": "Exalted Monk",
+    "id": "2259395n",
+    "name": "Lancelot royal archer",
+    "level": 402,
+    "vocation": "Paladin",
+    "vocationPromoted": "Royal Paladin",
     "sex": "M",
     "worldId": 1,
-    "outfitId": 962,
-    "bid": 25501,
-    "bidType": "current",
-    "auctionStart": "2026-09-08T10:00:00.000Z",
-    "auctionEnd": "2026-09-08T22:00:00.000Z",
+    "outfitId": 972,
+    "bid": 2500,
+    "bidType": "minimum",
+    "auctionStart": "2026-09-16T08:06:00.000Z",
+    "auctionEnd": "2026-09-17T17:00:00.000Z",
     "status": "active",
-    "skillMagic": 113,
-    "skillClub": 25,
-    "skillFist": 15,
-    "skillSword": 120,
-    "skillAxe": 15,
-    "skillDistance": 90,
-    "skillShielding": 110,
+    "skillMagic": 30,
+    "skillClub": 12,
+    "skillFist": 17,
+    "skillSword": 36,
+    "skillAxe": 25,
+    "skillDistance": 119,
+    "skillShielding": 108,
     "skillFishing": 20,
-    "charmPoints": 7611,
-    "charmPointsUnused": 0,
-    "minorCharmEchoes": 12,
-    "bossPoints": 2340,
-    "imbuementsUnlocked": 11,
+    "charmPoints": 3523,
+    "charmPointsUnused": 523,
+    "minorCharmEchoes": 400,
+    "bossPoints": 1415,
+    "imbuementsUnlocked": 21,
     "imbuementsTotal": 23,
-    "questsCompleted": 28,
+    "questsCompleted": 20,
     "questsTotal": 42,
-    "achievementPoints": 5420,
-    "animusMasteries": 180,
-    "gemsLesser": 44,
-    "gemsRegular": 0,
+    "achievementPoints": 314,
+    "animusMasteries": 0,
+    "gemsLesser": 4,
+    "gemsRegular": 4,
     "gemsGreater": 0,
     "storeOutfitsCount": 3,
     "storeMountsCount": 2,
-    "storeItemsCount": 15,
+    "storeItemsCount": 14,
     "hirelingsCount": 1,
-    "goldTotal": "500000n",
-    "tcInvested": 3900,
-    "hasSoulWar": true,
+    "goldTotal": "28552n",
+    "tcInvested": null,
+    "hasSoulWar": false,
     "hasPrimalOrdeal": false,
     "hasWorldTransfer": true,
-    "hasPreySlot": false,
+    "hasPreySlot": true,
     "hasCharmExpansion": false,
     "hasWeeklyTaskExpansion": false,
     "hasTwistOfFate": true,
     "blessingsActive": 5,
     "rawJson": {
       "source": "tibia.com",
-      "htmlHash": "773e90b2d59c06b7"
+      "htmlHash": "83b142261ae8d640"
     },
-    "firstSeenAt": "2026-09-08T12:00:00.000Z",
-    "lastSeenAt": "2026-09-08T12:00:00.000Z",
-    "scrapedAt": "2026-09-08T12:00:00.000Z",
-    "pricePerLevel": 41.197092084006464,
-    "searchVector": "migzen the exalted"
+    "firstSeenAt": "2026-09-17T12:00:00.000Z",
+    "lastSeenAt": "2026-09-17T12:00:00.000Z",
+    "scrapedAt": "2026-09-17T12:00:00.000Z",
+    "pricePerLevel": 6.218905472636816,
+    "searchVector": "lancelot royal archer"
   },
   "items": [
     {
-      "auctionId": "2173376n",
-      "itemId": 24999,
-      "quantity": 3,
-      "tier": null
+      "auctionId": "2259395n",
+      "itemId": 939,
+      "quantity": 1,
+      "tier": 0
     },
     {
-      "auctionId": "2173376n",
-      "itemId": 2160,
+      "auctionId": "2259395n",
+      "itemId": 2314,
+      "quantity": 5,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2469,
       "quantity": 1,
-      "tier": null
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2659,
+      "quantity": 3,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2664,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2828,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2842,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2853,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2854,
+      "quantity": 5,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2855,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2869,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2872,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2875,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2878,
+      "quantity": 15,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2885,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2971,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 2973,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3093,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3115,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3124,
+      "quantity": 7,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3177,
+      "quantity": 12,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3349,
+      "quantity": 8,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3510,
+      "quantity": 3,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3589,
+      "quantity": 64,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3598,
+      "quantity": 65,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3728,
+      "quantity": 8,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 5466,
+      "quantity": 64,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 5792,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 5949,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 6370,
+      "quantity": 4,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 6393,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 6498,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 7371,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 7385,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 7439,
+      "quantity": 59,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 7443,
+      "quantity": 3,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 7860,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 7862,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 8014,
+      "quantity": 45,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 8197,
+      "quantity": 99,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 8860,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 9062,
+      "quantity": 9,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 9064,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 9601,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 10212,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 10422,
+      "quantity": 10,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 10457,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 11695,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 12369,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 12548,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 12575,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 14754,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 14755,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 21144,
+      "quantity": 11,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 21892,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 22767,
+      "quantity": 4,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 25698,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 31726,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 32481,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 32490,
+      "quantity": 4,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 32499,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 32508,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 32582,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 32903,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 33948,
+      "quantity": 3,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 34102,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 34237,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 35508,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 35848,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 37471,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 37530,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 40602,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 51978,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 53751,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 53754,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 53771,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 3180,
+      "quantity": 3,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 23374,
+      "quantity": 163,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 23710,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 25217,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 25221,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 25720,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 26123,
+      "quantity": 15,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 28559,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 28928,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 28929,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 29432,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 31226,
+      "quantity": 2,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 34278,
+      "quantity": 1,
+      "tier": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "itemId": 38707,
+      "quantity": 1,
+      "tier": 0
     }
   ],
   "outfits": [
     {
-      "auctionId": "2173376n",
-      "outfitId": 962,
+      "auctionId": "2259395n",
+      "outfitId": 128,
+      "addons": 1
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 129,
       "addons": 3
     },
     {
-      "auctionId": "2173376n",
-      "outfitId": 156,
+      "auctionId": "2259395n",
+      "outfitId": 130,
+      "addons": 1
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 131,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 132,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 133,
+      "addons": 1
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 134,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 143,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 144,
+      "addons": 1
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 145,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 146,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 151,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 152,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 154,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 251,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 289,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 335,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 367,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 430,
       "addons": 2
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 432,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 463,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 512,
+      "addons": 2
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 516,
+      "addons": 2
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 610,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 1161,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 1270,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 1322,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 1824,
+      "addons": 0
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 684,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 899,
+      "addons": 3
+    },
+    {
+      "auctionId": "2259395n",
+      "outfitId": 972,
+      "addons": 0
     }
   ],
   "mounts": [
     {
-      "auctionId": "2173376n",
-      "mountId": 586
+      "auctionId": "2259395n",
+      "mountId": 368
     },
     {
-      "auctionId": "2173376n",
-      "mountId": 456
+      "auctionId": "2259395n",
+      "mountId": 369
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 373
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 378
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 387
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 392
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 401
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 402
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 503
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 526
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 606
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 1269
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 1336
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 1459
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 1934
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 1053
+    },
+    {
+      "auctionId": "2259395n",
+      "mountId": 1335
     }
   ],
   "usps": [
     {
-      "auctionId": "2173376n",
-      "category": 0,
-      "text": "120 Sword Fighting (Loyalty bonus not included)",
+      "auctionId": "2259395n",
+      "category": 4,
+      "text": "1x a ferumbras exercise dummy (Store Item)",
       "sortOrder": 0
     },
     {
-      "auctionId": "2173376n",
-      "category": 12,
-      "text": "Soul War available",
+      "auctionId": "2259395n",
+      "category": 5,
+      "text": "Store Decoration Items: 28",
       "sortOrder": 1
     },
     {
-      "auctionId": "2173376n",
-      "category": 11,
-      "text": "World Transfer available",
+      "auctionId": "2259395n",
+      "category": 5,
+      "text": "Additional Slots: Prey",
       "sortOrder": 2
     },
     {
-      "auctionId": "2173376n",
-      "category": 8,
-      "text": "Twist of Fate",
+      "auctionId": "2259395n",
+      "category": 5,
+      "text": "Store Outfits: 3",
       "sortOrder": 3
     },
     {
-      "auctionId": "2173376n",
-      "category": 13,
-      "text": "Boss points: 2340",
+      "auctionId": "2259395n",
+      "category": 5,
+      "text": "Store Mounts: 2",
       "sortOrder": 4
     }
   ],
-  "skillLoyalties": [
-    {
-      "auctionId": "2173376n",
-      "skill": "sword",
-      "baseValue": 120,
-      "loyaltyPct": 25
-    },
-    {
-      "auctionId": "2173376n",
-      "skill": "magic",
-      "baseValue": 113,
-      "loyaltyPct": 10
-    }
-  ],
+  "skillLoyalties": [],
   "parseError": null,
   "warnings": []
 }"

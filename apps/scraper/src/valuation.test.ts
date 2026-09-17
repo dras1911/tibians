@@ -116,20 +116,14 @@ function makeAuction(overrides: Partial<Auction> = {}): Auction {
   return result.data as Auction;
 }
 
-/** Wczytaj fixture HTML Migzen (auction 2173376) → Auction. */
-function loadMigzenAuction(): Auction {
-  const FIXTURES_DIR = resolve(
-    import.meta.dirname,
-    "./scrapers/__fixtures__",
-  );
-  const html = readFileSync(
-    resolve(FIXTURES_DIR, "auction-detail-2173376.html"),
-    "utf8",
-  );
-  const result = parseAuctionDetail(html, 2173376n);
+/** Wczytaj fixture HTML „Lancelot royal archer" (live 2259395) → Auction. */
+function loadBenchmarkAuction(): Auction {
+  const FIXTURES_DIR = resolve(import.meta.dirname, "./scrapers/__fixtures__");
+  const html = readFileSync(resolve(FIXTURES_DIR, "auction-detail-live-2259395.html"), "utf8");
+  const result = parseAuctionDetail(html, 2259395n);
   if (result.auction === null) {
     throw new Error(
-      `Migzen fixture parse failed: ${result.parseError} ${result.warnings.join("; ")}`,
+      `Lancelot fixture parse failed: ${result.parseError} ${result.warnings.join("; ")}`,
     );
   }
   return result.auction;
@@ -332,9 +326,7 @@ describe("estimateValue — FEATURES", () => {
     const auction = makeAuction({ level: 8, hasPrimalOrdeal: true });
     const result = estimateValue(auction, rulesFromSeed());
     expect(result.breakdown.features.value).toBe(12_000n);
-    expect(result.breakdown.features.items[0]?.key).toBe(
-      "feature_primal_ordeal",
-    );
+    expect(result.breakdown.features.items[0]?.key).toBe("feature_primal_ordeal");
   });
 
   it("World Transfer ON → +15 000 TC", () => {
@@ -408,9 +400,7 @@ describe("estimateValue — PROGRESSION", () => {
   it("animus 180 × 500 = 90 000 TC", () => {
     const auction = makeAuction({ level: 8, animusMasteries: 180 });
     const result = estimateValue(auction, rulesFromSeed());
-    const animItem = result.breakdown.progression.items.find(
-      (i) => i.key === "progression_animus",
-    );
+    const animItem = result.breakdown.progression.items.find((i) => i.key === "progression_animus");
     expect(animItem?.value).toBe(90_000n);
   });
 
@@ -561,63 +551,77 @@ describe("estimateValue — edge cases", () => {
 });
 
 // ──────────────────────────────────────────────────────────────────────────
-// Testy — Migzen benchmark (arch §9.2)
+// Testy — Lancelot benchmark (live fixture 2259395; arch §9.2)
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("estimateValue — Migzen benchmark (auction 2173376)", () => {
+describe("estimateValue — Lancelot benchmark (live fixture 2259395)", () => {
   it("snapshot z fixture → estimatedValue > 0, wszystkie komponenty > 0", () => {
-    const auction = loadMigzenAuction();
+    const auction = loadBenchmarkAuction();
     const result = estimateValue(auction, rulesFromSeed());
     expect(result.estimatedValue).toBeGreaterThan(0n);
 
     const b = result.breakdown;
-    expect(b.base.value).toBe(30_950n); // 619 × 50
-    expect(b.features.value).toBe(30_000n); // 12k + 15k + 3k
-    expect(b.cosmetics.value).toBe(11_400n); // 3k + 4k + 4.4k
-    expect(b.assets.value).toBe(3_950n); // 50 + 3900
+    expect(b.base.value).toBe(20_100n); // 402 × 50
+    expect(b.features.value).toBe(20_000n); // World Transfer 15k + Prey 2k + Twist 3k
+    expect(b.cosmetics.value).toBe(9_400n); // 3000 + 4000 + 400 + 2000
+    expect(b.assets.value).toBe(2n); // 28552 gold / 10000 = 2 (+ 0 TC)
     expect(b.progression.value).toBeGreaterThan(0n);
     expect(b.skills.value).toBeGreaterThan(0n);
   });
 
   it("suma komponentów = estimatedValue (invariant)", () => {
-    const auction = loadMigzenAuction();
+    const auction = loadBenchmarkAuction();
     const result = estimateValue(auction, rulesFromSeed());
     expect(sumBreakdown(result)).toBe(result.estimatedValue);
   });
 
   it("Monk vocation relevance: tylko fist + magic mają wartość", () => {
-    const auction = loadMigzenAuction();
+    // Test intencjonalnie poza fixture'em — sprawdza mapowanie relevance
+    // per vocation (Monk: fist + magic; sword/shielding = 0).
+    const auction = makeAuction({
+      vocation: "Monk",
+      vocationPromoted: "Exalted Monk",
+      skillFist: 113,
+      skillMagic: 113,
+      skillSword: 150,
+      skillShielding: 150,
+    });
     const result = estimateValue(auction, rulesFromSeed());
     expect(result.breakdown.skills.perSkill.sword).toBe(0n);
     expect(result.breakdown.skills.perSkill.shielding).toBe(0n);
-    expect(result.breakdown.skills.perSkill.magic).toBe(1_400n);
+    expect(result.breakdown.skills.perSkill.fist).toBeGreaterThan(0n);
+    expect(result.breakdown.skills.perSkill.magic).toBeGreaterThan(0n);
   });
 
-  it("konkretny output Migzen benchmark (T22 referencyjny snapshot)", () => {
-    const auction = loadMigzenAuction();
+  it("konkretny output Lancelot benchmark (referencyjny snapshot)", () => {
+    const auction = loadBenchmarkAuction();
     const result = estimateValue(auction, rulesFromSeed());
 
-    // Migzen (Exalted Monk, level 619, Soul War + World Transfer + Twist of Fate,
-    // 7611 charms, 2340 boss, 11/23 imbues, 28/42 quests, 500k gold, 3900 TC,
-    // 3 store outfity, 2 store mounty, 44 lesser gems):
-    //   BASE:    619 × 50 = 30 950
-    //   SKILLS:  magic 113 → 14 × 100 = 1 400 (Monk — tylko magic + fist)
-    //   FEAT:    Soul War 12k + World 15k + Twist 3k = 30 000
-    //   PROGR:   charm 15222 + boss 2340 + quests 56000 + imbues 11000
-    //            + achievement 542000 + animus 90000 = 716 562
-    //   COSM:    3000 + 4000 + 4400 = 11 400
-    //   ASSETS:  500000/10000=50 + 3900 = 3 950
-    //   SUM:     794 262 TC
-    const expectedBase = 30_950n;
-    const expectedSkills = 1_400n;
-    const expectedFeatures = 30_000n;
-    const expectedCosmetics = 11_400n;
-    const expectedAssets = 3_950n;
-    const expectedProgression =
-      15_222n + 2_340n + 56_000n + 11_000n + 542_000n + 90_000n;
+    // Lancelot royal archer (Royal Paladin, level 402, World Transfer + Prey
+    // Slot + Twist of Fate, 3523 charms, 1415 boss, 21/23 imbues, 20/42 quests,
+    // 314 achievement points, 0 animus, 3 store outfity, 2 store mounty,
+    // 4 lesser + 4 regular gemy, 28 552 gold, 0 TC):
+    //   BASE:    402 × 50 = 20 100
+    //   SKILLS:  distance 119 + shielding 108 (Paladin relevance)
+    //   FEAT:    World 15k + Prey 2k + Twist 3k = 20 000
+    //   PROGR:   charms 7046 + boss 1415 + quests 40000 + imbues 21000
+    //            + achievements 31400 + animus 0 = 100 861
+    //   COSM:    3000 + 4000 + 400 (lesser) + 2000 (regular) = 9 400
+    //   ASSETS:  28552/10000 = 2 + 0 TC = 2
+    //   SUM:     153 363 TC
+    const expectedBase = 20_100n;
+    const expectedSkills = 3_000n; // 2200 (distance) + 800 (shielding)
+    const expectedFeatures = 20_000n;
+    const expectedCosmetics = 9_400n;
+    const expectedAssets = 2n;
+    const expectedProgression = 7_046n + 1_415n + 40_000n + 21_000n + 31_400n + 0n;
     const expectedTotal =
-      expectedBase + expectedSkills + expectedFeatures +
-      expectedProgression + expectedCosmetics + expectedAssets;
+      expectedBase +
+      expectedSkills +
+      expectedFeatures +
+      expectedProgression +
+      expectedCosmetics +
+      expectedAssets;
 
     expect(result.estimatedValue).toBe(expectedTotal);
     expect(result.breakdown.base.value).toBe(expectedBase);
@@ -653,14 +657,12 @@ describe("estimateValue — determinizm", () => {
     for (let i = 0; i < 100; i++) {
       const r = estimateValue(auction, rulesFromSeed());
       expect(r.estimatedValue).toBe(first.estimatedValue);
-      expect(r.breakdown.skills.perSkill.sword).toBe(
-        first.breakdown.skills.perSkill.sword,
-      );
+      expect(r.breakdown.skills.perSkill.sword).toBe(first.breakdown.skills.perSkill.sword);
     }
   });
 
-  it("Migzen: 100 wywołań → identyczny wynik", () => {
-    const auction = loadMigzenAuction();
+  it("Lancelot (live): 100 wywołań → identyczny wynik", () => {
+    const auction = loadBenchmarkAuction();
     const first = estimateValue(auction, rulesFromSeed());
     for (let i = 0; i < 100; i++) {
       const r = estimateValue(auction, rulesFromSeed());
@@ -677,40 +679,22 @@ describe("estimateValue — monotoniczność", () => {
   it("wyższy level → wyższa wycena", () => {
     const r100 = estimateValue(makeAuction({ level: 100 }), rulesFromSeed());
     const r500 = estimateValue(makeAuction({ level: 500 }), rulesFromSeed());
-    const r1000 = estimateValue(
-      makeAuction({ level: 1_000 }),
-      rulesFromSeed(),
-    );
+    const r1000 = estimateValue(makeAuction({ level: 1_000 }), rulesFromSeed());
     expect(r500.estimatedValue).toBeGreaterThan(r100.estimatedValue);
     expect(r1000.estimatedValue).toBeGreaterThan(r500.estimatedValue);
   });
 
   it("więcej charm_points → wyższa wycena", () => {
-    const r0 = estimateValue(
-      makeAuction({ level: 100, charmPoints: 0 }),
-      rulesFromSeed(),
-    );
-    const r5k = estimateValue(
-      makeAuction({ level: 100, charmPoints: 5_000 }),
-      rulesFromSeed(),
-    );
-    const r20k = estimateValue(
-      makeAuction({ level: 100, charmPoints: 20_000 }),
-      rulesFromSeed(),
-    );
+    const r0 = estimateValue(makeAuction({ level: 100, charmPoints: 0 }), rulesFromSeed());
+    const r5k = estimateValue(makeAuction({ level: 100, charmPoints: 5_000 }), rulesFromSeed());
+    const r20k = estimateValue(makeAuction({ level: 100, charmPoints: 20_000 }), rulesFromSeed());
     expect(r5k.estimatedValue).toBeGreaterThan(r0.estimatedValue);
     expect(r20k.estimatedValue).toBeGreaterThan(r5k.estimatedValue);
   });
 
   it("Soul War ON vs OFF → różnica 12 000 TC", () => {
-    const off = estimateValue(
-      makeAuction({ level: 100, hasSoulWar: false }),
-      rulesFromSeed(),
-    );
-    const on = estimateValue(
-      makeAuction({ level: 100, hasSoulWar: true }),
-      rulesFromSeed(),
-    );
+    const off = estimateValue(makeAuction({ level: 100, hasSoulWar: false }), rulesFromSeed());
+    const on = estimateValue(makeAuction({ level: 100, hasSoulWar: true }), rulesFromSeed());
     const diff = on.estimatedValue - off.estimatedValue;
     expect(diff).toBe(12_000n);
   });
@@ -720,10 +704,7 @@ describe("estimateValue — monotoniczność", () => {
       makeAuction({ level: 100, hasWorldTransfer: false }),
       rulesFromSeed(),
     );
-    const on = estimateValue(
-      makeAuction({ level: 100, hasWorldTransfer: true }),
-      rulesFromSeed(),
-    );
+    const on = estimateValue(makeAuction({ level: 100, hasWorldTransfer: true }), rulesFromSeed());
     const diff = on.estimatedValue - off.estimatedValue;
     expect(diff).toBe(15_000n);
   });
@@ -781,8 +762,8 @@ describe("estimateValue — invariant: suma komponentów = estimatedValue", () =
       }),
     },
     {
-      name: "Migzen fixture",
-      auction: loadMigzenAuction(),
+      name: "Lancelot fixture (live)",
+      auction: loadBenchmarkAuction(),
     },
     {
       name: "all features",

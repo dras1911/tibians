@@ -1,51 +1,54 @@
 /**
- * Parser detalu pojedynczej aukcji Bazaara Tibii (tibia.com).
+ * Parser detalu pojedynczej aukcji Bazaara Tibii (tibia.com) — **v2**.
  *
  * Architektura (`.omo/plans/tibia-tools-portal-architecture.md`):
  *   - §2.4 — Exevo Pan (referencyjny układ karty: 8 skillów, USP, charms, …)
  *   - §2.5 — Tibia.com (źródło prawdy; USP categories 0-13 jako PNG ikonki)
  *   - §7.2 — schemat `auctions` (60+ kolumn + 5 relacji 1:N)
- *   - §7.1 — denormalizacja gorących filtrów jako kolumny (nie join)
  *
- * Źródło: `?subtopic=currentcharactertrades&page=details&auctionid={id}`
+ * ══════════════════════════════════════════════════════════════════════════
+ * HISTORIA WERSJI (DLACZEGO v2):
  *
- * Pipeline (per arch §2.4 + §2.5):
- *   1. cheerio.load(html)                          — DOM
- *   2. extractIdentity($)                          — name/level/vocation/sex/world
- *   3. extractBid($) + bidType                     — rozróżnienie current/minimum
- *   4. extractDates($)                             — PL/EU dd.mm.yyyy, hh:mm:ss
- *   5. extractSkills($) → 8 × {skill, value}      — `<div class="SkillsContainer">`
- *   6. extractItems($) → AuctionItem[]             — `<img .../objects/{id}.gif>`
- *   7. extractOutfits($) → AuctionOutfit[]         — `<img .../outfits/{id}_{addon}.gif>`
- *   8. extractMounts($) → AuctionMount[]           — `<img .../mounts/{id}.gif>`
- *   9. extractUsps($) → AuctionUsp[] (0..13)       — `<img .../usp-category-N.png>`
- *  10. extractSkillLoyalty($) → AuctionSkillLoyalty — `style="width: N%"`
- *  11. extractFlags($)                              — soul_war/primal/world_transfer/…
- *  12. extractProgression($)                        — charms/imbues/quests/…
- *  13. extractResources($)                          — gold/gems/store/hirelings
- *  14. buildAuction($)                              — AuctionSchema + transform
- *  15. AuctionSchema.safeParse(...)                 — Zod walidacja (R1)
+ * v1 (T31) był pisany pod HTML, którego nie dało się pobrać (Cloudflare) —
+ * fixture'y v1 okazały się „mirrorami strukturalnymi" (fikcyjnymi!), a parser
+ * szukał klas (`SkillsContainer`, `<b>Name:</b>`), których prawdziwy
+ * tibia.com NIE ZAWIERA. Efekt: na żywym HTML parser zwracał puste dane.
  *
- * Error handling:
- *   - Brak selektora / parsowalnej wartości → `null` dla tego pola + console.warn
- *   - Cały parser **nie rzuca wyjątków** — zwraca pusty rezultat z ostrzeżeniem
- *     gdyby Zod odrzucił całość (R1 future-proof).
+ * v2 przepisany pod REALNY layout (kopie 1:1 w `__fixtures__/*-live-*.html`):
+ *   - `.AuctionHeader` / `.AuctionCharacterName` / `.AuctionOutfitImage`
+ *   - `.ShortAuctionData*` — „Auction Start/End", „Minimum|Current|Winning Bid"
+ *   - `.AuctionTimer[data-timestamp]` — Unix epoch końca aukcji
+ *   - `.CharacterDetailsBlock` — sekcje (General / Item Summary / … / Proficiencies)
+ *   - `span.LabelV` — wartości liczbowe (charm points, gold, hirelings, …)
+ *   - `.SpecialCharacterFeatures .Entry` + `usp-category-N.png` — linijki USP
+ *   - `#ajax-target-type-{0..6}` — items / store items / mounts / outfits / familiars
  *
- * Locale awareness:
- *   - PL bid: `"25 501"` (U+00A0 non-breaking space) → 25501
- *   - EN bid: `"25,501"` (comma) → 25501
- *   - PL data: `"08.09.2026, 22:15:33"` → ISO datetime (Europe/Warsaw)
+ * NOWE DANE STRUKTURALNE v2:
+ *   - `reference` w wyniku — świat + słownikowe dane (nazwy/obrazki) itemów,
+ *     outfitów i mountów, do „harvestu" tabel referencyjnych przy upsercie
+ *     aukcji (`ensureReferenceData` w `@tibians/db`). Bez tego FK
+ *     `auction_items.item_id → items.id` blokowałby wstawianie relacji.
+ *   - Addony outfitów z nazwy pliku obrazka (`outfits/{id}_{addon}.gif`).
  *
- * raw_json:
- *   - Pełen HTML przekazany do `AuctionSchema.rawJson` (arch §7.1 pkt 2)
- *   - Pozwala backfill przy zmianie HTML Tibii (R1)
+ * ROZPOZNANE OGRANICZENIA (świadome, udokumentowane):
+ *   - Loyalty % per skill nie jest prezentowany w nowym layoutcie
+ *     (tylko adnotacja USP „(Loyalty bonus not included)") → `skillLoyalties`
+ *     jest puste do czasu znalezienia źródła.
+ *   - Item summary ma paginację (np. „» Results: 399", 6 stron) — v2 czyta
+ *     stronę 1 (do ~76 pozycji); kolejne strony do dociągnięcia w iteracji.
+ *   - Tier foringu itemów nie występuje w HTML → `tier: 0` (konwencja:
+ *     0 = base/nieznany; kolumna `tier` jest NOT NULL przez PK).
+ *
+ * Error handling (bez zmian):
+ *   - Brak selektora / parsowalnej wartości → `null` + `warnings`
+ *   - Parser **nie rzuca wyjątków** — Zod fail → `auction: null` + `parseError`
  */
 
-import { load, type CheerioAPI } from "cheerio";
+import { load, type CheerioAPI, type Cheerio } from "cheerio";
+import type { AnyNode } from "domhandler";
 
 import {
   AuctionSchema,
-  AUCTION_SKILL_KEYS,
   VOCATION_BASE_TO_PROMOTED,
   type Auction,
   type AuctionItem,
@@ -55,18 +58,56 @@ import {
   type AuctionUsp,
 } from "@tibians/shared/auction";
 
+import { unixToIso } from "./auction-list.js";
+
 // ──────────────────────────────────────────────────────────────────────────
 // Publiczny kontrakt
 // ──────────────────────────────────────────────────────────────────────────
 
+/** Słownikowy item (harvest) — do upsertu tabeli `items`. */
+export interface ReferenceItem {
+  readonly id: number;
+  readonly name: string;
+  readonly imageUrl: string;
+  readonly isStoreItem: boolean;
+}
+
+/** Słownikowy outfit (harvest) — do upsertu tabeli `outfits`. */
+export interface ReferenceOutfit {
+  readonly id: number;
+  readonly name: string;
+  readonly imageUrl: string;
+  readonly isStore: boolean;
+}
+
+/** Słownikowy mount (harvest) — do upsertu tabeli `mounts`. */
+export interface ReferenceMount {
+  readonly id: number;
+  readonly name: string;
+  readonly imageUrl: string;
+  readonly isStore: boolean;
+}
+
+/**
+ * Dane słownikowe zebrane z detalu aukcji (harvest).
+ *
+ * Użycie: scheduler przekazuje je do `db.upsertAuction({ reference })`,
+ * a warstwa DB przed wstawieniem relacji robi `ensure` wierszy
+ * referencyjnych (`ON CONFLICT DO NOTHING`), żeby FK nie blokowały.
+ */
+export interface AuctionDetailReference {
+  /** Świat postaci: `{ id (stabilny hash), name }`. */
+  readonly world: { readonly id: number; readonly name: string } | null;
+  readonly items: readonly ReferenceItem[];
+  readonly outfits: readonly ReferenceOutfit[];
+  readonly mounts: readonly ReferenceMount[];
+}
+
 /** Pełny wynik parsowania detalu aukcji. */
 export interface AuctionDetailResult {
-  /**
-   * Główna encja (60+ kolumn z arch §7.2 auctions).
-   * Jeśli Zod walidacja odrzuci → `null` + `parseError`.
-   */
+  /** Główna encja (60+ kolumn z arch §7.2 auctions) lub null (parseError). */
   auction: Auction | null;
-  /** Relacja 1:N `auction_items` — itemy z obrazka + opcjonalny tier (forging). */
+  /** Relacja 1:N `auction_items` — itemy (strona 1 sekcji Item Summary). */
   items: AuctionItem[];
   /** Relacja 1:N `auction_outfits` — outfit + maska addonów (0-3). */
   outfits: AuctionOutfit[];
@@ -74,8 +115,10 @@ export interface AuctionDetailResult {
   mounts: AuctionMount[];
   /** Relacja 1:N `auction_usps` (kategorie 0-13 + tekst + sortOrder). */
   usps: AuctionUsp[];
-  /** Relacja 1:N `auction_skill_loyalty` — base + loyaltyPct per skill. */
+  /** Relacja 1:N `auction_skill_loyalty` — puste w v2 (patrz nagłówek). */
   skillLoyalties: AuctionSkillLoyalty[];
+  /** Harvest słowników — świat + items/outfits/mounts z nazwami i obrazkami. */
+  reference: AuctionDetailReference;
   /** Błędy krytyczne (Zod parse failed). Jeśli ustawione, `auction === null`. */
   parseError: string | null;
   /** Ostrzeżenia per pole (brak selektora, pusty regex itp.). */
@@ -89,10 +132,11 @@ export interface AuctionDetailResult {
 /**
  * Deterministyczny mapping nazw światów Tibii → smallint id.
  *
- * Dane są statyczne — Tibia.com od lat utrzymuje te same ID dla rdzenia
- * światów (Antica=1, Astera=11, …). Źródło: scraper referencji (task 32)
- * wzbogaci tę listę o nowe światy. Dla nieznanych nazw generujemy
- * stabilny hash → smallint (100..32767), żeby spełnić `worldId: positive()`.
+ * Tibia.com NIE publikuje numerycznych ID światów — nadajemy je sami.
+ * Rdzeń światów z historyczną numeracją sceniczną (Antica=1 itd.) trzymamy
+ * stabilnie; dla pozostałych nazw generujemy stabilny hash → smallint
+ * (100..32766). Ten sam algorytm używa warstwa DB przy `ensure` wiersza
+ * świata (`worlds.id` = ten wynik), więc FK jest zawsze spójne z parserem.
  */
 const KNOWN_WORLDS: ReadonlyMap<string, number> = new Map<string, number>([
   ["Antica", 1],
@@ -169,13 +213,12 @@ function fnv1a(str: string): number {
     hash ^= str.charCodeAt(i);
     hash = Math.imul(hash, 0x01000193);
   }
-  // Unsigned 32-bit
   return hash >>> 0;
 }
 
-/** Mały zakres (100..32767) dla unknown worlds — nigdy nie koliduje z KNOWN. */
+/** Mały zakres (100..32766) dla unknown worlds — nigdy nie koliduje z KNOWN. */
 function hashToSmallint(name: string): number {
-  return 100 + (fnv1a(name.toLowerCase()) % (32767 - 100));
+  return 100 + (fnv1a(name.toLowerCase()) % (32766 - 100));
 }
 
 /** Rozwiąż nazwę świata Tibii → worldId (smallint). Case-insensitive. */
@@ -188,6 +231,10 @@ export function resolveWorldId(name: string): number {
   }
   return hashToSmallint(name);
 }
+
+// ──────────────────────────────────────────────────────────────────────────
+// Vocation mapping (promowana ↔ bazowa)
+// ──────────────────────────────────────────────────────────────────────────
 
 /** Odwrotność VOCATION_BASE_TO_PROMOTED: promowana → bazowa. */
 const VOCATION_PROMOTED_TO_BASE: ReadonlyMap<string, string> = (() => {
@@ -202,9 +249,7 @@ const VOCATION_PROMOTED_TO_BASE: ReadonlyMap<string, string> = (() => {
 function vocationToBase(raw: string): string {
   const direct = VOCATION_PROMOTED_TO_BASE.get(raw);
   if (direct) return direct;
-  // Jeśli już jest bazowa — zwróć jak jest.
   if (raw in VOCATION_BASE_TO_PROMOTED) return raw;
-  // Fallback: case-insensitive lookup.
   const lower = raw.toLowerCase();
   for (const [promoted, base] of VOCATION_PROMOTED_TO_BASE) {
     if (promoted.toLowerCase() === lower) return base;
@@ -217,46 +262,33 @@ function vocationToBase(raw: string): string {
 
 /** Rozwiąż nazwę vocation (bazową lub promowaną) → promowaną. */
 function vocationToPromoted(raw: string): string {
-  // Jeśli to już promowana — zwróć jak jest.
   for (const [promoted] of VOCATION_PROMOTED_TO_BASE) {
     if (promoted === raw) return raw;
   }
-  // Jeśli to bazowa — zmapuj.
   const lower = raw.toLowerCase();
   for (const [promoted, base] of VOCATION_PROMOTED_TO_BASE) {
     if (base.toLowerCase() === lower) return promoted;
     if (promoted.toLowerCase() === lower) return promoted;
   }
-  // Ostateczny fallback: weź bazową (zostaw validation do Zod).
   return vocationToBase(raw);
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Locale-aware number parsing
+// Locale-aware helpers
 // ──────────────────────────────────────────────────────────────────────────
 
 /**
  * Parsuj liczbę całkowitą z locale-aware stringa Tibii.
  *
- * Przykłady (Tibia.com PL/EN):
- *   "25 501"        — PL: separator U+00A0 (non-breaking space)
- *   "25\u00A0501"   — j.w. z explicit U+00A0
- *   "25,501"        — EN: separator przecinek
- *   "25501"         — bez separatora
- *   "1 234 567"     — PL: wiele grup
- *
- * WAŻNE: `\s+` w czyszczeniu NIE obejmuje nowej linii — w innym wypadku
- *   regex typu `\d[\d\s]* gold` łapałby poprzednie cyfry z poprzedniej
- *   linii (np. skill=20, gold=50000 → 2050000). Stąd `[^\S\n]` zamiast `\s`.
- *
- * Zwraca `null` dla pustych lub nie-liczbowych wejść.
+ * Przykłady: „25 501" (PL NBSP), „25,501" (EN), „25501", „1,073,009,429".
+ * Zwraca `null` dla pustych / nie-liczbowych wejść.
  */
 export function parseLocaleNumber(raw: string | null | undefined): number | null {
   if (raw == null) return null;
   const cleaned = raw
     .replace(/\u00A0/g, "") // PL non-breaking space
-    .replace(/[^\S\n]+/g, "") // horizontal whitespace tylko (nie nowe linie)
-    .replace(/,/g, "")      // EN thousands separator
+    .replace(/[^\S\n]+/g, "") // horizontal whitespace tylko
+    .replace(/,/g, "") // EN thousands separator
     .trim();
   if (cleaned === "") return null;
   if (!/^-?\d+$/.test(cleaned)) return null;
@@ -265,107 +297,82 @@ export function parseLocaleNumber(raw: string | null | undefined): number | null
   return n;
 }
 
-/** Parsuj PL/EU datę Tibii na ISO 8601 UTC. */
-const PL_DATE_REGEX = /(\d{2})\.(\d{2})\.(\d{4}),?\s+(\d{2}):(\d{2}):(\d{2})/;
+/** Miesiące EN tibia.com: „Sep 17 2026, 19:00 CEST". */
+const TIBIA_MONTHS: Readonly<Record<string, number>> = {
+  Jan: 0,
+  Feb: 1,
+  Mar: 2,
+  Apr: 3,
+  May: 4,
+  Jun: 5,
+  Jul: 6,
+  Aug: 7,
+  Sep: 8,
+  Oct: 9,
+  Nov: 10,
+  Dec: 11,
+};
+
+/** Regex daty tibia.com: „Sep 17 2026, 19:00 CEST" / „Nov 13 2019, 19:37:33 CET". */
+const TIBIA_DATE_REGEX =
+  /([A-Z][a-z]{2})\s+(\d{1,2})\s+(\d{4}),\s*(\d{1,2}):(\d{2})(?::(\d{2}))?\s*(CEST|CET)\b/;
 
 /**
- * Parsuj "08.09.2026, 22:15:33" → "2026-09-08T22:15:33.000Z" (assume UTC).
+ * Parsuj datę tibia.com → ISO-8601 UTC (poprawna konwersja CET/CEST).
  *
- * Tibia.com serwuje daty w formacie PL/EU z czasem lokalnym serwera
- * (typowo CET/CEST). Dla spójności zapisujemy jako UTC (bez konwersji
- * strefy — to robi warstwa prezentacji w UI). Parser zwraca ISO bez 'Z'
- * (lokalny datetime traktowany jako nominalny UTC).
+ * „Sep 17 2026, 19:00 CEST" → „2026-09-17T17:00:00.000Z"
+ * (CEST = UTC+2, CET = UTC+1 — strefa podana jawnie w treści).
+ */
+export function parseTibiaDateTime(raw: string | null | undefined): string | null {
+  if (raw == null) return null;
+  const m = TIBIA_DATE_REGEX.exec(norm(raw));
+  if (!m) return null;
+  const [, mmm, dd, yyyy, hh, mi, ss, tz] = m;
+  const month = mmm !== undefined ? TIBIA_MONTHS[mmm] : undefined;
+  if (month === undefined) return null;
+  if (!dd || !yyyy || !hh || !mi) return null;
+  const offsetMinutes = tz === "CEST" ? 120 : 60;
+  const utcMs =
+    Date.UTC(Number(yyyy), month, Number(dd), Number(hh), Number(mi), ss ? Number(ss) : 0) -
+    offsetMinutes * 60_000;
+  const d = new Date(utcMs);
+  if (Number.isNaN(d.getTime())) return null;
+  return d.toISOString();
+}
+
+/**
+ * (Legacy v1) Parsuj „08.09.2026, 22:15:33" → ISO. Zostawione dla zgodności
+ * z konsumentami v1; nowy layout używa `parseTibiaDateTime`.
  */
 export function parsePlDate(raw: string | null | undefined): string | null {
   if (raw == null) return null;
-  const m = PL_DATE_REGEX.exec(raw);
+  const m = /(\d{2})\.(\d{2})\.(\d{4}),?\s+(\d{2}):(\d{2}):(\d{2})/.exec(raw);
   if (!m) return null;
   const [, dd, mm, yyyy, hh, mi, ss] = m;
   if (!dd || !mm || !yyyy || !hh || !mi || !ss) return null;
-  // Walidacja podstawowa (zakresy).
-  const day = Number(dd);
-  const month = Number(mm);
-  if (month < 1 || month > 12 || day < 1 || day > 31) return null;
   return `${yyyy}-${mm}-${dd}T${hh}:${mi}:${ss}.000Z`;
 }
 
 /** Trim + normalizacja whitespace (w tym NBSP). */
 function norm(s: string | null | undefined): string {
   if (s == null) return "";
-  return s.replace(/\u00A0/g, " ").replace(/\s+/g, " ").trim();
+  return s
+    .replace(/\u00A0/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// USP category mapping (arch §2.5)
-// ──────────────────────────────────────────────────────────────────────────
-
-/**
- * Mapowanie nazw USP z tekstu Tibii → kategoria (0-13).
- *
- * `usp-category-N.png` z arch §2.5:
- *   0=skill, 1=gold, 2=achievements, 3=blessings, 4=store items,
- *   5=mounts/outfits/slots, 6=imbuements, 7=charms, 11=world transfer, 13=boss points
- *
- * Rozszerzamy heurystycznie na podstawie tekstu USP (kolorowe linijki):
- *   - "Soul War available"         → soul_war (12)
- *   - "Primal Ordeal available"    → soul_war variant / primal (12)
- *   - "Twist of Fate"              → twist_of_fate (premium, 8)
- *
- * Dla pewności mapujemy PO tekście — jeśli ikona PNG zgadza się z regexem.
- */
-const USP_TEXT_PATTERNS: ReadonlyArray<{ pattern: RegExp; category: number }> = [
-  // Skills (0) — "113 Sword Fighting", "47 Magic", "(Loyalty bonus not included)"
-  { pattern: /\b(Magic|Club|Fist|Sword|Axe|Distance|Shielding|Fishing)\b.*\d/i, category: 0 },
-  // Gold (1) — "100 000 gold", "12345 gold"
-  { pattern: /\d[\d\s\u00A0,]*\s*gold/i, category: 1 },
-  // Achievements (2) — "X achievement points"
-  { pattern: /\d+\s*achievement\s*points?/i, category: 2 },
-  // Charms (3) — "Charm points: 7611", "Minor Charm Echoes: 12"
-  { pattern: /charm\s*points?/i, category: 3 },
-  { pattern: /minor\s*charm\s*echoes?/i, category: 3 },
-  // Imbuements (4) — "Imbuements: 11/23"
-  { pattern: /imbuements?:\s*\d+\/\d+/i, category: 4 },
-  // Outfits (5) — "Outfit: ..." lub count store outfits
-  { pattern: /\boutfits?\b.*\d+|store\s*outfits?:?\s*\d+/i, category: 5 },
-  // Mounts (6) — "Mount: ..." lub count store mounts
-  { pattern: /\bmounts?\b.*\d+|store\s*mounts?:?\s*\d+/i, category: 6 },
-  // Store items (7) — "Store items: N"
-  { pattern: /store\s*items?:?\s*\d+/i, category: 7 },
-  // Premium / Twist of Fate (8)
-  { pattern: /twist\s*of\s*fate/i, category: 8 },
-  { pattern: /prey\s*slot/i, category: 8 },
-  { pattern: /charm\s*expansion/i, category: 8 },
-  { pattern: /weekly\s*task/i, category: 8 },
-  // Blessings (9) — "Blessings: 5/7", "X blessings active"
-  { pattern: /blessings?:\s*\d+\/\d+|\d+\s*blessings?\s*active/i, category: 9 },
-  // Quests (10) — "Quests: 28/42"
-  { pattern: /quests?:\s*\d+\/\d+/i, category: 10 },
-  // World transfer (11) — "World Transfer available"
-  { pattern: /world\s*transfer/i, category: 11 },
-  // Soul War (12) — "Soul War available"
-  { pattern: /soul\s*war/i, category: 12 },
-  { pattern: /primal\s*ordeal/i, category: 12 },
-  { pattern: /hirelings?:?\s*\d+/i, category: 12 },
-  // Boss (13) — "Boss points: 2340"
-  { pattern: /boss\s*points?:\s*\d+/i, category: 13 },
-  { pattern: /animus\s*masteries?:?\s*\d+/i, category: 13 },
-];
-
-/** Kategoryzuj tekst USP na 0-13, fallback: szukaj ikony PNG. */
-function categorizeUsp(text: string, pngCategoryFromIcon: number | null): number {
-  for (const { pattern, category } of USP_TEXT_PATTERNS) {
-    if (pattern.test(text)) return category;
+/** Deduplikacja z zachowaniem kolejności. */
+function uniqueBy<T, K>(items: readonly T[], key: (item: T) => K): T[] {
+  const seen = new Set<K>();
+  const out: T[] = [];
+  for (const item of items) {
+    const k = key(item);
+    if (seen.has(k)) continue;
+    seen.add(k);
+    out.push(item);
   }
-  return pngCategoryFromIcon ?? 0;
-}
-
-/** Rozpoznaj kategorię USP z URL ikony (np. `usp-category-7.png` → 7). */
-function categoryFromUspIconSrc(src: string): number | null {
-  const m = /usp-category-(\d+)\.png/i.exec(src);
-  if (!m || !m[1]) return null;
-  const n = Number(m[1]);
-  if (n < 0 || n > 13 || !Number.isInteger(n)) return null;
-  return n;
+  return out;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -375,7 +382,7 @@ function categoryFromUspIconSrc(src: string): number | null {
 interface Identity {
   name: string | null;
   level: number | null;
-  vocation: string | null;       // bazowa: "Knight" | "Monk" | …
+  vocation: string | null; // bazowa: „Knight" | „Monk" | …
   vocationPromoted: string | null;
   sex: "M" | "F" | null;
   worldName: string | null;
@@ -384,159 +391,83 @@ interface Identity {
 }
 
 /**
- * Szukamy `<b>Name:</b> Foo`, `<b>Level:</b> 619`, `<b>Vocation:</b> Elite Knight`,
- * `<b>Sex:</b> male`, `<b>World:</b> Antica` oraz obrazka outfitu.
- *
- * Fallbacki:
- *   - Tekst po `<b>` może być w `<td>` obok, lub w `<span>` wewnątrz tej samej komórki.
- *   - Outfit ID może być też w URL `<img src=".../outfits/962_3.gif">` w nagłówku.
+ * Nagłówek aukcji:
+ *   `<div class="AuctionCharacterName">Lancelot royal archer</div>` oraz
+ *   inline tekst `Level: 402 | Vocation: Royal Paladin | Male | World: Antica`.
+ * Outfit: `<img class="AuctionOutfitImage" src="…/outfits/972_0.gif">`.
  */
-function extractIdentity(
-  $: CheerioAPI,
-  warnings: string[],
-): Identity {
-  // Helper: znajdź <b>label</b> i zwróć tekst sąsiada (next sibling text node
-  // lub zawartość następnego elementu).
-  const findLabelValue = (
-    $: CheerioAPI,
-    label: string,
-  ): string | null => {
-    const labels = $(`b`).filter((_, el) => {
-      const t = $(el).text().trim().toLowerCase();
-      return t === label.toLowerCase() + ":" || t === label.toLowerCase();
-    });
-    if (labels.length === 0) return null;
+function extractIdentity($: CheerioAPI, warnings: string[]): Identity {
+  const name = norm($(".AuctionCharacterName").first().text()) || null;
 
-    const first = labels.first();
-    // Spróbuj sąsiedni tekst.
-    const next = first.next();
-    if (next.length > 0) {
-      const t = norm(next.text());
-      if (t.length > 0) return t;
-    }
-    // Parent text z odjęciem samej etykiety.
-    const parent = first.parent();
-    if (parent.length > 0) {
-      const fullText = norm(parent.text());
-      const stripped = fullText.replace(new RegExp(`^${label}\\s*:?\\s*`, "i"), "").trim();
-      if (stripped.length > 0 && stripped !== fullText) return stripped;
-    }
-    return null;
-  };
+  const headerText = norm($(".AuctionHeader").first().text());
+  const m =
+    /Level:\s*(\d+)\s*\|\s*Vocation:\s*([^|]+?)\s*\|\s*(Male|Female)\s*\|\s*World:\s*([A-Za-z'\- ]+?)(?:\s*$|\s*\||\s{2})/.exec(
+      headerText,
+    );
 
-  const nameRaw = findLabelValue($, "Name");
-  const levelRaw = findLabelValue($, "Level");
-  const vocationRaw = findLabelValue($, "Vocation");
-  const sexRaw = findLabelValue($, "Sex");
-  const worldRaw = findLabelValue($, "World");
+  const levelRaw = m?.[1] ?? null;
+  const vocationRaw = m?.[2] != null ? m[2].trim() : null;
+  const sexRaw = m?.[3] ?? null;
+  const worldRaw = m?.[4] != null ? m[4].trim() : null;
 
-  // Outfit ID: preferuj URL `<img src=".../outfits/{id}_{addon}.gif">` w nagłówku
-  // aukcji (pierwszy obrazek). Fallback: regex z URL outfitu.
-  let outfitId: number | null = null;
-  $("img[src*='/outfits/']").each((_, el) => {
-    if (outfitId !== null) return;
-    const src = $(el).attr("src") ?? "";
-    const m = /\/outfits\/(\d+)(?:_(\d+))?\.gif/i.exec(src);
-    if (m && m[1]) {
-      outfitId = Number(m[1]);
-    }
-  });
-
-  const name = nameRaw;
   const level = levelRaw != null ? parseLocaleNumber(levelRaw) : null;
-  // Tibia.com może pokazywać vocation promowany LUB bazowy:
-  //   - "Exalted Monk" → vocation: "Monk", promoted: "Exalted Monk"
-  //   - "Knight"       → vocation: "Knight", promoted: "Elite Knight"
-  // vocationToBase / vocationToPromoted są odwrotnymi mapowaniami.
   const vocation = vocationRaw != null ? vocationToBase(vocationRaw) : null;
-  const vocationPromoted =
-    vocationRaw != null ? vocationToPromoted(vocationRaw) : null;
-  const sex = sexRaw != null ? (norm(sexRaw).toLowerCase().startsWith("f") ? "F" : "M") : null;
-  const worldName = worldRaw;
+  const vocationPromoted = vocationRaw != null ? vocationToPromoted(vocationRaw) : null;
+  const sex = sexRaw != null ? (sexRaw === "Female" ? "F" : "M") : null;
+  const worldName = worldRaw !== "" ? worldRaw : null;
   const worldId = worldName != null ? resolveWorldId(worldName) : null;
 
-  // Warnings — brak kluczowych pól.
+  let outfitId: number | null = null;
+  const outfitSrc = $(".AuctionOutfitImage").first().attr("src") ?? "";
+  const outfitMatch = /\/outfits\/(\d+)(?:_(\d+))?\.gif/i.exec(outfitSrc);
+  if (outfitMatch?.[1]) outfitId = Number(outfitMatch[1]);
+  if (outfitId == null) {
+    $("img[src*='/outfits/']").each((_, el) => {
+      if (outfitId !== null) return;
+      const src = $(el).attr("src") ?? "";
+      const mm = /\/outfits\/(\d+)(?:_(\d+))?\.gif/i.exec(src);
+      if (mm?.[1]) outfitId = Number(mm[1]);
+    });
+  }
+
   if (name == null) warnings.push("identity.name: not found");
   if (level == null) warnings.push("identity.level: not found");
   if (vocation == null) warnings.push("identity.vocation: not found");
   if (worldName == null) warnings.push("identity.world: not found");
 
-  return {
-    name,
-    level,
-    vocation,
-    vocationPromoted,
-    sex,
-    worldName,
-    worldId,
-    outfitId,
-  };
+  return { name, level, vocation, vocationPromoted, sex, worldName, worldId, outfitId };
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Extractor: bid + bid type
+// Extractor: bid + bid type + status
 // ──────────────────────────────────────────────────────────────────────────
 
 interface BidResult {
   bid: number;
   bidType: "current" | "minimum";
+  status: "active" | "finished";
 }
 
 /**
- * Rozróżnienie `Current bid` vs `Minimum bid` — kluczowe (arch §2.4).
+ * `.ShortAuctionDataBidRow`: label „Minimum Bid:" | „Current Bid:" |
+ * „Winning Bid:" + wartość w `.ShortAuctionDataValue`.
  *
- * Szukamy `<b>Current bid</b>` lub `<b>Minimum bid</b>` (lub warianty
- * `Current Bid`/`Minimum Bid`). Tekst po etykiecie zawiera liczbę z
- * separatorem.
+ * „Winning Bid" + blok `.AuctionInfo` = „currently processed" oznaczają
+ * aukcję zakończoną (status `finished`).
  */
 function extractBid($: CheerioAPI, warnings: string[]): BidResult {
-  const candidates: Array<{ label: string; type: "current" | "minimum" }> = [
-    { label: "Current bid", type: "current" },
-    { label: "Minimum bid", type: "minimum" },
-    { label: "Current Bid", type: "current" },
-    { label: "Minimum Bid", type: "minimum" },
-    { label: "Current Offer", type: "current" },
-    { label: "Minimum Offer", type: "minimum" },
-  ];
+  const row = $(".ShortAuctionDataBidRow").first();
+  const label = norm(row.find(".ShortAuctionDataLabel").first().text()).toLowerCase();
+  const valueText = norm(row.find(".ShortAuctionDataValue").first().text());
+  const bid = parseLocaleNumber(valueText) ?? 0;
+  if (bid === 0) warnings.push("bid: not found or zero");
 
-  for (const { label, type } of candidates) {
-    const labelEls = $(`b, strong, td`).filter((_, el) => {
-      const t = $(el).text().trim();
-      return t.toLowerCase() === label.toLowerCase();
-    });
-    if (labelEls.length === 0) continue;
-    const labelEl = labelEls.first();
+  const bidType: "current" | "minimum" = label.startsWith("minimum") ? "minimum" : "current";
 
-    // Szukaj liczby w: następnym elemencie, rodzicu (tekst po etykiecie),
-    // lub dowolnym tekście w odległości 2 elementów od etykiety.
-    const next = labelEl.next();
-    if (next.length > 0) {
-      const n = parseLocaleNumber(next.text());
-      if (n !== null) return { bid: n, bidType: type };
-    }
-    const parent = labelEl.parent();
-    if (parent.length > 0) {
-      const text = parent.text();
-      const after = text.replace(new RegExp(label, "i"), "").trim();
-      const n = parseLocaleNumber(after);
-      if (n !== null) return { bid: n, bidType: type };
-    }
-  }
+  const bodyText = norm($("body").text());
+  const finished = label.startsWith("winning") || /currently\s+processed/i.test(bodyText);
 
-  // Fallback: szukaj pierwszej liczby w dedykowanej sekcji "Outfits"/"Bid".
-  const tableText = $("table").text();
-  const m = /(\d[\d\s\u00A0,]*)/.exec(tableText);
-  if (m && m[1]) {
-    const n = parseLocaleNumber(m[1]);
-    if (n !== null && n > 100) {
-      // Heurystyka: bid raczej > 100 TC
-      warnings.push("bid: fell back to first big number (no Current/Minimum label found)");
-      return { bid: n, bidType: "current" };
-    }
-  }
-
-  warnings.push("bid: not found, defaulting to 0 (minimum)");
-  return { bid: 0, bidType: "minimum" };
+  return { bid, bidType, status: finished ? "finished" : "active" };
 }
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -548,403 +479,169 @@ interface DatesResult {
   auctionEnd: string | null;
 }
 
-/** Szukamy `<b>Auction Start:</b>` i `<b>Auction End:</b>` + wariantów. */
+/**
+ * Daty aukcji:
+ *   1. `.AuctionTimer[data-timestamp]` — Unix epoch końca (authoritative,
+ *      spójny z parserem listy, który też używa data-timestamp),
+ *   2. fallback: teksty „Auction Start:" / „Auction End:"
+ *      („Sep 17 2026, 19:00 CEST" → konwersja CET/CEST → UTC).
+ */
 function extractDates($: CheerioAPI, warnings: string[]): DatesResult {
-  const findDate = (label: string): string | null => {
-    const labels = $(`b`).filter((_, el) => {
-      const t = $(el).text().trim().toLowerCase();
-      return t.startsWith(label.toLowerCase());
+  const readDateValue = (label: string): string | null => {
+    let out: string | null = null;
+    $(".ShortAuctionDataLabel").each((_, el) => {
+      if (out !== null) return;
+      if (norm($(el).text()).toLowerCase() !== label.toLowerCase()) return;
+      const value = norm($(el).next(".ShortAuctionDataValue").text());
+      if (value !== "") out = value;
     });
-    if (labels.length === 0) return null;
-    const labelEl = labels.first();
-    const parent = labelEl.parent();
-    const parentText = parent.length > 0 ? parent.text() : "";
-    return parsePlDate(parentText);
+    return out;
   };
 
-  const start = findDate("Auction Start");
-  const end = findDate("Auction End");
-  if (start == null) warnings.push("dates.auctionStart: not parsed");
-  if (end == null) warnings.push("dates.auctionEnd: not parsed");
-  return { auctionStart: start, auctionEnd: end };
+  const startText = readDateValue("Auction Start:");
+  const endText = readDateValue("Auction End:");
+
+  const auctionStart = parseTibiaDateTime(startText);
+  let auctionEnd: string | null = null;
+
+  const timerRaw = $(".AuctionTimer").first().attr("data-timestamp");
+  if (timerRaw != null) {
+    try {
+      auctionEnd = unixToIso(timerRaw);
+    } catch {
+      auctionEnd = null;
+    }
+  }
+  auctionEnd ??= parseTibiaDateTime(endText);
+
+  if (auctionStart == null) warnings.push("dates.auctionStart: not parsed");
+  if (auctionEnd == null) warnings.push("dates.auctionEnd: not parsed");
+  return { auctionStart, auctionEnd };
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Extractor: skills (8 × Skill: value)
+// Extractor: skills (8 × td.LabelColumn / td.LevelColumn)
 // ──────────────────────────────────────────────────────────────────────────
 
+const SKILL_NAME_TO_KEY: Readonly<Record<string, string>> = {
+  "magic level": "magic",
+  magic: "magic",
+  "club fighting": "club",
+  club: "club",
+  "fist fighting": "fist",
+  fist: "fist",
+  "sword fighting": "sword",
+  sword: "sword",
+  "axe fighting": "axe",
+  axe: "axe",
+  "distance fighting": "distance",
+  distance: "distance",
+  shielding: "shielding",
+  fishing: "fishing",
+};
+
 /**
- * W detalu Tibii skille są w `<div class="SkillsContainer">` z parami:
- *   `<span class="Skill">Sword Fighting</span>: <span>113</span>`
- *
- * Zwracamy mapę `skillKey → value` (8 kluczy z AUCTION_SKILL_KEYS).
+ * Tabela skilli w bloku „General": każdy wiersz to
+ * `<td class="LabelColumn"><b>Axe Fighting</b></td><td class="LevelColumn">25</td>`.
  */
-function extractSkills(
-  $: CheerioAPI,
-  warnings: string[],
-): Map<string, number> {
+function extractSkills($: CheerioAPI, warnings: string[]): Map<string, number> {
   const result = new Map<string, number>();
 
-  const skillNameToKey: Record<string, (typeof AUCTION_SKILL_KEYS)[number]> = {
-    "magic level": "magic",
-    magic: "magic",
-    "club fighting": "club",
-    club: "club",
-    "fist fighting": "fist",
-    fist: "fist",
-    "sword fighting": "sword",
-    sword: "sword",
-    "axe fighting": "axe",
-    axe: "axe",
-    "distance fighting": "distance",
-    distance: "distance",
-    shielding: "shielding",
-    fishing: "fishing",
-  };
-
-  // Próba 1: `<div class="SkillsContainer">`.
-  const container = $(".SkillsContainer");
-  const scope = container.length > 0 ? container : $("body");
-
-  scope.find(".Skill, span.Skill").each((_, el) => {
-    const labelEl = $(el);
-    const labelText = norm(labelEl.text()).toLowerCase();
-    const key = skillNameToKey[labelText];
-    if (!key) return;
-    // Szukaj wartości: następny span z liczbą, lub parent text.
-    const next = labelEl.next();
-    if (next.length > 0) {
-      const n = parseLocaleNumber(next.text());
-      if (n !== null) {
-        result.set(key, n);
-        return;
-      }
-    }
-    // Fallback: regex w parent text.
-    const parent = labelEl.parent();
-    if (parent.length > 0) {
-      const text = parent.text();
-      const after = text.replace(new RegExp(labelText, "i"), "").trim();
-      const n = parseLocaleNumber(after);
-      if (n !== null) result.set(key, n);
-    }
+  $("td.LevelColumn").each((_, el) => {
+    const $el = $(el);
+    const $label = $el.prevAll("td.LabelColumn").first();
+    const labelText = norm($label.find("b").text() || $label.text()).toLowerCase();
+    const key = SKILL_NAME_TO_KEY[labelText];
+    if (!key || result.has(key)) return;
+    const value = parseLocaleNumber(norm($el.text()));
+    if (value !== null) result.set(key, value);
   });
 
-  // Próba 2: ogólne iterowanie wszystkich `<span class="Skill">` (poza container).
-  if (result.size === 0) {
-    $(".Skill").each((_, el) => {
-      const labelEl = $(el);
-      const labelText = norm(labelEl.text()).toLowerCase();
-      const key = skillNameToKey[labelText];
-      if (!key || result.has(key)) return;
-      const parent = labelEl.parent();
-      if (parent.length > 0) {
-        const text = parent.text();
-        const m = /(\d[\d\s\u00A0,]*)/.exec(text.replace(labelEl.text(), ""));
-        if (m && m[1]) {
-          const n = parseLocaleNumber(m[1]);
-          if (n !== null) result.set(key, n);
-        }
-      }
-    });
-  }
-
   if (result.size === 0) warnings.push("skills: none extracted");
-
   return result;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Extractor: skill loyalty (base + loyaltyPct)
+// Extractor: LabelV (General / progression / resources)
 // ──────────────────────────────────────────────────────────────────────────
 
-/**
- * Loyalty pasek: `<div class="Loyalty" style="width: 25%"></div>`.
- * Tekst obok mówi "Sword Fighting" / "25%".
- *
- * loyaltyPct: 0..50 (wielokrotność 5).
- */
-function extractSkillLoyalty(
-  $: CheerioAPI,
-  skills: Map<string, number>,
-  auctionId: bigint,
-  warnings: string[],
-): AuctionSkillLoyalty[] {
-  const out: AuctionSkillLoyalty[] = [];
-  const loyaltyNameToKey: Record<string, (typeof AUCTION_SKILL_KEYS)[number]> = {
-    "magic level": "magic",
-    magic: "magic",
-    "club fighting": "club",
-    club: "club",
-    "fist fighting": "fist",
-    fist: "fist",
-    "sword fighting": "sword",
-    sword: "sword",
-    "axe fighting": "axe",
-    axe: "axe",
-    "distance fighting": "distance",
-    distance: "distance",
-    shielding: "shielding",
-    fishing: "fishing",
-  };
-
-  // Struktura (po reparentowaniu w HTML5):
-//   `<div class="LoyaltyRow"><span class="SkillLabel">Skill</span><div class="Loyalty" style="width: N%"></div></div>`
-// Lub alternatywnie:
-//   `<p>Skill</p><div class="Loyalty" style="width: N%"></div>`
-// Parser jest odporny — szukamy tekstu z poprzedniego sibling elementu (lub parent).
-  $(".Loyalty, [class*='Loyalty']").each((_, el) => {
+/** Zbierz wszystkie `<span class="LabelV">Label:</span><div>value</div>` w mapę. */
+function collectLabels($: CheerioAPI): Map<string, string> {
+  const out = new Map<string, string>();
+  $("span.LabelV").each((_, el) => {
     const $el = $(el);
-    const style = $el.attr("style") ?? "";
-    const widthMatch = /width:\s*(\d+)\s*%/i.exec(style);
-    if (!widthMatch || !widthMatch[1]) return;
-    const pct = Number(widthMatch[1]);
-    if (!Number.isInteger(pct) || pct < 0 || pct > 50) return;
-
-    // Próba 1: tekst z bezpośredniego poprzedniego element-siblinga.
-    const prev = $el.prev();
-    let labelText = "";
-    if (prev.length > 0) {
-      labelText += prev.text();
-    }
-
-    // Próba 2: tekst z parent (na wypadek gdyby Loyalty był zagnieżdżony).
-    const $parent = $el.parent();
-    if ($parent.length > 0 && labelText === "") {
-      labelText += $parent.text();
-    }
-
-    // Próba 3: najbliższy poprzedni label — `.SkillLabel` lub `<span>` z nazwą.
-    if (labelText === "") {
-      const prevLabel = $parent.find(".SkillLabel").first();
-      if (prevLabel.length > 0) labelText += prevLabel.text();
-    }
-
-    const parentText = norm(labelText).toLowerCase();
-    if (parentText === "") return;
-
-    let matchedKey: (typeof AUCTION_SKILL_KEYS)[number] | null = null;
-    // Preferuj dłuższe matche (np. "sword fighting" przed "sword").
-    const sortedNames = Object.entries(loyaltyNameToKey).sort(
-      (a, b) => b[0].length - a[0].length,
-    );
-    for (const [name, key] of sortedNames) {
-      if (parentText.includes(name)) {
-        matchedKey = key;
-        break;
-      }
-    }
-    if (!matchedKey) return;
-
-    const baseValue = skills.get(matchedKey) ?? 0;
-    // Idempotentność: nie duplikuj per skill.
-    if (out.some((sl) => sl.skill === matchedKey)) return;
-    out.push({
-      auctionId,
-      skill: matchedKey,
-      baseValue,
-      loyaltyPct: pct === 0 ? null : pct,
-    });
+    const key = norm($el.text()).replace(/:$/, "");
+    if (key === "" || out.has(key)) return;
+    // Wartość: pierwszy div PO labelu w tej samej komórce.
+    const value = norm($el.parent().find("div").first().text());
+    out.set(key, value);
   });
-
-  if (out.length === 0) warnings.push("skillLoyalty: none extracted");
-
   return out;
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// Extractor: items (objects/{id}.gif + opcjonalnie tier)
-// ──────────────────────────────────────────────────────────────────────────
+/** Odczytaj liczbę z mapy labeli (locale-aware). */
+function labelNumber(labels: Map<string, string>, key: string): number | null {
+  const raw = labels.get(key);
+  if (raw == null) return null;
+  return parseLocaleNumber(raw);
+}
 
-/**
- * Items w inventory aukcji: `<img src=".../objects/{id}.gif">` + opcjonalnie
- * `<span>{count}x</span>`. Tier (0-3) nie jest wprost w HTML — fallback null.
- */
-function extractItems(
-  $: CheerioAPI,
-  auctionId: bigint,
-  warnings: string[],
-): AuctionItem[] {
-  const seen = new Set<string>();
-  const out: AuctionItem[] = [];
-
-  $("img[src*='/objects/']").each((_, el) => {
-    const src = $(el).attr("src") ?? "";
-    const m = /\/objects\/(\d+)\.gif/i.exec(src);
-    if (!m || !m[1]) return;
-    const itemId = Number(m[1]);
-    if (!Number.isInteger(itemId) || itemId <= 0) return;
-
-    // Quantity: szukaj `<span>Nx</span>` lub `Nx` w sąsiedztwie.
-    let quantity = 1;
+/** Odczytaj yes/no z mapy labeli (wartość tekstowa lub png `icon_yes/no`). */
+function labelYesNo($: CheerioAPI, labels: Map<string, string>, key: string): boolean | null {
+  const raw = (labels.get(key) ?? "").toLowerCase();
+  if (raw === "yes") return true;
+  if (raw === "no") return false;
+  // Fallback: ikona przy labelu.
+  let found: boolean | null = null;
+  $("span.LabelV").each((_, el) => {
+    if (found !== null) return;
     const $el = $(el);
-    const parent = $el.parent();
-    if (parent.length > 0) {
-      const siblings = parent.text();
-      const qm = /(\d+)\s*x\b/i.exec(siblings);
-      if (qm && qm[1]) {
-        const q = Number(qm[1]);
-        if (Number.isInteger(q) && q > 0) quantity = q;
-      }
-    }
-
-    const key = `${itemId}:${0}`;
-    if (seen.has(key)) return;
-    seen.add(key);
-
-    out.push({
-      auctionId,
-      itemId,
-      quantity,
-      tier: null, // Tibia.com nie ujawnia tieru w detalu
-    });
+    if (norm($el.text()).replace(/:$/, "") !== key) return;
+    const src = $el.parent().find("img").first().attr("src") ?? "";
+    if (/icon_yes\.png/i.test(src)) found = true;
+    else if (/icon_no\.png/i.test(src)) found = false;
   });
-
-  if (out.length === 0) warnings.push("items: none extracted");
-  return out;
+  return found;
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Extractor: outfits
+// Extractor: sekcje CharacterDetailsBlock (liczniki + tabelki)
 // ──────────────────────────────────────────────────────────────────────────
 
-/**
- * Outfits: `<img src=".../outfits/{id}_{addon}.gif">` → id + addon.
- * Addon = 0 gdy sam `{id}.gif`, wpp `_1`/`_2`/`_3` (maska bitowa).
- */
-function extractOutfits(
-  $: CheerioAPI,
-  auctionId: bigint,
-  warnings: string[],
-): AuctionOutfit[] {
-  const seen = new Set<number>();
-  const out: AuctionOutfit[] = [];
-
-  $("img[src*='/outfits/']").each((_, el) => {
-    const src = $(el).attr("src") ?? "";
-    const m = /\/outfits\/(\d+)(?:_(\d+))?\.gif/i.exec(src);
-    if (!m || !m[1]) return;
-    const outfitId = Number(m[1]);
-    if (!Number.isInteger(outfitId) || outfitId <= 0) return;
-    const addonStr = m[2];
-    const addons = addonStr ? Number(addonStr) : 0;
-    const safeAddons =
-      Number.isInteger(addons) && addons >= 0 && addons <= 3 ? addons : 0;
-    if (seen.has(outfitId)) return;
-    seen.add(outfitId);
-    out.push({ auctionId, outfitId, addons: safeAddons });
-  });
-
-  if (out.length === 0) warnings.push("outfits: none extracted");
-  return out;
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// Extractor: mounts
-// ──────────────────────────────────────────────────────────────────────────
-
-function extractMounts(
-  $: CheerioAPI,
-  auctionId: bigint,
-  warnings: string[],
-): AuctionMount[] {
-  const seen = new Set<number>();
-  const out: AuctionMount[] = [];
-
-  $("img[src*='/mounts/']").each((_, el) => {
-    const src = $(el).attr("src") ?? "";
-    const m = /\/mounts\/(\d+)\.gif/i.exec(src);
-    if (!m || !m[1]) return;
-    const mountId = Number(m[1]);
-    if (!Number.isInteger(mountId) || mountId <= 0) return;
-    if (seen.has(mountId)) return;
-    seen.add(mountId);
-    out.push({ auctionId, mountId });
-  });
-
-  if (out.length === 0) warnings.push("mounts: none extracted");
-  return out;
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// Extractor: USP lines (arch §2.5)
-// ──────────────────────────────────────────────────────────────────────────
-
-/**
- * USP = `<img class="UspCategory" src="usp-category-N.png"> + tekst`.
- * Szukamy `<img src*="usp-category">` i bierzemy sąsiedni tekst jako treść USP.
- */
-function extractUsps(
-  $: CheerioAPI,
-  auctionId: bigint,
-  warnings: string[],
-): AuctionUsp[] {
-  const out: AuctionUsp[] = [];
-  let sortOrder = 0;
-
-  $("img[src*='usp-category']").each((_, el) => {
+/** Znajdź CharacterDetailsBlock po captionie (np. „Imbuements"). */
+function findBlockByCaption($: CheerioAPI, caption: string): Cheerio<AnyNode> | null {
+  let found: Cheerio<AnyNode> | null = null;
+  $(".CharacterDetailsBlock").each((_, el) => {
+    if (found !== null) return;
     const $el = $(el);
-    const src = $el.attr("src") ?? "";
-    const pngCat = categoryFromUspIconSrc(src);
-    // Tekst USP: parent / sibling.
-    let text = "";
-    const parent = $el.parent();
-    if (parent.length > 0) {
-      text = norm(parent.text());
-    }
-    if (text === "") {
-      const next = $el.next();
-      if (next.length > 0) text = norm(next.text());
-    }
-    if (text === "") {
-      // Szukaj w `.UspText` rodzeństwa.
-      const uspText = parent.find(".UspText, .Usp");
-      if (uspText.length > 0) text = norm(uspText.text());
-    }
-    if (text === "") return;
-
-    const category = categorizeUsp(text, pngCat);
-    out.push({
-      auctionId,
-      category,
-      text,
-      sortOrder: sortOrder++,
-    });
+    const c = norm($el.find(".CaptionInnerContainer .Text").first().text());
+    if (c === caption) found = $el;
   });
+  return found;
+}
 
-  if (out.length === 0) warnings.push("usps: none extracted");
-  return out;
+/** Policz wiersze danych w tabeli bloku (bez wiersza-nagłówka). */
+function countBlockRows($: CheerioAPI, $block: Cheerio<AnyNode>): number {
+  const rows = $block.find("table.TableContent").first().find("tr");
+  let count = 0;
+  rows.each((i, el) => {
+    if (i === 0) return; // header (np. „Imbuement Name")
+    const text = norm($(el).text());
+    if (text !== "") count += 1;
+  });
+  return count;
+}
+
+/** Odczytaj „» Results: N" z nagłówka paginacji bloku. */
+function readResultsCount($block: Cheerio<AnyNode>): number | null {
+  const text = norm($block.find(".BlockPageNavigationRow").first().text());
+  const m = /Results:\s*([\d.,\u00A0]+)/i.exec(text);
+  if (!m?.[1]) return null;
+  return parseLocaleNumber(m[1]);
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Extractor: flags (regex na całym tekście)
-// ──────────────────────────────────────────────────────────────────────────
-
-interface FlagsResult {
-  hasSoulWar: boolean;
-  hasPrimalOrdeal: boolean;
-  hasWorldTransfer: boolean;
-  hasPreySlot: boolean;
-  hasCharmExpansion: boolean;
-  hasWeeklyTaskExpansion: boolean;
-  hasTwistOfFate: boolean;
-}
-
-function extractFlags($: CheerioAPI): FlagsResult {
-  const text = $("body").text();
-  return {
-    hasSoulWar: /Soul\s*War\s*available/i.test(text),
-    hasPrimalOrdeal: /Primal\s*Ordeal/i.test(text),
-    hasWorldTransfer: /World\s*Transfer/i.test(text),
-    hasPreySlot: /Prey\s*Slot/i.test(text),
-    hasCharmExpansion: /Charm\s*Expansion/i.test(text),
-    hasWeeklyTaskExpansion: /Weekly\s*Task\s*Expansion/i.test(text),
-    hasTwistOfFate: /Twist\s*of\s*Fate/i.test(text),
-  };
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// Extractor: progression (charms, imbues, quests, achievements, boss, animus)
+// Extractor: progression
 // ──────────────────────────────────────────────────────────────────────────
 
 interface ProgressionResult {
@@ -961,69 +658,56 @@ interface ProgressionResult {
   blessingsActive: number;
 }
 
+const DEFAULT_IMBUEMENTS_TOTAL = 23;
+const DEFAULT_QUESTS_TOTAL = 42;
+
 function extractProgression(
   $: CheerioAPI,
+  labels: Map<string, string>,
   warnings: string[],
 ): ProgressionResult {
-  const text = $("body").text();
+  // Charm points: dostępne + wydane = total; „unused" = dostępne.
+  const charmAvail = labelNumber(labels, "Available Charm Points") ?? 0;
+  const charmSpent = labelNumber(labels, "Spent Charm Points") ?? 0;
+  const minorAvail = labelNumber(labels, "Available Minor Charm Echoes") ?? 0;
+  const minorSpent = labelNumber(labels, "Spent Minor Charm Echoes") ?? 0;
 
-  const extractFrac = (
-    re: RegExp,
-  ): { done: number; total: number } | null => {
-    const m = re.exec(text);
-    if (!m) return null;
-    const done = parseLocaleNumber(m[1] ?? "");
-    const total = m[2] != null ? parseLocaleNumber(m[2]) : null;
-    if (done == null || total == null) return null;
-    return { done, total };
-  };
+  const bossPoints = labelNumber(labels, "Boss Points") ?? 0;
+  const achievementPoints = labelNumber(labels, "Achievement Points") ?? 0;
+  const animusMasteries = labelNumber(labels, "Animus Masteries unlocked") ?? 0;
 
-  const extractSingle = (re: RegExp): number | null => {
-    const m = re.exec(text);
-    if (!m || !m[1]) return null;
-    return parseLocaleNumber(m[1]);
-  };
+  // Blessings: „5/7" → 5.
+  let blessingsActive = 0;
+  const blessRaw = labels.get("Blessings") ?? "";
+  const blessMatch = /(\d+)\s*\/\s*7/.exec(blessRaw);
+  if (blessMatch?.[1]) blessingsActive = Number(blessMatch[1]);
+  if (!blessMatch) warnings.push("progression.blessings: not parsed");
 
-  const imbuements = extractFrac(/Imbuements?:\s*(\d+)\s*\/\s*(\d+)/i);
-  const quests = extractFrac(/Quests?:\s*(\d+)\s*\/\s*(\d+)/i);
-  const bless = extractFrac(/Blessings?:\s*(\d+)\s*\/\s*(\d+)/i) ??
-    extractFrac(/Blessings?\s*active:\s*(\d+)\s*\/\s*(\d+)/i) ??
-    ((): { done: number; total: number } | null => {
-      const n = extractSingle(/Blessings?\s*active:\s*(\d+)/i);
-      if (n == null) return null;
-      return { done: n, total: 7 };
-    })();
-  // Regex po "Achievement points: N" — N musi być PRZED "achievement", więc
-  // anchor po lewej stronie do ":" albo granicy wyrazu.
-  const achievements = extractSingle(/Achievement\s*points?:\s*(\d+)/i) ??
-    extractSingle(/(\d+)\s*achievement\s*points?/i);
-  const boss = extractSingle(/Boss\s*points?:\s*(\d+)/i);
-  const animus = extractSingle(/Animus\s*Masteries?:\s*(\d+)/i);
-  const charmPts = extractSingle(/Charm\s*points?:\s*(\d+)/i);
-  const charmUnused = extractSingle(/(\d+)\s*unused\s*charm/i);
-  const minorEchoes = extractSingle(/Minor\s*Charm\s*Echoes?:\s*(\d+)/i);
-
-  if (imbuements == null) warnings.push("progression.imbuements: not parsed");
-  if (quests == null) warnings.push("progression.quests: not parsed");
-  if (bless == null) warnings.push("progression.blessings: not parsed");
+  // Liczniki z sekcji.
+  const imbBlock = findBlockByCaption($, "Imbuements");
+  const imbuementsUnlocked = imbBlock ? countBlockRows($, imbBlock) : 0;
+  const questBlock = findBlockByCaption($, "Completed Quest Lines");
+  const questsCompleted = questBlock ? countBlockRows($, questBlock) : 0;
+  if (!imbBlock) warnings.push("progression.imbuements: not parsed");
+  if (!questBlock) warnings.push("progression.quests: not parsed");
 
   return {
-    charmPoints: charmPts ?? 0,
-    charmPointsUnused: charmUnused ?? 0,
-    minorCharmEchoes: minorEchoes ?? 0,
-    bossPoints: boss ?? 0,
-    imbuementsUnlocked: imbuements?.done ?? 0,
-    imbuementsTotal: imbuements?.total ?? 23,
-    questsCompleted: quests?.done ?? 0,
-    questsTotal: quests?.total ?? 42,
-    achievementPoints: achievements ?? 0,
-    animusMasteries: animus ?? 0,
-    blessingsActive: bless?.done ?? 0,
+    charmPoints: charmAvail + charmSpent,
+    charmPointsUnused: charmAvail,
+    minorCharmEchoes: minorAvail + minorSpent,
+    bossPoints,
+    imbuementsUnlocked,
+    imbuementsTotal: Math.max(DEFAULT_IMBUEMENTS_TOTAL, imbuementsUnlocked),
+    questsCompleted,
+    questsTotal: Math.max(DEFAULT_QUESTS_TOTAL, questsCompleted),
+    achievementPoints,
+    animusMasteries,
+    blessingsActive,
   };
 }
 
 // ──────────────────────────────────────────────────────────────────────────
-// Extractor: resources (gold, gems, store counts, hirelings, tcInvested)
+// Extractor: resources (gold/gems/store/hirelings)
 // ──────────────────────────────────────────────────────────────────────────
 
 interface ResourcesResult {
@@ -1038,55 +722,334 @@ interface ResourcesResult {
   tcInvested: number | null;
 }
 
+/**
+ * Gemy z bloku „Revealed Gems": każdy wiersz ma `<div class="Gem" title="X Gem">`:
+ *   - „Lesser …"   → gemsLesser
+ *   - „Greater …" / „Supreme …" → gemsGreater
+ *   - pozostałe (np. „Marksman Gem") → gemsRegular
+ */
+function extractGems($: CheerioAPI): { lesser: number; regular: number; greater: number } {
+  let lesser = 0;
+  let regular = 0;
+  let greater = 0;
+  const block = findBlockByCaption($, "Revealed Gems");
+  if (block) {
+    block.find("div.Gem").each((_, el) => {
+      const title = norm($(el).attr("title") ?? "");
+      if (title === "") return;
+      if (/^lesser\b/i.test(title)) lesser += 1;
+      else if (/^(greater|supreme)\b/i.test(title)) greater += 1;
+      else regular += 1;
+    });
+  }
+  return { lesser, regular, greater };
+}
+
 function extractResources(
   $: CheerioAPI,
+  labels: Map<string, string>,
   warnings: string[],
 ): ResourcesResult {
-  const text = $("body").text();
+  const goldTotalRaw = labelNumber(labels, "Gold");
+  if (goldTotalRaw == null) warnings.push("resources.gold: not parsed");
+  const goldTotal = BigInt(Math.min(Math.max(goldTotalRaw ?? 0, 0), Number.MAX_SAFE_INTEGER));
 
-  const extractSingle = (re: RegExp): number | null => {
-    const m = re.exec(text);
-    if (!m || !m[1]) return null;
-    return parseLocaleNumber(m[1]);
-  };
+  const hirelingsCount = labelNumber(labels, "Hirelings") ?? 0;
 
-  // Gems: format "44-0-0" lub "(44, 0, 0)"
-  let gemsLesser = 0;
-  let gemsRegular = 0;
-  let gemsGreater = 0;
-  const gemsMatch = /Gems?:\s*(\d+)\s*[- ,]\s*(\d+)\s*[- ,]\s*(\d+)/i.exec(text);
-  if (gemsMatch && gemsMatch[1] && gemsMatch[2] && gemsMatch[3]) {
-    gemsLesser = Number(gemsMatch[1]);
-    gemsRegular = Number(gemsMatch[2]);
-    gemsGreater = Number(gemsMatch[3]);
-  }
+  const storeItemsBlock = findBlockByCaption($, "Store Item Summary");
+  const storeMountsBlock = findBlockByCaption($, "Store Mounts");
+  const storeOutfitsBlock = findBlockByCaption($, "Store Outfits");
+  const storeItemsCount = (storeItemsBlock && readResultsCount(storeItemsBlock)) ?? 0;
+  const storeMountsCount = (storeMountsBlock && readResultsCount(storeMountsBlock)) ?? 0;
+  const storeOutfitsCount = (storeOutfitsBlock && readResultsCount(storeOutfitsBlock)) ?? 0;
 
-  const storeOutfits = extractSingle(/(\d+)\s*store\s*outfits?/i) ?? 0;
-  const storeMounts = extractSingle(/(\d+)\s*store\s*mounts?/i) ?? 0;
-  const storeItems = extractSingle(/(\d+)\s*store\s*items?/i) ?? 0;
-  const hirelings = extractSingle(/(\d+)\s*hirelings?/i) ?? 0;
-  // Gold regex: szukamy "<num> gold" w tej samej linii. Aby uniknąć
-  // łapania cyfr z poprzednich linii (skill values), używamy `[^\S\n]*`
-  // zamiast `\s*` między cyfrą a słowem "gold".
-  const goldRaw = extractSingle(/(\d[\d\u00A0,]*)[^\S\n]*gold/i);
-  const tcRaw = extractSingle(/(\d+)\s*transferabl/i); // "transferable coins"
-
-  if (gemsMatch == null) warnings.push("resources.gems: not parsed");
-  if (goldRaw == null) warnings.push("resources.gold: not parsed");
-
-  const goldTotal =
-    goldRaw != null ? BigInt(Math.min(goldRaw, Number.MAX_SAFE_INTEGER)) : 0n;
+  const gems = extractGems($);
 
   return {
-    gemsLesser,
-    gemsRegular,
-    gemsGreater,
-    storeOutfitsCount: storeOutfits,
-    storeMountsCount: storeMounts,
-    storeItemsCount: storeItems,
-    hirelingsCount: hirelings,
+    gemsLesser: gems.lesser,
+    gemsRegular: gems.regular,
+    gemsGreater: gems.greater,
+    storeOutfitsCount,
+    storeMountsCount,
+    storeItemsCount,
+    hirelingsCount,
     goldTotal,
-    tcInvested: tcRaw,
+    tcInvested: null, // nowy layout nie publikuje tej wartości
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Extractor: flags
+// ──────────────────────────────────────────────────────────────────────────
+
+interface FlagsResult {
+  hasSoulWar: boolean;
+  hasPrimalOrdeal: boolean;
+  hasWorldTransfer: boolean;
+  hasPreySlot: boolean;
+  hasCharmExpansion: boolean;
+  hasWeeklyTaskExpansion: boolean;
+  hasTwistOfFate: boolean;
+}
+
+/**
+ * Flagi z sekcji detalu:
+ *   - hasSoulWar / hasPrimalOrdeal — obecność linii questa („Soul War",
+ *     „Primal Ordeal") w „Completed Quest Lines",
+ *   - hasWorldTransfer — obecność wiersza „Regular World Transfer:" (pole
+ *     zawsze widoczne dla aukcji kwalifikujących się do transferu),
+ *   - hasPreySlot — „Permanent Prey Slots:" > 0,
+ *   - hasCharmExpansion — „Charm Expansion:" = yes,
+ *   - hasWeeklyTaskExpansion — „Permanent Weekly Task Expansion:" = yes,
+ *   - hasTwistOfFate — wiersz „Twist of Fate" w tabeli Blessings z ilością > 0.
+ */
+function extractFlags($: CheerioAPI, labels: Map<string, string>): FlagsResult {
+  const questBlock = findBlockByCaption($, "Completed Quest Lines");
+  let hasSoulWar = false;
+  let hasPrimalOrdeal = false;
+  if (questBlock) {
+    questBlock.find("table.TableContent tr td").each((_, el) => {
+      const t = norm($(el).text());
+      if (/^soul war$/i.test(t)) hasSoulWar = true;
+      if (/^primal ordeal$/i.test(t)) hasPrimalOrdeal = true;
+    });
+  }
+
+  const hasWorldTransfer = labels.has("Regular World Transfer");
+  const preySlots = labelNumber(labels, "Permanent Prey Slots") ?? 0;
+
+  let hasTwistOfFate = false;
+  const blessBlock = findBlockByCaption($, "Blessings");
+  if (blessBlock) {
+    blessBlock.find("table.TableContent tr").each((_, el) => {
+      const $tr = $(el);
+      const cells = $tr.find("td");
+      if (cells.length < 2) return;
+      const name = norm(cells.eq(1).text());
+      if (name.toLowerCase() !== "twist of fate") return;
+      const amount = parseLocaleNumber(norm(cells.eq(0).text()).replace(/\s*x$/i, ""));
+      if ((amount ?? 0) > 0) hasTwistOfFate = true;
+    });
+  }
+
+  return {
+    hasSoulWar,
+    hasPrimalOrdeal,
+    hasWorldTransfer,
+    hasPreySlot: preySlots > 0,
+    hasCharmExpansion: labelYesNo($, labels, "Charm Expansion") === true,
+    hasWeeklyTaskExpansion: labelYesNo($, labels, "Permanent Weekly Task Expansion") === true,
+    hasTwistOfFate,
+  };
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Extractor: USP lines (.SpecialCharacterFeatures .Entry + usp-category-N.png)
+// ──────────────────────────────────────────────────────────────────────────
+
+/** Rozpoznaj kategorię USP z URL ikony (np. `usp-category-7.png` → 7). */
+function categoryFromUspIconSrc(src: string): number | null {
+  const m = /usp-category-(\d+)\.png/i.exec(src);
+  if (!m?.[1]) return null;
+  const n = Number(m[1]);
+  if (n < 0 || n > 13 || !Number.isInteger(n)) return null;
+  return n;
+}
+
+function extractUsps($: CheerioAPI, auctionId: bigint, warnings: string[]): AuctionUsp[] {
+  const out: AuctionUsp[] = [];
+  $(".SpecialCharacterFeatures .Entry").each((i, el) => {
+    const $el = $(el);
+    const src = $el.find("img").first().attr("src") ?? "";
+    const category = categoryFromUspIconSrc(src) ?? 0;
+    const text = norm($el.text());
+    if (text === "") return;
+    out.push({ auctionId, category, text, sortOrder: i });
+  });
+  if (out.length === 0) warnings.push("usps: none extracted");
+  return out;
+}
+
+// ──────────────────────────────────────────────────────────────────────────
+// Extractor: items / outfits / mounts / familiars (#ajax-target-type-N)
+// ──────────────────────────────────────────────────────────────────────────
+
+/**
+ * Container `#ajax-target-type-{n}` z listą `.CVIcon` (items mają dodatkowo
+ * klasę `CVIconObject`; mounts/outfits/familiars tylko `CVIcon`).
+ * Wpis: `<div class="CVIcon …" title="5x big table"><img src="…/objects/2314.gif">
+ *        <div class="ObjectAmount">5</div></div>`.
+ */
+function readCvIcons(
+  $: CheerioAPI,
+  containerType: number,
+): Array<{ src: string; title: string; amount: number | null }> {
+  const $c = $(`#ajax-target-type-${containerType}`).first();
+  if ($c.length === 0) return [];
+  const out: Array<{ src: string; title: string; amount: number | null }> = [];
+  $c.find(".CVIcon").each((_, el) => {
+    const $el = $(el);
+    const src = $el.find("img").first().attr("src") ?? "";
+    if (src === "") return;
+    const title = norm($el.attr("title") ?? "");
+    const amountRaw = norm($el.find(".ObjectAmount").first().text());
+    const amount = parseLocaleNumber(amountRaw);
+    out.push({ src, title, amount });
+  });
+  return out;
+}
+
+/** Wyciągnij ilość z prefiksu tytułu („5x big table" → 5, „2,921x potion" → 2921). */
+function quantityFromTitle(title: string): number | null {
+  const m = /^([\d,]+)\s*x\s+/i.exec(title);
+  if (!m?.[1]) return null;
+  const n = parseLocaleNumber(m[1]);
+  return n !== null && n > 0 ? n : null;
+}
+
+/**
+ * Nazwa itemu z tytułu CVIcon:
+ *   „5x big table" → „big table"
+ *   „2,921x ultimate mana potion" → „ultimate mana potion"
+ *   „2x bitter-smack leaf A full grown bitter-smack leaf" → „bitter-smack leaf"
+ *   (opis zaczyna się od spacji + wielkiej litery; nazwy itemów są lowercase)
+ */
+function itemNameFromTitle(title: string): string {
+  let t = norm(title).replace(/^[\d,]+\s*x\s+/i, "");
+  const m = / [A-Z]/.exec(t);
+  if (m && m.index > 1) t = t.slice(0, m.index);
+  return t.trim();
+}
+
+/** Nazwa outfitu z tytułu: „Citizen (base & addon 1)" → „Citizen". */
+function outfitNameFromTitle(title: string): string {
+  const t = norm(title);
+  const idx = t.indexOf(" (");
+  return (idx > 0 ? t.slice(0, idx) : t).trim();
+}
+
+interface RelationsResult {
+  items: AuctionItem[];
+  outfits: AuctionOutfit[];
+  mounts: AuctionMount[];
+  refItems: ReferenceItem[];
+  refOutfits: ReferenceOutfit[];
+  refMounts: ReferenceMount[];
+  familiars: Array<{ id: number; name: string; imageUrl: string }>;
+}
+
+/**
+ * Relacje + harvest słowników z kontenerów:
+ *   - type-0 — Item Summary (items), type-1 — Store Item Summary (store items),
+ *   - type-2 — Mounts, type-3 — Store Mounts,
+ *   - type-4 — Outfits, type-5 — Store Outfits,
+ *   - type-6 — Familiars (tylko do rawJson — brak tabeli w schemacie).
+ */
+function extractRelations($: CheerioAPI, auctionId: bigint, warnings: string[]): RelationsResult {
+  const items: AuctionItem[] = [];
+  const refItems: ReferenceItem[] = [];
+  const outfits: AuctionOutfit[] = [];
+  const refOutfits: ReferenceOutfit[] = [];
+  const mounts: AuctionMount[] = [];
+  const refMounts: ReferenceMount[] = [];
+  const familiars: Array<{ id: number; name: string; imageUrl: string }> = [];
+
+  const addItems = (containerType: number, isStoreItem: boolean): void => {
+    // Dedupe po itemId — sumujemy quantity (stacki mogą wystąpić wielokrotnie).
+    const byId = new Map<number, AuctionItem>();
+    for (const { src, title, amount } of readCvIcons($, containerType)) {
+      const m = /\/objects\/(\d+)\.gif/i.exec(src);
+      if (!m?.[1]) continue;
+      const itemId = Number(m[1]);
+      if (!Number.isInteger(itemId) || itemId <= 0) continue;
+      const quantity = amount ?? quantityFromTitle(title) ?? 1;
+      const existing = byId.get(itemId);
+      if (existing) {
+        byId.set(itemId, { ...existing, quantity: existing.quantity + quantity });
+        continue;
+      }
+      byId.set(itemId, { auctionId, itemId, quantity, tier: 0 });
+      refItems.push({
+        id: itemId,
+        name: itemNameFromTitle(title) || `item ${itemId}`,
+        imageUrl: src,
+        isStoreItem,
+      });
+    }
+    items.push(...byId.values());
+  };
+
+  addItems(0, false);
+  addItems(1, true);
+
+  const addOutfits = (containerType: number, isStore: boolean): void => {
+    const seen = new Set<number>();
+    for (const { src, title } of readCvIcons($, containerType)) {
+      const m = /\/outfits\/(\d+)(?:_(\d+))?\.gif/i.exec(src);
+      if (!m?.[1]) continue;
+      const outfitId = Number(m[1]);
+      if (!Number.isInteger(outfitId) || outfitId <= 0 || seen.has(outfitId)) continue;
+      seen.add(outfitId);
+      const addonStr = m[2];
+      const addons = addonStr ? Number(addonStr) : 0;
+      outfits.push({
+        auctionId,
+        outfitId,
+        addons: Number.isInteger(addons) && addons >= 0 && addons <= 3 ? addons : 0,
+      });
+      refOutfits.push({
+        id: outfitId,
+        name: outfitNameFromTitle(title) || `outfit ${outfitId}`,
+        imageUrl: src,
+        isStore,
+      });
+    }
+  };
+
+  addOutfits(4, false);
+  addOutfits(5, true);
+
+  const addMounts = (containerType: number, isStore: boolean): void => {
+    const seen = new Set<number>();
+    for (const { src, title } of readCvIcons($, containerType)) {
+      const m = /\/mounts\/(\d+)\.gif/i.exec(src);
+      if (!m?.[1]) continue;
+      const mountId = Number(m[1]);
+      if (!Number.isInteger(mountId) || mountId <= 0 || seen.has(mountId)) continue;
+      seen.add(mountId);
+      mounts.push({ auctionId, mountId });
+      refMounts.push({
+        id: mountId,
+        name: norm(title) || `mount ${mountId}`,
+        imageUrl: src,
+        isStore,
+      });
+    }
+  };
+
+  addMounts(2, false);
+  addMounts(3, true);
+
+  for (const { src, title } of readCvIcons($, 6)) {
+    const m = /\/summons\/(\d+)\.gif/i.exec(src);
+    if (!m?.[1]) continue;
+    const id = Number(m[1]);
+    if (!Number.isInteger(id) || id <= 0) continue;
+    familiars.push({ id, name: norm(title), imageUrl: src });
+  }
+
+  if (items.length === 0) warnings.push("items: none extracted");
+  if (outfits.length === 0) warnings.push("outfits: none extracted");
+  if (mounts.length === 0) warnings.push("mounts: none extracted");
+
+  return {
+    items,
+    outfits,
+    mounts,
+    refItems: uniqueBy(refItems, (i) => i.id),
+    refOutfits: uniqueBy(refOutfits, (o) => o.id),
+    refMounts: uniqueBy(refMounts, (m) => m.id),
+    familiars,
   };
 }
 
@@ -1095,17 +1058,16 @@ function extractResources(
 // ──────────────────────────────────────────────────────────────────────────
 
 /**
- * Parsuj stronę `/charactertrade/?page=details&auctionid={id}` na pełny `Auction`
- * + relacje 1:N.
+ * Parsuj stronę `/charactertrade/?page=details&auctionid={id}` na pełny
+ * `Auction` + relacje 1:N + harvest słowników (`reference`).
  *
  * Kontrakt:
- *   - Zwraca pełny `AuctionDetailResult`
  *   - **Nie rzuca** — w najgorszym wypadku `auction: null` + `parseError`
  *   - Walidacja Zod na `AuctionSchema` (R1 future-proof)
  *
- * @param html         — surowy HTML strony detalu
- * @param auctionId    — ID aukcji (bigint, zwykle z query stringu)
- * @param scrapedAt    — moment scrape'a (opcjonalnie, default: now())
+ * @param html       — surowy HTML strony detalu
+ * @param auctionId  — ID aukcji (bigint, z query stringu)
+ * @param scrapedAt  — moment scrape'a (default: now())
  */
 export function parseAuctionDetail(
   html: string,
@@ -1115,43 +1077,63 @@ export function parseAuctionDetail(
   const warnings: string[] = [];
   const $ = load(html);
 
-  // ── 1. Ekstrakcja wszystkich sekcji ────────────────────────────────────
+  // ── 1. Ekstrakcja wszystkich sekcji ──────────────────────────────────
   const identity = extractIdentity($, warnings);
   const bid = extractBid($, warnings);
   const dates = extractDates($, warnings);
   const skills = extractSkills($, warnings);
-  const skillLoyalties = extractSkillLoyalty($, skills, auctionId, warnings);
-  const items = extractItems($, auctionId, warnings);
-  const outfits = extractOutfits($, auctionId, warnings);
-  const mounts = extractMounts($, auctionId, warnings);
+  const labels = collectLabels($);
+  const progression = extractProgression($, labels, warnings);
+  const resources = extractResources($, labels, warnings);
+  const flags = extractFlags($, labels);
   const usps = extractUsps($, auctionId, warnings);
-  const flags = extractFlags($);
-  const progression = extractProgression($, warnings);
-  const resources = extractResources($, warnings);
+  const relations = extractRelations($, auctionId, warnings);
 
-  // ── 2. Złóż obiekt Auction (wymaga poprawnych pól obowiązkowych) ────────
+  const reference: AuctionDetailReference = {
+    world:
+      identity.worldName != null && identity.worldId != null
+        ? { id: identity.worldId, name: identity.worldName }
+        : null,
+    items: relations.refItems,
+    outfits: relations.refOutfits,
+    mounts: relations.refMounts,
+  };
+
+  /**
+   * GUARD: strona NIE wygląda na detal aukcji. Detal tibia.com zawsze ma:
+   *   - `.AuctionCharacterName` + pola nagłówka (Level/Vocation/Sex/World),
+   *   - ≥1 `.CharacterDetailsBlock` (General / Item Summary / …; strona
+   *     listy ma 0 — dzięki temu odsiewamy też pomyłkowe URL-e).
+   * Bez tego Zod przeszedłby dzięki syntetycznym fallbackom (name „Auction N",
+   * level 8, …) i do bazy trafiłyby śmieciowe wiersze. Lepiej jawnie zgłosić
+   * błąd — scheduler zapisze go w `scrape_errors`.
+   */
+  if (identity.name == null || identity.level == null || $(".CharacterDetailsBlock").length === 0) {
+    const errMsg =
+      "not an auction detail page (missing .AuctionCharacterName / header fields / CharacterDetailsBlock)";
+    warnings.push(`Zod validation skipped: ${errMsg}`);
+    return {
+      auction: null,
+      items: relations.items,
+      outfits: relations.outfits,
+      mounts: relations.mounts,
+      usps,
+      skillLoyalties: [],
+      reference,
+      parseError: errMsg,
+      warnings,
+    };
+  }
+
+  // ── 2. Złóż obiekt Auction (wymaga pól obowiązkowych) ────────────────
   const scrapedAtIso = scrapedAt.toISOString();
-
-  // Schema wymaga poprawnego vocation ↔ vocationPromoted. Jeśli któregoś brak
-  // → ustawiamy bezpieczne domyślne (failure mode: parser zwraca dane, ale
-  // Zod może je odrzucić, więc `auction` będzie null).
   const safeVocation = (identity.vocation ?? "Knight") as
-    | "Knight"
-    | "Paladin"
-    | "Druid"
-    | "Sorcerer"
-    | "Monk";
+    "Knight" | "Paladin" | "Druid" | "Sorcerer" | "Monk";
   const safeVocationPromoted = (identity.vocationPromoted ?? "Elite Knight") as
-    | "Elite Knight"
-    | "Royal Paladin"
-    | "Elder Druid"
-    | "Master Sorcerer"
-    | "Exalted Monk";
+    "Elite Knight" | "Royal Paladin" | "Elder Druid" | "Master Sorcerer" | "Exalted Monk";
   const safeSex: "M" | "F" = identity.sex ?? "M";
   const safeWorldId = identity.worldId ?? 1;
 
-  // Jeśli brak dat → Zod odrzuci; fallback: synthetic (teraz + 1h / + 24h).
-  const now = scrapedAtIso;
   const inOneHour = new Date(scrapedAt.getTime() + 60 * 60_000).toISOString();
   const inOneDay = new Date(scrapedAt.getTime() + 24 * 60 * 60_000).toISOString();
 
@@ -1168,7 +1150,7 @@ export function parseAuctionDetail(
     bidType: bid.bidType,
     auctionStart: dates.auctionStart ?? inOneHour,
     auctionEnd: dates.auctionEnd ?? inOneDay,
-    status: "active",
+    status: bid.status,
     finalPrice: undefined,
     skillMagic: skills.get("magic") ?? 0,
     skillClub: skills.get("club") ?? 0,
@@ -1206,12 +1188,12 @@ export function parseAuctionDetail(
     hasTwistOfFate: flags.hasTwistOfFate,
     blessingsActive: progression.blessingsActive,
     rawJson: { source: "tibia.com", html },
-    firstSeenAt: now,
-    lastSeenAt: now,
-    scrapedAt: now,
+    firstSeenAt: scrapedAtIso,
+    lastSeenAt: scrapedAtIso,
+    scrapedAt: scrapedAtIso,
   };
 
-  // ── 3. Walidacja Zod (R1 future-proof + wymuszenie kontraktu) ───────────
+  // ── 3. Walidacja Zod (R1 future-proof + wymuszenie kontraktu) ────────
   const parseResult = AuctionSchema.safeParse(auctionCandidate);
   if (!parseResult.success) {
     const errMsg = parseResult.error.issues
@@ -1221,11 +1203,12 @@ export function parseAuctionDetail(
     warnings.push(`Zod validation failed: ${errMsg}`);
     return {
       auction: null,
-      items,
-      outfits,
-      mounts,
+      items: relations.items,
+      outfits: relations.outfits,
+      mounts: relations.mounts,
       usps,
-      skillLoyalties,
+      skillLoyalties: [],
+      reference,
       parseError: errMsg,
       warnings,
     };
@@ -1233,11 +1216,12 @@ export function parseAuctionDetail(
 
   return {
     auction: parseResult.data,
-    items,
-    outfits,
-    mounts,
+    items: relations.items,
+    outfits: relations.outfits,
+    mounts: relations.mounts,
     usps,
-    skillLoyalties,
+    skillLoyalties: [],
+    reference,
     parseError: null,
     warnings,
   };
@@ -1248,10 +1232,9 @@ export function parseAuctionDetail(
 // ──────────────────────────────────────────────────────────────────────────
 
 /**
- * Stabilny hash 64-bit (FNV-1a 64) z `rawJson` (arch §8.3: skip gdy identyczne).
- *
+ * Stabilny hash 64-bit (FNV-1a 64) z HTML (arch §8.3: skip gdy identyczne).
  * Używany przez scheduler (task 36) do pominięcia detail fetch gdy
- * `rawJson` się nie zmienił od ostatniego scrape'a.
+ * rawJson się nie zmienił od ostatniego scrape'a.
  */
 export function rawJsonHash(html: string): string {
   let hash = 0xcbf29ce484222325n;
@@ -1272,11 +1255,4 @@ export function isAuctionDetailSuccessful(
 }
 
 // Re-export typów dla konsumentów.
-export type {
-  Auction,
-  AuctionItem,
-  AuctionOutfit,
-  AuctionMount,
-  AuctionUsp,
-  AuctionSkillLoyalty,
-};
+export type { Auction, AuctionItem, AuctionOutfit, AuctionMount, AuctionUsp, AuctionSkillLoyalty };

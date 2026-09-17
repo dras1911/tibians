@@ -1,32 +1,23 @@
 /**
- * Testy parsera detalu aukcji Bazaara Tibii (task 31).
+ * Testy parsera detalu aukcji Bazaara Tibii — **v2 (realny layout)**.
  *
- * Filozofia (analogicznie do `packages/shared/src/auction/__tests__/auction.test.ts`):
- *   - fixture HTML w `__fixtures__/*.html` (commitowane do repo, R1 insurance)
- *   - hand-crafted fixtures mirrorujące tibia.com layout (task 33 przypnę prawdziwe)
- *   - assert na konkretnych wartościach z każdego fixture'a
+ * Filozofia:
+ *   - fixture'y to KOPIE 1:1 żywych stron tibia.com (pobrane 2026-09-17
+ *     przez FlareSolverr+WARP; patrz `__fixtures__/README.md`),
+ *   - asercje na konkretnych wartościach z każdej aukcji (mutation guard),
+ *   - pokrycie: identity / bid / daty / skille / progresja / zasoby / flagi /
+ *     relacje 1:N / harvest słowników / helpery / guard błędnych stron.
  *
- * Pokrycie (minimum 12 + edge cases):
- *   1.  Rich fixture: pełna aukcja Exalted Monk — wszystkie 60+ pól wypełnione
- *   2.  Edge: pusta aukcja (brak outfitów/mountów/USPs/progresji)
- *   3.  Edge: EN-locale bid z comma separator
- *   4.  PL bid parsing: U+00A0 separator → 25501
- *   5.  PL date parsing: dd.mm.yyyy, hh:mm:ss → ISO datetime
- *   6.  Bid type: "Current bid" vs "Minimum bid" rozróżnienie
- *   7.  Skills: 8 wartości z `<div class="SkillsContainer">`
- *   8.  Skill loyalty: `style="width: N%"` → loyaltyPct
- *   9.  Items: `<img .../objects/{id}.gif>` + quantity
- *  10.  Outfits: addon mask extraction
- *  11.  Mounts: dedup per ID
- *  12.  USP categories: 14 kategorii 0-13 z ikon PNG + text matching
- *  13.  Flags: Soul War / Primal / World Transfer / Twist of Fate
- *  14.  Progression: charms / imbuements / quests / boss / achievements / animus
- *  15.  Resources: gems "44-0-0" / gold / store counts / hirelings / tcInvested
- *  16.  Zod walidacja: corrupted HTML → auction=null + parseError + warnings
- *  17.  rawJsonHash: stabilny + identyczny dla identycznego HTML
- *  18.  World ID: Antica → 1, nieznana → deterministyczny hash
- *  19.  Helper: parseLocaleNumber akceptuje U+00A0 i comma
- *  20.  Helper: parsePlDate na edge cases (nieprawidłowy format)
+ * Fixture'y:
+ *   - `auction-detail-live-2259395.html` — Lancelot royal archer (RP 402, aktywna)
+ *   - `auction-detail-live-2252245.html` — Misericuerdia (K 15, zakończona „Winning Bid")
+ *   - `auction-detail-live-2258972.html` — Khufuh (EK 865, Primal Ordeal, hash-world)
+ *   - `auction-detail-live-2255748.html` — Fuurius (EK 93, aktywna, bogate USP)
+ *   - `auction-detail-live-2258274.html` — Crazy Persil (MS 131, brak sekcji USP)
+ *
+ * UWAGA: stary layout v1 (fikcyjne fixture'y `auction-detail-*.html` bez
+ * sufiksu `-live-`) NIE jest już testowany — parser v1 nie potrafił czytać
+ * prawdziwego tibia.com (patrz nagłówek `auction-detail.ts`).
  */
 
 import { describe, expect, it } from "vitest";
@@ -38,14 +29,10 @@ import {
   parseAuctionDetail,
   parseLocaleNumber,
   parsePlDate,
+  parseTibiaDateTime,
   rawJsonHash,
   resolveWorldId,
-  type AuctionDetailResult,
 } from "./auction-detail.js";
-
-// ──────────────────────────────────────────────────────────────────────────
-// Helpers: wczytywanie fixtures
-// ──────────────────────────────────────────────────────────────────────────
 
 const FIXTURES_DIR = resolve(import.meta.dirname, "./__fixtures__");
 
@@ -53,498 +40,473 @@ function loadFixture(name: string): string {
   return readFileSync(resolve(FIXTURES_DIR, name), "utf8");
 }
 
-// ──────────────────────────────────────────────────────────────────────────
-// 1. Rich fixture — pełna aukcja Exalted Monk
-// ──────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// 1. Lancelot royal archer (RP 402, aktywna aukcja) — pełny „rich" fixture
+// ══════════════════════════════════════════════════════════════════════════
 
-describe("parseAuctionDetail — rich fixture (auction-detail-2173376.html)", () => {
-  const html = loadFixture("auction-detail-2173376.html");
-  const result = parseAuctionDetail(html, 2173376n);
+describe("parseAuctionDetail — Lancelot royal archer (live 2259395)", () => {
+  const html = loadFixture("auction-detail-live-2259395.html");
+  const result = parseAuctionDetail(html, 2259395n);
 
-  it("parses successfully (auction != null, parseError == null)", () => {
-    // Diagnostic — log parseError if not null
-    if (result.auction === null) {
-      // eslint-disable-next-line no-console
-      console.error("parseError:", result.parseError);
-      // eslint-disable-next-line no-console
-      console.error("warnings:", result.warnings.slice(0, 10));
-    }
-    expect(result.auction).not.toBeNull();
+  it("parsuje się bez błędu (auction != null, parseError == null)", () => {
     expect(result.parseError).toBeNull();
+    expect(result.auction).not.toBeNull();
     expect(isAuctionDetailSuccessful(result)).toBe(true);
   });
 
-  it("extracts identity fields (name/level/vocation/sex/worldId)", () => {
+  it("identity: name/level/vocation/sex/world/outfit", () => {
     const a = result.auction;
-    expect(a).not.toBeNull();
-    if (!a) return;
-    expect(a.id).toBe(2173376n);
-    expect(a.name).toBe("Migzen The Exalted");
-    expect(a.level).toBe(619);
-    expect(a.vocation).toBe("Monk");
-    expect(a.vocationPromoted).toBe("Exalted Monk");
-    expect(a.sex).toBe("M");
-    expect(a.worldId).toBe(1); // Antica → 1
+    expect(a?.id).toBe(2259395n);
+    expect(a?.name).toBe("Lancelot royal archer");
+    expect(a?.level).toBe(402);
+    expect(a?.vocation).toBe("Paladin");
+    expect(a?.vocationPromoted).toBe("Royal Paladin");
+    expect(a?.sex).toBe("M");
+    expect(a?.worldId).toBe(1); // Antica → 1 (KNOWN_WORLDS)
+    expect(a?.outfitId).toBe(972);
   });
 
-  it("extracts outfitId from header <img>", () => {
-    expect(result.auction?.outfitId).toBe(962);
+  it("bid: minimum 2500, status active", () => {
+    expect(result.auction?.bid).toBe(2500);
+    expect(result.auction?.bidType).toBe("minimum");
+    expect(result.auction?.status).toBe("active");
   });
 
-  it("extracts bid (PL locale, U+00A0 space)", () => {
-    expect(result.auction?.bid).toBe(25501);
-    expect(result.auction?.bidType).toBe("current");
+  it("daty: start z tekstu (CEST→UTC), end z data-timestamp", () => {
+    // „Sep 16 2026, 10:06 CEST" → 08:06 UTC
+    expect(result.auction?.auctionStart).toBe("2026-09-16T08:06:00.000Z");
+    // data-timestamp=1789664400 → 2026-09-17T17:00:00Z (19:00 CEST)
+    expect(result.auction?.auctionEnd).toBe("2026-09-17T17:00:00.000Z");
   });
 
-  it("extracts PL dates → ISO datetimes", () => {
-    expect(result.auction?.auctionStart).toBe("2026-09-08T10:00:00.000Z");
-    expect(result.auction?.auctionEnd).toBe("2026-09-08T22:00:00.000Z");
-  });
-
-  it("extracts all 8 skills (denormalized columns)", () => {
+  it("wszystkie 8 skilli (denormalizowane kolumny)", () => {
     const a = result.auction;
-    expect(a?.skillMagic).toBe(113);
-    expect(a?.skillClub).toBe(25);
-    expect(a?.skillFist).toBe(15);
-    expect(a?.skillSword).toBe(120);
-    expect(a?.skillAxe).toBe(15);
-    expect(a?.skillDistance).toBe(90);
-    expect(a?.skillShielding).toBe(110);
+    expect(a?.skillMagic).toBe(30);
+    expect(a?.skillClub).toBe(12);
+    expect(a?.skillFist).toBe(17);
+    expect(a?.skillSword).toBe(36);
+    expect(a?.skillAxe).toBe(25);
+    expect(a?.skillDistance).toBe(119);
+    expect(a?.skillShielding).toBe(108);
     expect(a?.skillFishing).toBe(20);
   });
 
-  it("extracts items (Ferumbras' Hat + Crystal Coin)", () => {
-    expect(result.items).toHaveLength(2);
-    const ferumbras = result.items.find((i) => i.itemId === 24999);
-    expect(ferumbras).toBeDefined();
-    expect(ferumbras?.quantity).toBe(3);
-    expect(ferumbras?.tier).toBeNull();
-    const crystal = result.items.find((i) => i.itemId === 2160);
-    expect(crystal?.quantity).toBe(1);
-  });
-
-  it("extracts outfits with addon mask (962_3 → 3, 156_2 → 2)", () => {
-    expect(result.outfits).toHaveLength(2);
-    const o962 = result.outfits.find((o) => o.outfitId === 962);
-    expect(o962?.addons).toBe(3);
-    const o156 = result.outfits.find((o) => o.outfitId === 156);
-    expect(o156?.addons).toBe(2);
-  });
-
-  it("extracts mounts (Cerberus + Dawnbinder)", () => {
-    expect(result.mounts).toHaveLength(2);
-    expect(result.mounts.some((m) => m.mountId === 586)).toBe(true);
-    expect(result.mounts.some((m) => m.mountId === 456)).toBe(true);
-  });
-
-  it("extracts USP categories (5 lines: skill/soul_war/world/twist/boss)", () => {
-    expect(result.usps).toHaveLength(5);
-    // Kolejność sortOrder zachowana
-    expect(result.usps[0]?.category).toBe(0); // skill: 120 Sword Fighting
-    expect(result.usps[0]?.text).toContain("Sword Fighting");
-    expect(result.usps[1]?.category).toBe(12); // soul_war
-    expect(result.usps[1]?.text).toContain("Soul War");
-    expect(result.usps[2]?.category).toBe(11); // world_transfer
-    expect(result.usps[2]?.text).toContain("World Transfer");
-    expect(result.usps[3]?.category).toBe(8); // twist_of_fate
-    expect(result.usps[3]?.text).toContain("Twist of Fate");
-    expect(result.usps[4]?.category).toBe(13); // boss points
-    expect(result.usps[4]?.text).toContain("Boss points");
-  });
-
-  it("extracts skill loyalty (Sword 25%, Magic 10%)", () => {
-    expect(result.skillLoyalties).toHaveLength(2);
-    const sword = result.skillLoyalties.find((s) => s.skill === "sword");
-    expect(sword?.baseValue).toBe(120);
-    expect(sword?.loyaltyPct).toBe(25);
-    const magic = result.skillLoyalties.find((s) => s.skill === "magic");
-    expect(magic?.baseValue).toBe(113);
-    expect(magic?.loyaltyPct).toBe(10);
-  });
-
-  it("extracts boolean flags (Soul War + World Transfer + Twist of Fate)", () => {
-    expect(result.auction?.hasSoulWar).toBe(true);
-    expect(result.auction?.hasPrimalOrdeal).toBe(false);
-    expect(result.auction?.hasWorldTransfer).toBe(true);
-    expect(result.auction?.hasTwistOfFate).toBe(true);
-    expect(result.auction?.hasPreySlot).toBe(false);
-    expect(result.auction?.hasCharmExpansion).toBe(false);
-    expect(result.auction?.hasWeeklyTaskExpansion).toBe(false);
-  });
-
-  it("extracts progression (charms/imbues/quests/boss/animus/achievements/blessings)", () => {
+  it("progresja: charm points = available + spent; echoes; boss; imbuements; quests", () => {
     const a = result.auction;
-    expect(a?.charmPoints).toBe(7611);
-    expect(a?.minorCharmEchoes).toBe(12);
-    expect(a?.imbuementsUnlocked).toBe(11);
+    expect(a?.charmPoints).toBe(3523); // 523 + 3000
+    expect(a?.charmPointsUnused).toBe(523);
+    expect(a?.minorCharmEchoes).toBe(400); // 50 + 350
+    expect(a?.bossPoints).toBe(1415);
+    expect(a?.imbuementsUnlocked).toBe(21);
     expect(a?.imbuementsTotal).toBe(23);
-    expect(a?.questsCompleted).toBe(28);
+    expect(a?.questsCompleted).toBe(20);
     expect(a?.questsTotal).toBe(42);
-    expect(a?.bossPoints).toBe(2340);
-    expect(a?.achievementPoints).toBe(5420);
-    expect(a?.animusMasteries).toBe(180);
+    expect(a?.achievementPoints).toBe(314);
+    expect(a?.animusMasteries).toBe(0);
     expect(a?.blessingsActive).toBe(5);
   });
 
-  it("extracts resources (gems/gold/store counts/tcInvested)", () => {
+  it("zasoby: gemy (lesser/regular/greater), store counts, hirelings, gold", () => {
     const a = result.auction;
-    expect(a?.gemsLesser).toBe(44);
-    expect(a?.gemsRegular).toBe(0);
+    expect(a?.gemsLesser).toBe(4);
+    expect(a?.gemsRegular).toBe(4);
     expect(a?.gemsGreater).toBe(0);
-    expect(a?.goldTotal).toBe(500000n);
     expect(a?.storeOutfitsCount).toBe(3);
     expect(a?.storeMountsCount).toBe(2);
-    expect(a?.storeItemsCount).toBe(15);
+    expect(a?.storeItemsCount).toBe(14);
     expect(a?.hirelingsCount).toBe(1);
-    expect(a?.tcInvested).toBe(3900);
+    expect(a?.goldTotal).toBe(28552n);
+    expect(a?.tcInvested).toBeNull();
   });
 
-  it("stores rawJson with full HTML (R1 future-proof)", () => {
-    expect(result.auction?.rawJson).toBeDefined();
-    expect((result.auction?.rawJson as { html?: string }).html).toBe(html);
-  });
-
-  it("computes pricePerLevel (GENERATED) and searchVector", () => {
+  it("flagi: World Transfer + Prey Slot + Twist of Fate; brak Soul War/Primal", () => {
     const a = result.auction;
-    expect(a?.pricePerLevel).toBeCloseTo(25501 / 619, 5);
-    expect(a?.searchVector).toBe("migzen the exalted");
+    expect(a?.hasSoulWar).toBe(false);
+    expect(a?.hasPrimalOrdeal).toBe(false);
+    expect(a?.hasWorldTransfer).toBe(true);
+    expect(a?.hasPreySlot).toBe(true);
+    expect(a?.hasCharmExpansion).toBe(false);
+    expect(a?.hasWeeklyTaskExpansion).toBe(false);
+    expect(a?.hasTwistOfFate).toBe(true);
   });
 
-  it("sets firstSeenAt/lastSeenAt/scrapedAt to ISO datetimes", () => {
+  it("relacje: 90 itemów (76 + 14 store), 31 outfitów, 17 mountów", () => {
+    expect(result.items).toHaveLength(90);
+    expect(result.outfits).toHaveLength(31);
+    expect(result.mounts).toHaveLength(17);
+  });
+
+  it("itemy: ilość z ObjectAmount („5x big table” → 5), nazwa bez prefiksu", () => {
+    const bait = result.items.find((i) => i.itemId === 939);
+    expect(bait?.quantity).toBe(1);
+    expect(bait?.tier).toBe(0); // konwencja: 0 = base (kolumna NOT NULL przez PK)
+    const bigTable = result.items.find((i) => i.itemId === 2314);
+    expect(bigTable?.quantity).toBe(5);
+  });
+
+  it("outfity: addon maska z URL (972_0 → 0, 129_3 → 3)", () => {
+    const o129 = result.outfits.find((o) => o.outfitId === 129);
+    expect(o129?.addons).toBe(3);
+    const o132 = result.outfits.find((o) => o.outfitId === 132);
+    expect(o132?.addons).toBe(0);
+  });
+
+  it("USP: 5 linijek z kategoriami z ikon usp-category-N.png", () => {
+    expect(result.usps).toHaveLength(5);
+    const dummy = result.usps.find((u) => u.text.includes("ferumbras exercise dummy"));
+    expect(dummy?.category).toBe(4); // store items
+    expect(dummy?.sortOrder).toBe(0);
+    const slots = result.usps.find((u) => u.text.includes("Additional Slots"));
+    expect(slots?.category).toBe(5); // cosmetic
+  });
+
+  it("harvest słowników: świat + nazwy/obrazki itemów/outfitów/mountów", () => {
+    expect(result.reference.world).toEqual({ id: 1, name: "Antica" });
+    expect(result.reference.items).toHaveLength(90);
+    expect(result.reference.outfits).toHaveLength(31);
+    expect(result.reference.mounts).toHaveLength(17);
+
+    const bigTable = result.reference.items.find((i) => i.id === 2314);
+    expect(bigTable?.name).toBe("big table");
+    expect(bigTable?.imageUrl).toBe(
+      "https://static.tibia.com/images/charactertrade/objects/2314.gif",
+    );
+    expect(bigTable?.isStoreItem).toBe(false);
+
+    const citizen = result.reference.outfits.find((o) => o.id === 128);
+    expect(citizen?.name).toBe("Citizen");
+    expect(citizen?.isStore).toBe(false);
+
+    const widow = result.reference.mounts.find((m) => m.id === 368);
+    expect(widow?.name).toBe("Widow Queen");
+  });
+
+  it("skillLoyalties: puste (nowy layout nie publikuje loyalty %)", () => {
+    expect(result.skillLoyalties).toHaveLength(0);
+  });
+
+  it("Zod transform: pricePerLevel + searchVector", () => {
     const a = result.auction;
-    expect(a?.firstSeenAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    expect(a?.lastSeenAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
-    expect(a?.scrapedAt).toMatch(/^\d{4}-\d{2}-\d{2}T/);
+    expect(a?.pricePerLevel).toBeCloseTo(2500 / 402, 5);
+    expect(a?.searchVector).toBe("lancelot royal archer");
+  });
+
+  it("rawJson zawiera pełny HTML źródłowy", () => {
+    expect(result.auction?.rawJson.source).toBe("tibia.com");
+    expect(typeof result.auction?.rawJson.html).toBe("string");
   });
 });
 
-// ──────────────────────────────────────────────────────────────────────────
-// 2. Edge case: minimal/empty fixture
-// ──────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// 2. Misericuerdia (K 15) — aukcja zakończona („Winning Bid", bez timera)
+// ══════════════════════════════════════════════════════════════════════════
 
-describe("parseAuctionDetail — minimal fixture (auction-detail-empty.html)", () => {
-  const html = loadFixture("auction-detail-empty.html");
-  const result = parseAuctionDetail(html, 99999n);
+describe("parseAuctionDetail — Misericuerdia (live 2252245, finished)", () => {
+  const html = loadFixture("auction-detail-live-2252245.html");
+  const result = parseAuctionDetail(html, 2252245n);
 
-  it("still parses (no Zod rejection) and produces minimal record", () => {
-    if (result.auction === null) {
-      // eslint-disable-next-line no-console
-      console.error("[empty fixture] parseError:", result.parseError);
-      // eslint-disable-next-line no-console
-      console.error("[empty fixture] warnings:", result.warnings.slice(0, 5));
-    }
+  it("parsuje się i wykrywa status finished („currently processed”)", () => {
     expect(result.auction).not.toBeNull();
-    expect(result.parseError).toBeNull();
-    expect(result.auction?.name).toBe("Min Tester");
-    expect(result.auction?.level).toBe(50);
-    expect(result.auction?.vocation).toBe("Knight");
-    expect(result.auction?.vocationPromoted).toBe("Elite Knight");
-    expect(result.auction?.worldId).toBe(17); // Belobra → 17
+    expect(result.auction?.status).toBe("finished");
+    // „Winning Bid" traktujemy jako current (była licytacja)
+    expect(result.auction?.bidType).toBe("current");
+    expect(result.auction?.bid).toBe(1801);
   });
 
-  it("distinguishes Minimum bid type", () => {
-    expect(result.auction?.bid).toBe(500);
-    expect(result.auction?.bidType).toBe("minimum");
+  it("daty z tekstu (brak timera): start i end w UTC", () => {
+    expect(result.auction?.auctionStart).toBe("2026-09-08T08:27:00.000Z");
+    expect(result.auction?.auctionEnd).toBe("2026-09-17T15:45:00.000Z");
   });
 
-  it("yields empty 1:N relations when no outfits/mounts/items/USPs", () => {
-    expect(result.items).toEqual([]);
-    expect(result.outfits).toEqual([]);
-    expect(result.mounts).toEqual([]);
-    expect(result.usps).toEqual([]);
-    expect(result.skillLoyalties).toEqual([]);
-  });
-
-  it("produces warnings for missing sections (usps/outfits/etc)", () => {
-    expect(result.warnings.length).toBeGreaterThan(0);
-    expect(
-      result.warnings.some((w) => w.includes("usps")),
-    ).toBe(true);
-    expect(
-      result.warnings.some((w) => w.includes("outfits")),
-    ).toBe(true);
-  });
-
-  it("leaves skill defaults at 10/10/.../10 and zero progression", () => {
+  it("identity + świat Ombra (KNOWN_WORLDS → 122)", () => {
     const a = result.auction;
-    expect(a?.skillMagic).toBe(10);
-    expect(a?.skillFishing).toBe(10);
+    expect(a?.name).toBe("Misericuerdia");
+    expect(a?.level).toBe(15);
+    expect(a?.vocation).toBe("Knight");
+    expect(a?.vocationPromoted).toBe("Elite Knight");
+    expect(a?.worldId).toBe(122);
+    expect(a?.outfitId).toBe(131);
+  });
+
+  it("minimalna progresja (nowa postać): zero charmów, 1 quest, 0 blessings", () => {
+    const a = result.auction;
+    expect(a?.charmPoints).toBe(0);
+    expect(a?.minorCharmEchoes).toBe(0);
     expect(a?.bossPoints).toBe(0);
     expect(a?.imbuementsUnlocked).toBe(0);
-    expect(a?.questsCompleted).toBe(0);
+    expect(a?.questsCompleted).toBe(1);
+    expect(a?.achievementPoints).toBe(5);
     expect(a?.blessingsActive).toBe(0);
-    expect(a?.goldTotal).toBe(0n);
   });
 
-  it("outfitId is null when no outfit image in header", () => {
-    expect(result.auction?.outfitId).toBeNull();
+  it("itemy w ekwipunku (backpack/rope/boots of haste)", () => {
+    expect(result.items).toHaveLength(22);
+    const backpack = result.reference.items.find((i) => i.id === 2867);
+    expect(backpack?.name).toBe("red backpack");
+    const boots = result.reference.items.find((i) => i.id === 3079);
+    expect(boots?.name).toBe("boots of haste");
+  });
+
+  it("USP: linijki skilli („Loyalty bonus not included”)", () => {
+    expect(result.usps).toHaveLength(2);
+    expect(result.usps[0]?.text).toBe("116 Club Fighting (Loyalty bonus not included)");
+    expect(result.usps[0]?.category).toBe(0);
   });
 });
 
-// ──────────────────────────────────────────────────────────────────────────
-// 3. EN locale: bid with comma separator
-// ──────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// 3. Khufuh (EK 865) — Primal Ordeal, Charm Expansion, hash-world (Havera)
+// ══════════════════════════════════════════════════════════════════════════
 
-describe("parseAuctionDetail — EN locale bid (auction-detail-en.html)", () => {
-  const html = loadFixture("auction-detail-en.html");
-  const result = parseAuctionDetail(html, 11111n);
+describe("parseAuctionDetail — Khufuh (live 2258972)", () => {
+  const html = loadFixture("auction-detail-live-2258972.html");
+  const result = parseAuctionDetail(html, 2258972n);
 
-  it("parses comma-formatted bid (1,234,567 → 1234567)", () => {
+  it("world spoza KNOWN_WORLDS → stabilny hash (Havera → 29766)", () => {
+    expect(result.auction?.worldId).toBe(29766);
+    expect(result.reference.world).toEqual({ id: 29766, name: "Havera" });
+    // deterministyczność: ten sam hash przy powtórnym wywołaniu
+    expect(resolveWorldId("Havera")).toBe(29766);
+  });
+
+  it("flagi progresji: Primal Ordeal + Charm Expansion + Weekly Task", () => {
+    const a = result.auction;
+    expect(a?.hasPrimalOrdeal).toBe(true); // quest line „Primal Ordeal"
+    expect(a?.hasSoulWar).toBe(false);
+    expect(a?.hasCharmExpansion).toBe(true);
+    expect(a?.hasWeeklyTaskExpansion).toBe(true);
+    expect(a?.hasPreySlot).toBe(true);
+  });
+
+  it("duże liczby: charms 7695 (495+7200), echoes 1000, animus 31/31", () => {
+    const a = result.auction;
+    expect(a?.charmPoints).toBe(7695);
+    expect(a?.charmPointsUnused).toBe(495);
+    expect(a?.minorCharmEchoes).toBe(1000);
+    expect(a?.animusMasteries).toBe(31);
+    expect(a?.bossPoints).toBe(1890);
+    expect(a?.achievementPoints).toBe(449);
+    expect(a?.blessingsActive).toBe(7);
+  });
+
+  it("gemy: 3 regular + 2 greater (bez lesser)", () => {
+    const a = result.auction;
+    expect(a?.gemsLesser).toBe(0);
+    expect(a?.gemsRegular).toBe(3);
+    expect(a?.gemsGreater).toBe(2);
+  });
+
+  it("imbuementsUnlocked=24 → imbuementsTotal nie może być mniejsze (refine)", () => {
+    expect(result.auction?.imbuementsUnlocked).toBe(24);
+    expect(result.auction?.imbuementsTotal).toBe(24);
+  });
+
+  it("USP: „Charm Points: 7695 (Unused: 495)…” z kategorią 7", () => {
+    const charmUsp = result.usps.find((u) => u.text.startsWith("Charm Points:"));
+    expect(charmUsp?.category).toBe(7);
+    expect(charmUsp?.text).toContain("Minor Charm Echoes: 1000");
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// 4. Fuurius (EK 93) — aktywna, potiony z ilościami, bogate USP
+// ══════════════════════════════════════════════════════════════════════════
+
+describe("parseAuctionDetail — Fuurius (live 2255748)", () => {
+  const html = loadFixture("auction-detail-live-2255748.html");
+  const result = parseAuctionDetail(html, 2255748n);
+
+  it("identity: Knight 93, Bona → 21", () => {
+    const a = result.auction;
+    expect(a?.name).toBe("Fuurius");
+    expect(a?.level).toBe(93);
+    expect(a?.worldId).toBe(21);
+    expect(a?.outfitId).toBe(131);
+    expect(a?.status).toBe("active");
+  });
+
+  it("skille: sword fighter (109 sword / 102 shielding)", () => {
+    const a = result.auction;
+    expect(a?.skillSword).toBe(109);
+    expect(a?.skillShielding).toBe(102);
+    expect(a?.skillMagic).toBe(6);
+  });
+
+  it("stacki potionów: 118x great health potion, 8x health potion", () => {
+    const greatHealth = result.items.find((i) => i.itemId === 239);
+    expect(greatHealth?.quantity).toBe(118);
+    const health = result.items.find((i) => i.itemId === 266);
+    expect(health?.quantity).toBe(8);
+  });
+
+  it("USP: 5 linijek (store item + skille + level + gold)", () => {
+    expect(result.usps).toHaveLength(5);
+    expect(result.usps[0]?.text).toBe("140x a supreme health potion (Store Item)");
+    expect(result.usps[0]?.category).toBe(4);
+    const gold = result.usps.find((u) => u.text.includes("Gold total"));
+    expect(gold?.category).toBe(1);
+    expect(gold?.text).toBe("250720 Gold total in bank, inventory and depot");
+  });
+
+  it("gems + goldTotal z sekcji", () => {
+    const a = result.auction;
+    expect(a?.goldTotal).toBe(250720n);
+    expect(a?.gemsLesser).toBe(4);
+    expect(a?.gemsRegular).toBe(4);
+  });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// 5. Crazy Persil (MS 131) — brak sekcji USP (edge case)
+// ══════════════════════════════════════════════════════════════════════════
+
+describe("parseAuctionDetail — Crazy Persil (live 2258274)", () => {
+  const html = loadFixture("auction-detail-live-2258274.html");
+  const result = parseAuctionDetail(html, 2258274n);
+
+  it("parsuje się mimo braku sekcji SpecialCharacterFeatures", () => {
     expect(result.auction).not.toBeNull();
-    expect(result.auction?.bid).toBe(1234567);
-    expect(result.auction?.bidType).toBe("current");
+    expect(result.usps).toHaveLength(0);
+    // „usps: none extracted" jest warningiem, nie błędem
+    expect(result.warnings).toContain("usps: none extracted");
   });
 
-  it("resolves Astera → worldId=11", () => {
-    expect(result.auction?.worldId).toBe(11);
+  it("identity: Sorcerer 131, Celesta → 31", () => {
+    const a = result.auction;
+    expect(a?.name).toBe("Crazy Persil");
+    expect(a?.vocation).toBe("Sorcerer");
+    expect(a?.vocationPromoted).toBe("Master Sorcerer");
+    expect(a?.worldId).toBe(31);
+    expect(a?.outfitId).toBe(133);
   });
 
-  it("parses gold even with thousands commas", () => {
-    expect(result.auction?.goldTotal).toBe(50000n);
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 4. parseLocaleNumber — locale-aware parsing helper
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("parseLocaleNumber", () => {
-  it("parses PL NBSP '25\\u00A0501' → 25501", () => {
-    expect(parseLocaleNumber("25\u00A0501")).toBe(25501);
+  it("store item z przecinkiem w ilości: „2,921x ultimate mana potion”", () => {
+    const ultimate = result.reference.items.find((i) => i.id === 23373);
+    expect(ultimate?.name).toBe("ultimate mana potion");
+    expect(ultimate?.isStoreItem).toBe(true);
   });
 
-  it("parses EN comma '1,234,567' → 1234567", () => {
-    expect(parseLocaleNumber("1,234,567")).toBe(1234567);
-  });
-
-  it("parses PL plain '25 501' → 25501 (zwykły space)", () => {
-    expect(parseLocaleNumber("25 501")).toBe(25501);
-  });
-
-  it("parses no-separator '25501' → 25501", () => {
-    expect(parseLocaleNumber("25501")).toBe(25501);
-  });
-
-  it("returns null for empty / non-numeric", () => {
-    expect(parseLocaleNumber("")).toBeNull();
-    expect(parseLocaleNumber(null)).toBeNull();
-    expect(parseLocaleNumber(undefined)).toBeNull();
-    expect(parseLocaleNumber("abc")).toBeNull();
-  });
-
-  it("returns null for unsafe integer (> Number.MAX_SAFE_INTEGER)", () => {
-    expect(parseLocaleNumber("99999999999999999999")).toBeNull();
+  it("mount Sparkion + 31 itemów + 12 outfitów", () => {
+    expect(result.items).toHaveLength(31);
+    expect(result.outfits).toHaveLength(12);
+    expect(result.mounts).toHaveLength(1);
+    expect(result.reference.mounts[0]?.name).toBe("Sparkion");
   });
 });
 
-// ──────────────────────────────────────────────────────────────────────────
-// 5. parsePlDate — PL/EU date parser
-// ──────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// 6. Guard: strony, które NIE są detalem aukcji
+// ══════════════════════════════════════════════════════════════════════════
 
-describe("parsePlDate", () => {
-  it("parses '08.09.2026, 22:15:33' → ISO datetime", () => {
-    expect(parsePlDate("08.09.2026, 22:15:33")).toBe(
-      "2026-09-08T22:15:33.000Z",
-    );
-  });
-
-  it("parses '08.09.2026 22:15:33' (no comma)", () => {
-    expect(parsePlDate("08.09.2026 22:15:33")).toBe(
-      "2026-09-08T22:15:33.000Z",
-    );
-  });
-
-  it("parses date within mixed text (regex extraction)", () => {
-    expect(
-      parsePlDate("Auction End: 08.09.2026, 22:15:33 (UTC)"),
-    ).toBe("2026-09-08T22:15:33.000Z");
-  });
-
-  it("returns null for invalid format", () => {
-    expect(parsePlDate("2026-09-08")).toBeNull();
-    expect(parsePlDate("08/09/2026")).toBeNull();
-    expect(parsePlDate("")).toBeNull();
-    expect(parsePlDate(null)).toBeNull();
-  });
-
-  it("rejects invalid day/month ranges", () => {
-    expect(parsePlDate("32.01.2026, 00:00:00")).toBeNull();
-    expect(parsePlDate("01.13.2026, 00:00:00")).toBeNull();
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 6. resolveWorldId — known worlds + hash fallback
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("resolveWorldId", () => {
-  it("maps known worlds to canonical smallint IDs", () => {
-    expect(resolveWorldId("Antica")).toBe(1);
-    expect(resolveWorldId("Belobra")).toBe(17);
-    expect(resolveWorldId("Astera")).toBe(11);
-  });
-
-  it("is case-insensitive for known worlds", () => {
-    expect(resolveWorldId("antica")).toBe(1);
-    expect(resolveWorldId("ANTICA")).toBe(1);
-  });
-
-  it("falls back to deterministic hash for unknown worlds", () => {
-    const a = resolveWorldId("Atlantis");
-    const b = resolveWorldId("Atlantis");
-    expect(a).toBe(b); // deterministic
-    expect(a).toBeGreaterThanOrEqual(100);
-    expect(a).toBeLessThanOrEqual(32767);
-  });
-
-  it("produces different IDs for different names", () => {
-    const a = resolveWorldId("Atlantis");
-    const c = resolveWorldId("Lemuria");
-    expect(a).not.toBe(c);
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 7. rawJsonHash — stable hash for diff/skip logic
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("rawJsonHash", () => {
-  it("produces stable 16-char hex hash", () => {
-    const h1 = rawJsonHash("<html>foo</html>");
-    const h2 = rawJsonHash("<html>foo</html>");
-    expect(h1).toBe(h2);
-    expect(h1).toMatch(/^[0-9a-f]{16}$/);
-  });
-
-  it("produces different hashes for different HTML", () => {
-    const a = rawJsonHash("<html>foo</html>");
-    const b = rawJsonHash("<html>bar</html>");
-    expect(a).not.toBe(b);
-  });
-
-  it("is sensitive to whitespace differences", () => {
-    const a = rawJsonHash("<html>foo</html>");
-    const b = rawJsonHash("<html> foo </html>");
-    expect(a).not.toBe(b);
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 8. Zod validation failure mode
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("parseAuctionDetail — Zod validation failure", () => {
-  it("returns auction=null + parseError for malformed input", () => {
-    // Pusty HTML — brak wszystkich pól. Parser nadaje fallbacki → Zod przejdzie.
-    // Aby wymusić failure, musimy zmanipulować schemę. Pomijamy tu — fallbacki
-    // bezpieczne dla Zod. Sprawdzamy natomiast typ wyniku.
-    const result: AuctionDetailResult = parseAuctionDetail("", 1n);
-    // Pusty HTML → fallbacki bezpieczne → Zod przejdzie
-    expect(result.parseError).toBeNull();
-    expect(result.auction).not.toBeNull();
-    // Ale warnings są obfite
-    expect(result.warnings.length).toBeGreaterThan(5);
-  });
-
-  it("never throws — malformed HTML always returns a result", () => {
-    expect(() => parseAuctionDetail("", 1n)).not.toThrow();
-    expect(() => parseAuctionDetail("not html at all", 1n)).not.toThrow();
-    expect(() => parseAuctionDetail("<html><body></body></html>", 1n)).not.toThrow();
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 9. Status / finalPrice behavior
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("parseAuctionDetail — status defaults to active", () => {
-  it("sets status='active' and finalPrice=null", () => {
-    const html = loadFixture("auction-detail-empty.html");
-    const result = parseAuctionDetail(html, 42n);
-    expect(result.auction?.status).toBe("active");
-    expect(result.auction?.finalPrice).toBeUndefined();
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 10. Idempotencja — ponowne parsowanie daje identyczny wynik
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("parseAuctionDetail — idempotency", () => {
-  it("returns structurally equal result for identical input", () => {
-    const html = loadFixture("auction-detail-2173376.html");
-    const r1 = parseAuctionDetail(html, 2173376n);
-    const r2 = parseAuctionDetail(html, 2173376n);
-    expect(r1.auction?.id).toBe(r2.auction?.id);
-    expect(r1.auction?.bid).toBe(r2.auction?.bid);
-    expect(r1.items.length).toBe(r2.items.length);
-    expect(r1.outfits.length).toBe(r2.outfits.length);
-    expect(r1.mounts.length).toBe(r2.mounts.length);
-    expect(r1.usps.length).toBe(r2.usps.length);
-    expect(r1.skillLoyalties.length).toBe(r2.skillLoyalties.length);
-  });
-});
-
-// ──────────────────────────────────────────────────────────────────────────
-// 11. isAuctionDetailSuccessful type guard
-// ──────────────────────────────────────────────────────────────────────────
-
-describe("isAuctionDetailSuccessful", () => {
-  it("returns true when auction != null and parseError == null", () => {
-    const result = parseAuctionDetail(
-      loadFixture("auction-detail-2173376.html"),
-      2173376n,
-    );
-    expect(isAuctionDetailSuccessful(result)).toBe(true);
-  });
-
-  it("returns false when auction is null", () => {
-    // Symulujemy poprzez zmuszenie do failure — tu używamy pustego rezultatu
-    // poprzez type-cast (parser z fallbackami nie da auction=null).
-    const result: AuctionDetailResult = {
-      auction: null,
-      items: [],
-      outfits: [],
-      mounts: [],
-      usps: [],
-      skillLoyalties: [],
-      parseError: "synthetic",
-      warnings: [],
-    };
+describe("parseAuctionDetail — guard błędnych stron", () => {
+  it("pusty HTML → auction=null + parseError (bez śmieciowych fallbacków)", () => {
+    const result = parseAuctionDetail("<html><body>hello</body></html>", 123n);
+    expect(result.auction).toBeNull();
+    expect(result.parseError).toContain("not an auction detail page");
     expect(isAuctionDetailSuccessful(result)).toBe(false);
   });
+
+  it("strona listy (nie detal) → auction=null", () => {
+    const listHtml = loadFixture("auction-list-live-2026-09-17.html");
+    const result = parseAuctionDetail(listHtml, 999n);
+    // Lista MA .AuctionCharacterName (25 bloków) — guard nie zadziała na listę!
+    // …ale poziom/listy nie ma w formacie „Level: N | Vocation: …" na poziomie body,
+    // więc identity.level pozostaje null → guard łapie.
+    expect(result.auction).toBeNull();
+    expect(result.parseError).toContain("not an auction detail page");
+  });
+
+  it("uszkodzony HTML z poprawnym nagłówkiem → Zod reject albo sukces częściowy", () => {
+    const broken = `<html><body><div class="AuctionCharacterName">Tester</div>
+      Level: 100 | Vocation: Knight | Male | World: Antica
+      <div class="ShortAuctionDataBidRow"><div class="ShortAuctionDataLabel">Minimum Bid:</div>
+      <div class="ShortAuctionDataValue">not-a-number</div></div></body></html>`;
+    const result = parseAuctionDetail(broken, 42n);
+    // Nagłówek jest OK → Zod przechodzi z fallbackami (bid 0, daty syntetyczne)
+    // albo zwraca parseError — żadna ścieżka nie może rzucić wyjątku.
+    expect(result).toBeDefined();
+    if (result.auction !== null) {
+      expect(result.auction.bid).toBe(0);
+      expect(result.warnings.length).toBeGreaterThan(0);
+    } else {
+      expect(result.parseError).not.toBeNull();
+    }
+  });
 });
 
-// ──────────────────────────────────────────────────────────────────────────
-// 12. Cross-validation refinements (AuctionSchema)
-// ──────────────────────────────────────────────────────────────────────────
+// ══════════════════════════════════════════════════════════════════════════
+// 7. Helpery
+// ══════════════════════════════════════════════════════════════════════════
 
-describe("parseAuctionDetail — AuctionSchema refinements", () => {
-  it("computes pricePerLevel via .transform() (GENERATED in DB)", () => {
-    const html = loadFixture("auction-detail-2173376.html");
-    const result = parseAuctionDetail(html, 2173376n);
-    expect(result.auction?.pricePerLevel).toBeCloseTo(25501 / 619, 3);
+describe("parseLocaleNumber", () => {
+  it("akceptuje U+00A0, przecinki i gołe liczby", () => {
+    expect(parseLocaleNumber("25\u00A0501")).toBe(25501);
+    expect(parseLocaleNumber("25,501")).toBe(25501);
+    expect(parseLocaleNumber("25501")).toBe(25501);
+    expect(parseLocaleNumber("1,073,009,429")).toBe(1073009429);
   });
 
-  it("derives searchVector from name (lowercased)", () => {
-    const html = loadFixture("auction-detail-2173376.html");
-    const result = parseAuctionDetail(html, 2173376n);
-    expect(result.auction?.searchVector).toBe("migzen the exalted");
+  it("zwraca null dla pustych/nie-liczbowych", () => {
+    expect(parseLocaleNumber("")).toBeNull();
+    expect(parseLocaleNumber(null)).toBeNull();
+    expect(parseLocaleNumber("abc")).toBeNull();
+    expect(parseLocaleNumber("12x")).toBeNull();
+  });
+});
+
+describe("parseTibiaDateTime", () => {
+  it("CEST (UTC+2): „Sep 17 2026, 19:00 CEST” → 17:00Z", () => {
+    expect(parseTibiaDateTime("Sep 17 2026, 19:00 CEST")).toBe("2026-09-17T17:00:00.000Z");
   });
 
-  it("auctionEnd strictly after auctionStart (refine passes)", () => {
-    const html = loadFixture("auction-detail-2173376.html");
-    const result = parseAuctionDetail(html, 2173376n);
-    expect(
-      Date.parse(result.auction!.auctionEnd) >
-        Date.parse(result.auction!.auctionStart),
-    ).toBe(true);
+  it("CET (UTC+1): „Nov 13 2019, 19:37:33 CET” → 18:37:33Z", () => {
+    expect(parseTibiaDateTime("Nov 13 2019, 19:37:33 CET")).toBe("2019-11-13T18:37:33.000Z");
   });
 
-  it("vocationPromoted matches vocation (Knight→Elite Knight refine)", () => {
-    const html = loadFixture("auction-detail-empty.html");
-    const result = parseAuctionDetail(html, 42n);
-    expect(result.auction?.vocation).toBe("Knight");
-    expect(result.auction?.vocationPromoted).toBe("Elite Knight");
+  it("NBSP w treści (jak w HTML)", () => {
+    expect(parseTibiaDateTime("Sep\u00A016\u00A02026, 10:06\u00A0CEST")).toBe(
+      "2026-09-16T08:06:00.000Z",
+    );
+  });
+
+  it("odrzuca nieprawidłowe formaty", () => {
+    expect(parseTibiaDateTime("08.09.2026, 22:15:33")).toBeNull();
+    expect(parseTibiaDateTime("Foo 17 2026, 19:00 CEST")).toBeNull();
+    expect(parseTibiaDateTime(null)).toBeNull();
+  });
+});
+
+describe("parsePlDate (legacy v1 — dla zgodności)", () => {
+  it("parsuje PL datę", () => {
+    expect(parsePlDate("08.09.2026, 22:15:33")).toBe("2026-09-08T22:15:33.000Z");
+  });
+
+  it("odrzuca nieprawidłowe formaty", () => {
+    expect(parsePlDate("Sep 17 2026, 19:00 CEST")).toBeNull();
+    expect(parsePlDate("")).toBeNull();
+  });
+});
+
+describe("resolveWorldId", () => {
+  it("znane światy → stałe ID; case-insensitive", () => {
+    expect(resolveWorldId("Antica")).toBe(1);
+    expect(resolveWorldId("antica")).toBe(1);
+    expect(resolveWorldId("Ombra")).toBe(122);
+  });
+
+  it("nieznane światy → deterministyczny hash w zakresie 100..32766", () => {
+    const a = resolveWorldId("Havera");
+    const b = resolveWorldId("Havera");
+    expect(a).toBe(b);
+    expect(a).toBeGreaterThanOrEqual(100);
+    expect(a).toBeLessThanOrEqual(32766);
+  });
+});
+
+describe("rawJsonHash", () => {
+  it("stabilny dla identycznego HTML i różny dla różnych", () => {
+    expect(rawJsonHash("<html>a</html>")).toBe(rawJsonHash("<html>a</html>"));
+    expect(rawJsonHash("<html>a</html>")).not.toBe(rawJsonHash("<html>b</html>"));
+    expect(rawJsonHash("")).toHaveLength(16);
   });
 });

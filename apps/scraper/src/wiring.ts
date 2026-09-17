@@ -33,15 +33,11 @@ import {
   upsertMounts,
   upsertOutfits,
   type Db,
-} from '@tibians/db';
-import { VocationSchema } from '@tibians/shared/auction';
+} from "@tibians/db";
+import { VocationSchema } from "@tibians/shared/auction";
 
-import { AuctionSummarySchema, type AuctionSummary } from './scrapers/auction-list.js';
-import type {
-  SchedulerDb,
-  UpsertAuctionInput,
-  UpsertAuctionResult,
-} from './scheduler.js';
+import { AuctionSummarySchema, type AuctionSummary } from "./scrapers/auction-list.js";
+import type { SchedulerDb, UpsertAuctionInput, UpsertAuctionResult } from "./scheduler.js";
 
 /**
  * Fallback dla `outfitUrl`, gdy aukcja nie ma outfitu w słowniku
@@ -49,8 +45,7 @@ import type {
  * zaseedowane przy pierwszym uruchomieniu). `AuctionSummarySchema` wymaga
  * pełnego URLa ze `static.tibia.com`, inaczej walidacja odrzuci wiersz.
  */
-const FALLBACK_OUTFIT_URL =
-  'https://static.tibia.com/images/charactertrade/outfits/128_0.gif';
+const FALLBACK_OUTFIT_URL = "https://static.tibia.com/images/charactertrade/outfits/128_0.gif";
 
 /**
  * Tworzy `SchedulerDb` związany z realną bazą.
@@ -125,6 +120,9 @@ export function createSchedulerDb(database: Db = db): SchedulerDb {
           baseValue: s.baseValue,
           loyaltyPct: s.loyaltyPct,
         })),
+        // Harvest słowników (świat + items/outfits/mounts) — warstwa DB
+        // zrobi `ensure` wierszy przed wstawieniem relacji (FK!).
+        reference: input.reference,
       });
 
       return { kind: outcome.kind };

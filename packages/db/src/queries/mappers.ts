@@ -23,7 +23,8 @@ import type {
   NewItem,
   NewMount,
   NewOutfit,
-} from '../schema';
+  NewWorld,
+} from "../schema";
 
 /* ════════════════════════════════════════════════════════════════
  *  WIDOKI STRUKTURALNE WEJŚCIA
@@ -44,14 +45,14 @@ export interface ScraperAuctionLike {
   readonly level: number;
   readonly vocation: string;
   readonly vocationPromoted: string;
-  readonly sex: 'M' | 'F';
+  readonly sex: "M" | "F";
   readonly worldId: number;
   readonly outfitId?: number | null | undefined;
   readonly bid: number;
-  readonly bidType: 'current' | 'minimum';
+  readonly bidType: "current" | "minimum";
   readonly auctionStart: string;
   readonly auctionEnd: string;
-  readonly status: 'active' | 'finished' | 'cancelled' | 'sold';
+  readonly status: "active" | "finished" | "cancelled" | "sold";
   readonly finalPrice?: number | null | undefined;
 
   readonly skillMagic: number;
@@ -132,7 +133,7 @@ export interface ScraperItemLike {
   readonly id: number;
   readonly name: string;
   readonly namePl: string | null;
-  readonly category: NewItem['category'];
+  readonly category: NewItem["category"];
   readonly marketPrice: number | null;
   readonly tcValue: number | null;
   readonly isStoreItem: boolean;
@@ -168,14 +169,7 @@ export interface ScraperAuctionUspLike {
 /** Relacja: skill z lojalnością (kontrakt shared `AuctionSkillLoyalty`). */
 export interface ScraperAuctionSkillLoyaltyLike {
   readonly skill:
-    | 'magic'
-    | 'club'
-    | 'fist'
-    | 'sword'
-    | 'axe'
-    | 'distance'
-    | 'shielding'
-    | 'fishing';
+    "magic" | "club" | "fist" | "sword" | "axe" | "distance" | "shielding" | "fishing";
   readonly baseValue: number;
   readonly loyaltyPct?: number | null | undefined;
 }
@@ -195,22 +189,23 @@ export interface ScraperAuctionSkillLoyaltyLike {
  * Kody nieznane (Tibia doda nowe) → `'other'` (bezpieczny fallback,
  * nie gubimy danych bo pełny payload i tak ląduje w `auctions.raw_json`).
  */
-const USP_CATEGORY_BY_CODE: Readonly<Record<number, NewAuctionUsp['category']>> = {
-  0: 'skill',
-  1: 'gold',
-  2: 'achievement',
-  3: 'blessing',
-  4: 'store',
-  5: 'cosmetic',
-  6: 'imbuement',
-  7: 'charm',
-  11: 'world_transfer',
-  13: 'boss',
+const USP_CATEGORY_BY_CODE: Readonly<Record<number, NewAuctionUsp["category"]>> = {
+  0: "skill",
+  1: "gold",
+  2: "achievement",
+  3: "blessing",
+  4: "store",
+  5: "cosmetic",
+  6: "imbuement",
+  7: "charm",
+  9: "progression", // „Unused Hunting Task Points" (obserwacja z żywego HTML)
+  11: "world_transfer",
+  13: "boss",
 };
 
 /** Konwertuje kod liczbowy USP na wartość enuma DB. */
-export function uspCategoryFromCode(code: number): NewAuctionUsp['category'] {
-  return USP_CATEGORY_BY_CODE[code] ?? 'other';
+export function uspCategoryFromCode(code: number): NewAuctionUsp["category"] {
+  return USP_CATEGORY_BY_CODE[code] ?? "other";
 }
 
 /* ════════════════════════════════════════════════════════════════
@@ -372,6 +367,102 @@ export function auctionSkillLoyaltyToNewAuctionSkillLoyalty(
     skill: loyalty.skill,
     baseValue: loyalty.baseValue,
     loyaltyPct: loyalty.loyaltyPct ?? null,
+  };
+}
+
+/* ════════════════════════════════════════════════════════════════
+ *  HARVEST: dane słownikowe z detalu aukcji (minimalne wiersze)
+ * ════════════════════════════════════════════════════════════════
+ *
+ * Detal aukcji (v2 parsera) zawiera nazwy i obrazki itemów/outfitów/
+ * mountów ORAZ nazwę świata. Przed wstawieniem relacji aukcji robimy
+ * `ensure` tych wierszy (`ON CONFLICT DO NOTHING`) — inaczej FK
+ * (`auction_items.item_id → items.id` itd.) blokuje insert.
+ *
+ * Te widoki są CELOWO minimalne: uzupełniają tylko brakujące wiersze
+ * (nie nadpisują danych z pełnego scrapera referencji T32).
+ */
+
+/** Harvest: świat z detalu aukcji (`id` = stabilny hash z parsera). */
+export interface ScraperHarvestWorldLike {
+  readonly id: number;
+  readonly name: string;
+}
+
+/** Harvest: item z detalu aukcji (bez ceny/kategorii — to dane T32). */
+export interface ScraperHarvestItemLike {
+  readonly id: number;
+  readonly name: string;
+  readonly imageUrl: string;
+  readonly isStoreItem: boolean;
+}
+
+/** Harvest: outfit/mount z detalu aukcji (identyczny kształt). */
+export interface ScraperHarvestReferenceLike {
+  readonly id: number;
+  readonly name: string;
+  readonly imageUrl: string;
+  readonly isStore: boolean;
+}
+
+/** Harvest: pełny pakiet słownikowy przekazywany z detalu aukcji. */
+export interface ScraperHarvestLike {
+  readonly world: ScraperHarvestWorldLike | null;
+  readonly items: readonly ScraperHarvestItemLike[];
+  readonly outfits: readonly ScraperHarvestReferenceLike[];
+  readonly mounts: readonly ScraperHarvestReferenceLike[];
+}
+
+/**
+ * Świat (harvest) → wiersz `worlds`.
+ *
+ * UWAGA: `region`/`pvpType`/`battleye` są NULL-owalne (migracja 0002) —
+ * dane uzupełni scraper referencji z TibiaData. Harvest wstawia tylko
+ * tożsamość (id + nazwa), żeby FK aukcji działał od pierwszego scrape'a.
+ */
+export function harvestWorldToNewWorld(world: ScraperHarvestWorldLike): NewWorld {
+  return {
+    id: world.id,
+    name: world.name,
+  };
+}
+
+/** Item (harvest) → wiersz `items` (kategoria `other` — do nadpisania przez T32). */
+export function harvestItemToNewItem(item: ScraperHarvestItemLike): NewItem {
+  return {
+    id: item.id,
+    name: item.name,
+    namePl: null,
+    category: "other",
+    marketPrice: null,
+    tcValue: null,
+    isStoreItem: item.isStoreItem,
+    isRare: false,
+    imageUrl: item.imageUrl,
+  };
+}
+
+/** Outfit (harvest) → wiersz `outfits`. */
+export function harvestOutfitToNewOutfit(outfit: ScraperHarvestReferenceLike): NewOutfit {
+  return {
+    id: outfit.id,
+    name: outfit.name,
+    namePl: null,
+    isStore: outfit.isStore,
+    isRare: false,
+    imageUrl: outfit.imageUrl,
+  };
+}
+
+/** Mount (harvest) → wiersz `mounts`. */
+export function harvestMountToNewMount(mount: ScraperHarvestReferenceLike): NewMount {
+  return {
+    id: mount.id,
+    name: mount.name,
+    namePl: null,
+    isStore: mount.isStore,
+    isRare: false,
+    imageUrl: mount.imageUrl,
   };
 }
 

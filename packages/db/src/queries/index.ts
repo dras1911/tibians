@@ -18,10 +18,10 @@
  * — dzięki temu wiring może wstrzyknąć realny pool, a testy mocka.
  */
 
-import { and, eq, inArray, sql } from 'drizzle-orm';
-import type { NodePgDatabase } from 'drizzle-orm/node-postgres';
+import { and, eq, inArray, sql } from "drizzle-orm";
+import type { NodePgDatabase } from "drizzle-orm/node-postgres";
 
-import { schema } from '../schema';
+import { schema } from "../schema";
 import {
   auctionItems,
   auctionMounts,
@@ -36,8 +36,8 @@ import {
   scrapeRuns,
   users as usersTable,
   worlds,
-} from '../schema';
-import { MV_FACET_COUNTS_REFRESH } from '../schema/views';
+} from "../schema";
+import { MV_FACET_COUNTS_REFRESH } from "../schema/views";
 import {
   auctionItemToNewAuctionItem,
   auctionMountToNewAuctionMount,
@@ -45,6 +45,10 @@ import {
   auctionSkillLoyaltyToNewAuctionSkillLoyalty,
   auctionToNewAuction,
   auctionUspToNewAuctionUsp,
+  harvestItemToNewItem,
+  harvestMountToNewMount,
+  harvestOutfitToNewOutfit,
+  harvestWorldToNewWorld,
   referenceItemToNewItem,
   referenceMountToNewMount,
   referenceOutfitToNewOutfit,
@@ -54,15 +58,19 @@ import {
   type ScraperAuctionOutfitLike,
   type ScraperAuctionSkillLoyaltyLike,
   type ScraperAuctionUspLike,
+  type ScraperHarvestItemLike,
+  type ScraperHarvestLike,
+  type ScraperHarvestReferenceLike,
+  type ScraperHarvestWorldLike,
   type ScraperItemLike,
   type ScraperReferenceLike,
-} from './mappers';
+} from "./mappers";
 
 /** Typ klienta DB (singleton z `packages/db` albo transakcja). */
 export type Db = NodePgDatabase<typeof schema>;
 
 /** Typ transakcji Drizzle — podzbiór `Db` używany wewnątrz `db.transaction`. */
-type Tx = Parameters<Parameters<Db['transaction']>[0]>[0];
+type Tx = Parameters<Parameters<Db["transaction"]>[0]>[0];
 
 /* ════════════════════════════════════════════════════════════════
  *  AUKCJE
@@ -82,18 +90,16 @@ export interface AuctionSummaryRow {
   readonly characterName: string;
   readonly level: number;
   readonly vocation: string;
-  readonly sex: 'M' | 'F';
+  readonly sex: "M" | "F";
   readonly world: string;
   readonly outfitUrl: string | null;
   readonly bid: number;
-  readonly bidType: 'current' | 'minimum';
+  readonly bidType: "current" | "minimum";
   readonly auctionEnd: Date;
 }
 
 /** Aktywne aukcje w kształcie potrzebnym do `compareAuctionLists`. */
-export async function fetchAllAuctionSummaries(
-  db: Db,
-): Promise<readonly AuctionSummaryRow[]> {
+export async function fetchAllAuctionSummaries(db: Db): Promise<readonly AuctionSummaryRow[]> {
   return db
     .select({
       auctionId: auctions.auctionId,
@@ -110,7 +116,7 @@ export async function fetchAllAuctionSummaries(
     .from(auctions)
     .innerJoin(worlds, eq(worlds.id, auctions.worldId))
     .leftJoin(outfitsTable, eq(outfitsTable.id, auctions.outfitId))
-    .where(eq(auctions.status, 'active'));
+    .where(eq(auctions.status, "active"));
 }
 
 /** Pakiet do `upsertAuction` — odpowiednik `UpsertAuctionInput` ze scrapera. */
@@ -121,11 +127,17 @@ export interface UpsertAuctionData {
   readonly mounts: readonly ScraperAuctionMountLike[];
   readonly usps: readonly ScraperAuctionUspLike[];
   readonly skillLoyalties: readonly ScraperAuctionSkillLoyaltyLike[];
+  /**
+   * Harvest słowników z detalu (świat + items/outfits/mounts z nazwami).
+   * Opcjonalny — starsi konsumenci (testy) mogą go pominąć; wtedy FK
+   * muszą być spełnione z innego źródła.
+   */
+  readonly reference?: ScraperHarvestLike | undefined;
 }
 
 /** Wynik upsertu (odpowiednik `UpsertAuctionResult`). */
 export interface UpsertAuctionOutcome {
-  readonly kind: 'new' | 'updated';
+  readonly kind: "new" | "updated";
 }
 
 /**
@@ -163,15 +175,18 @@ export async function upsertAuction(
 
     const isNew = returned[0]?.inserted === true;
 
+    // Harvest słowników (świat/items/outfits/mounts) — MUSI być przed
+    // relacjami, bo FK (auction_items.item_id → items.id itd.) wymaga
+    // istniejących wierszy referencyjnych.
+    await ensureReferenceData(tx, input.reference);
+
     // Relacje: najprostszy poprawny wariant to delete + insert. Unika
     // zgadywania targetów `ON CONFLICT` dla PK z nullable `tier`.
     await tx.delete(auctionItems).where(eq(auctionItems.auctionId, auctionId));
     await tx.delete(auctionOutfits).where(eq(auctionOutfits.auctionId, auctionId));
     await tx.delete(auctionMounts).where(eq(auctionMounts.auctionId, auctionId));
     await tx.delete(auctionUsps).where(eq(auctionUsps.auctionId, auctionId));
-    await tx
-      .delete(auctionSkillLoyalty)
-      .where(eq(auctionSkillLoyalty.auctionId, auctionId));
+    await tx.delete(auctionSkillLoyalty).where(eq(auctionSkillLoyalty.auctionId, auctionId));
 
     if (input.items.length > 0) {
       await tx
@@ -181,9 +196,7 @@ export async function upsertAuction(
     if (input.outfits.length > 0) {
       await tx
         .insert(auctionOutfits)
-        .values(
-          input.outfits.map((o) => auctionOutfitToNewAuctionOutfit(auctionId, o)),
-        );
+        .values(input.outfits.map((o) => auctionOutfitToNewAuctionOutfit(auctionId, o)));
     }
     if (input.mounts.length > 0) {
       await tx
@@ -205,7 +218,7 @@ export async function upsertAuction(
         );
     }
 
-    return { kind: isNew ? 'new' : 'updated' } as const;
+    return { kind: isNew ? "new" : "updated" } as const;
   });
 }
 
@@ -213,37 +226,26 @@ export async function upsertAuction(
  * Oznacza aukcje jako zakończone. Zwraca liczbę faktycznie zarchiwizowanych
  * (warunek `status = 'active'` — powtórne wywołanie nie liczy drugi raz).
  */
-export async function archiveFinishedAuctions(
-  db: Db,
-  ids: readonly bigint[],
-): Promise<number> {
+export async function archiveFinishedAuctions(db: Db, ids: readonly bigint[]): Promise<number> {
   if (ids.length === 0) return 0;
 
   const archived = await db
     .update(auctions)
-    .set({ status: 'finished', archivedAt: new Date() })
-    .where(
-      and(
-        inArray(auctions.auctionId, Array.from(ids)),
-        eq(auctions.status, 'active'),
-      ),
-    )
+    .set({ status: "finished", archivedAt: new Date() })
+    .where(and(inArray(auctions.auctionId, Array.from(ids)), eq(auctions.status, "active")))
     .returning({ auctionId: auctions.auctionId });
 
   return archived.length;
 }
 
 /** IDs aktywnych aukcji kończących się w oknie `[NOW, NOW + withinHours]`. */
-export async function getEndingSoonIds(
-  db: Db,
-  withinHours: number,
-): Promise<readonly bigint[]> {
+export async function getEndingSoonIds(db: Db, withinHours: number): Promise<readonly bigint[]> {
   const rows = await db
     .select({ auctionId: auctions.auctionId })
     .from(auctions)
     .where(
       and(
-        eq(auctions.status, 'active'),
+        eq(auctions.status, "active"),
         sql`${auctions.auctionEnd} BETWEEN NOW() AND NOW() + (${withinHours} * INTERVAL '1 hour')`,
       ),
     );
@@ -262,10 +264,7 @@ export async function getEndingSoonIds(
  * tabeli `items`), więc aktualizujemy wszystkie pola pochodzące ze scrapera.
  * `updated_at` ustawiamy jawnie — `DEFAULT now()` działa tylko przy INSERT.
  */
-export async function upsertItems(
-  db: Db,
-  items: readonly ScraperItemLike[],
-): Promise<number> {
+export async function upsertItems(db: Db, items: readonly ScraperItemLike[]): Promise<number> {
   if (items.length === 0) return 0;
 
   await db
@@ -334,6 +333,47 @@ export async function upsertMounts(
   return mounts.length;
 }
 
+/**
+ * Ensure wierszy słownikowych z harvestu detalu aukcji — `ON CONFLICT DO NOTHING`.
+ *
+ * Cel: FK `auction_items.item_id → items.id`, `auction_outfits.outfit_id →
+ * outfits.id`, `auction_mounts.mount_id → mounts.id` oraz `auctions.world_id →
+ * worlds.id` muszą być spełnione, zanim wstawimy relacje aukcji. Detal aukcji
+ * (parser v2) dostarcza nazwy + obrazki, więc tworzymy brakujące wiersze
+ * „przy okazji" — pełne dane (kategorie, ceny, regiony światów) uzupełni
+ * scraper referencji T32 przez `upsertItems/upsertOutfits/upsertMounts`.
+ *
+ * `DO NOTHING` (nie `DO UPDATE`) — nie nadpisujemy bogatszych danych z T32.
+ */
+export async function ensureReferenceData(
+  tx: Tx,
+  reference: ScraperHarvestLike | undefined,
+): Promise<void> {
+  if (reference == null) return;
+
+  if (reference.world != null) {
+    await tx.insert(worlds).values(harvestWorldToNewWorld(reference.world)).onConflictDoNothing();
+  }
+  if (reference.items.length > 0) {
+    await tx
+      .insert(itemsTable)
+      .values(reference.items.map(harvestItemToNewItem))
+      .onConflictDoNothing();
+  }
+  if (reference.outfits.length > 0) {
+    await tx
+      .insert(outfitsTable)
+      .values(reference.outfits.map(harvestOutfitToNewOutfit))
+      .onConflictDoNothing();
+  }
+  if (reference.mounts.length > 0) {
+    await tx
+      .insert(mountsTable)
+      .values(reference.mounts.map(harvestMountToNewMount))
+      .onConflictDoNothing();
+  }
+}
+
 /* ════════════════════════════════════════════════════════════════
  *  SCRAPE_RUNS (observability — arch §7.2)
  * ════════════════════════════════════════════════════════════════ */
@@ -350,13 +390,13 @@ export async function createScrapeRun(
       // w enumie DB (6 wartości, szósta to 'calibration' używana niżej).
       runType: input.runType as typeof scrapeRuns.$inferInsert.runType,
       startedAt: input.startedAt,
-      status: 'running',
+      status: "running",
     })
     .returning({ id: scrapeRuns.id });
 
   const id = rows[0]?.id;
   if (id === undefined) {
-    throw new Error('[queries] createScrapeRun: INSERT nie zwrócił id');
+    throw new Error("[queries] createScrapeRun: INSERT nie zwrócił id");
   }
   return id;
 }
@@ -367,7 +407,7 @@ export async function finishScrapeRun(
   id: bigint,
   input: {
     finishedAt: Date;
-    status: 'success' | 'partial' | 'failed';
+    status: "success" | "partial" | "failed";
     pagesFetched: number;
     auctionsFound: number;
     auctionsNew: number;
@@ -479,15 +519,15 @@ export async function recordCalibrationRun(
 ): Promise<void> {
   const serialized = JSON.parse(
     JSON.stringify(input.report, (_key, value: unknown) =>
-      typeof value === 'bigint' ? value.toString() : value,
+      typeof value === "bigint" ? value.toString() : value,
     ),
   ) as Record<string, unknown>;
 
   const finishedAt = new Date(input.generatedAt);
 
   await db.insert(scrapeRuns).values({
-    runType: 'calibration',
-    status: 'success',
+    runType: "calibration",
+    status: "success",
     startedAt: finishedAt,
     finishedAt,
     errorSummary: serialized,
@@ -569,4 +609,12 @@ export async function getUserById(db: Db, discordId: string) {
   return rows[0] ?? null;
 }
 
-export type { ScraperAuctionLike, ScraperItemLike, ScraperReferenceLike };
+export type {
+  ScraperAuctionLike,
+  ScraperHarvestItemLike,
+  ScraperHarvestLike,
+  ScraperHarvestReferenceLike,
+  ScraperHarvestWorldLike,
+  ScraperItemLike,
+  ScraperReferenceLike,
+};

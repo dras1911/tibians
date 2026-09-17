@@ -161,36 +161,53 @@ Go (TibiaData) nie przechodzą — także przez WARP.
 **Wdrożenie w toku**: transport `flaresolverr` w scraperze + serwis w compose.
 Szczegóły: `.omo/notepads/tibians/cloudflare-warp-solution.md`.
 
-### 🔴 6.10 KRYTYCZNE (odkryte 2026-09-17): parser detalu był pisany pod WYMYŚLONY HTML
+### ✅ 6.10 ROZWIĄZANE (2026-09-17, sesja 2): parser detalu v2 pod REALNY HTML + harvest słowników
 
-**Objaw**: parser detalu zwraca `isSuccessful: true` + puste dane
+**Objaw (historyczny)**: parser detalu zwracał `isSuccessful: true` + puste dane
 (`name: undefined`, `skills: 0`, `items: 0`) na prawdziwym HTML z tibia.com.
 
-**Przyczyna**: fixture'y detalu (`auction-detail-*.html`, T31/T33) to
-**„mirror strukturalne"** — HTML zostało odtworzone/zmyślone przez agenta,
-bo nie mógł pobrać realnej strony (Cloudflare 403). Parser napisano pod te
-wymyślone klasy (`CharacterInfo`, `BidInfo`, `SkillsContainer`, `UspSection`),
-których **prawdziwy tibia.com NIE UŻYWA**.
+**Przyczyna (historyczna)**: fixture'y detalu v1 (T31/T33) były **„mirrorami
+strukturalnymi"** — HTML wymyślony przez agenta (Cloudflare blokował pobranie
+prawdziwej strony). Parser szukał klas (`CharacterInfo`, `BidInfo`,
+`SkillsContainer`), których prawdziwy tibia.com **NIE UŻYWA**.
 
-**Dowód**:
+**Naprawa (v2) — co zostało zrobione**:
 
-- prawdziwy HTML listy (realna kopia 8 IX) używa `AuctionCharacterName` (8×),
-  `AuctionBody` (8×) — fixture detalu nie ma ANI JEDNEJ z tych klas;
-- żywy detal (17 IX) używa `AuctionCharacterName`, `AuctionBody`,
-  `ShortAuctionDataLabel/Value`, `CharacterDetailsBlock` — zero wystąpień klas
-  z fixture detalu.
+1. **Parser detalu przepisany** (`apps/scraper/src/scrapers/auction-detail.ts`)
+   pod realny layout: `.AuctionHeader/.AuctionCharacterName/.AuctionOutfitImage`,
+   `.ShortAuctionData*` (Minimum|Current|Winning Bid + daty CET/CEST),
+   `.AuctionTimer[data-timestamp]` (Unix epoch końca — spójny z parserem listy),
+   `td.LabelColumn/LevelColumn` (skille), `span.LabelV` (charm points, gold,
+   hirelings, prey slots, charm/weekly expansion), `.SpecialCharacterFeatures
+.Entry` + `usp-category-N.png` (USP), `#ajax-target-type-{0..6}`
+   (items / store / mounts / outfits / familiars).
+2. **Guard „to nie detal"**: brak `.AuctionCharacterName` / pól nagłówka /
+   `.CharacterDetailsBlock` → `auction: null` + `parseError` (koniec cichych
+   śmieciowych wierszy; scheduler zapisze błąd w `scrape_errors`).
+3. **Harvest słowników** (NOWE — rozwiązuje problem pustych FK):
+   detal zwraca `reference` = świat + nazwy/obrazki items/outfits/mounts;
+   `upsertAuction` robi `ensureReferenceData` (ON CONFLICT DO NOTHING)
+   przed relacjami → FK `auction_items.item_id → items.id` itd. są spełnione
+   od pierwszego scrape'a. Tabele referencyjne wypełniają się same.
+4. **Migracja 0002**: `worlds.region/pvp_type/battleye` → NULL-owalne
+   (harvest wstawia tylko id+name; reszta z TibiaData).
+5. **`tier` itemów**: kolumna jest NOT NULL (PK) — parser ustawia `0`
+   (= base/nieznany); mapper normalizuje `?? 0`.
+6. **Testy**: 285/285 przechodzi. Detale testowane na **5 żywych kopiach 1:1**
+   (`auction-detail-live-{2259395,2252245,2258972,2255748,2258274}.html`);
+   stare mirror-fixture'y detalu USUNIĘTE; benchmark waloryzacji przeniesiony
+   na żywy fixture (Lancelot, 153 363 TC).
 
-**Konsekwencja**: nawet po odblokowaniu CF scraper detali zapisywałby śmieci.
-**Lista aukcji JEST OK** — parser + realne fixture'y działają na żywym HTML
-(zweryfikowane: 25/25 aukcji sparsowanych poprawnie).
+**Ograniczenia v2 (świadome, udokumentowane w kodzie)**:
 
-**Plan naprawy**: przepisać parser detalu pod realny HTML. Realne kopie
-zapasowe: `auction-list-live-2026-09-17.html`, `auction-detail-live-2259395.html`
-(dodane do `__fixtures__`).
+- `skillLoyalties` puste — nowy layout nie publikuje loyalty % per skill
+  (tylko adnotacja USP „(Loyalty bonus not included)").
+- Item Summary ma paginację (np. „» Results: 399", 6 stron) — v2 czyta
+  stronę 1 (~76 pozycji); kolejne strony do dociągnięcia w iteracji.
+- Tier foringu itemów nie występuje w HTML.
 
-**LEKCJA (jeszcze raz ta sama)**: test + implementacja pisane razem = wspólny
-błąd. Mirror „strukturalny" bez realnego źródła = fikcja. Zawsze konfrontuj
-z PRAWDZIWYM artefaktem (tu: realnym HTML), nie z własnym wyobrażeniem.
+**Weryfikacja**: parser na 5 żywych fixture'ach — wszystkie pola zgodne
+z ręczną analizą HTML (identity/skille/daty/charms/gems/flagi/relacje/USP).
 
 **Odrzucone opcje** (dla historii): proxy residential/ISP (~5-15 €/mies.),
 scraping API (~30-100 €/mies.), zmiana VPS (niepewna). WARP+Browser = 0 €
