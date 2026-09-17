@@ -458,19 +458,22 @@ Pełna lista: `git log --oneline`
 4. **Bezpieczeństwo**: port 8192 tylko dla sieci dockerowych (ufw) + token
    `BROWSER_FETCH_TOKEN`; serwis w host network (dostęp do WARP).
 5. **Deploy**: migracja 0002 (worlds nullable) + restart scrapera na nowym kodzie.
-6. **Backfill DZIAŁA** (potwierdzone na produkcji): baza 1310 aukcji /
-   91 858 auction_items / 3494 items / 90 worlds, portal pokazuje listę.
+6. **Backfill DZIAŁA** (potwierdzone na produkcji): baza rośnie przez cały
+   czas (2119+ aukcji o 21:30, licznik live na portalu), filtry facetów
+   liczą się z danych, tabela renderuje się ze zrzutu ekranu (25/h).
 
 ### Bugi produkcyjne złapane i naprawione w trakcie backfillu (2026-09-17)
 
-| #   | Objaw                                                                | Przyczyna                                                                                                 | Fix (commit)                                                                 |
-| --- | -------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- |
-| 1   | `Cannot switch to a different thread` przy każdym fetchu             | Playwright sync API nie jest thread-safe; ThreadingHTTPServer obsługuje każdy request w innym wątku       | Dedykowany wątek przeglądarki + kolejka zadań (`5bb61fd`)                    |
-| 2   | `violates foreign key auctions_world_id_worlds_id_fk` (każda aukcja) | `ensureReferenceData` był PO insercie aukcji, a FK world wymaga świata PRZED                              | Przeniesione na początek transakcji (`a76cdaa`)                              |
-| 3   | `duplicate key ... auction_items_auction_id_item_id_tier_pk`         | Ten sam item w Item Summary i Store Item Summary → 2 wiersze relacji (dedupe był per-kontener)            | Globalny dedupe: quantity sumowane, isStore OR (`f2b1ab6`) + test regresyjny |
-| 4   | Scraper czekał 15 min na pierwszy scrape po restarcie                | `setInterval` odpala pierwszą iterację po pełnym interwale                                                | Kickoff full+endingSoon natychmiast po starcie (`56381b4`)                   |
-| 5   | `db:migrate` w kontenerze: `Cannot find module '/app/pnpm'`          | Brak pnpm w obrazie runnera                                                                               | `npm i -g pnpm@9.15.9` w Dockerfile.scraper (`7e86ebf`)                      |
-| 6   | `Invalid vocation: "None"` — aukcje bez profesji pomijane (~kilka %) | tibia.com realnie renderuje `Vocation: None` (postacie challenge/Rookgaard; `None` nie było w kontrakcie) | `None` w `VocationSchema` + parserze + UI (`4828436`)                        |
+| #   | Objaw                                                                 | Przyczyna                                                                                                 | Fix (commit)                                                                              |
+| --- | --------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| 1   | `Cannot switch to a different thread` przy każdym fetchu              | Playwright sync API nie jest thread-safe; ThreadingHTTPServer obsługuje każdy request w innym wątku       | Dedykowany wątek przeglądarki + kolejka zadań (`5bb61fd`)                                 |
+| 2   | `violates foreign key auctions_world_id_worlds_id_fk` (każda aukcja)  | `ensureReferenceData` był PO insercie aukcji, a FK world wymaga świata PRZED                              | Przeniesione na początek transakcji (`a76cdaa`)                                           |
+| 3   | `duplicate key ... auction_items_auction_id_item_id_tier_pk`          | Ten sam item w Item Summary i Store Item Summary → 2 wiersze relacji (dedupe był per-kontener)            | Globalny dedupe: quantity sumowane, isStore OR (`f2b1ab6`) + test regresyjny              |
+| 4   | Scraper czekał 15 min na pierwszy scrape po restarcie                 | `setInterval` odpala pierwszą iterację po pełnym interwale                                                | Kickoff full+endingSoon natychmiast po starcie (`56381b4`)                                |
+| 5   | `db:migrate` w kontenerze: `Cannot find module '/app/pnpm'`           | Brak pnpm w obrazie runnera                                                                               | `npm i -g pnpm@9.15.9` w Dockerfile.scraper (`7e86ebf`)                                   |
+| 6   | `Invalid vocation: "None"` — aukcje bez profesji pomijane (~kilka %)  | tibia.com realnie renderuje `Vocation: None` (postacie challenge/Rookgaard; `None` nie było w kontrakcie) | `None` w `VocationSchema` + parserze + UI (`4828436`)                                     |
+| 7   | Build web padał: `'users' is not exported from '../schema'`           | Webpack (Next) rozwiązywał importy bez rozszerzenia do starego `.js` obok `.ts` w `packages/db/src`       | Usunięte 88 artefaktów `.js/.d.ts/map` + `resolve.extensions` preferuje `.ts` (`820729c`) |
+| 8   | Strona bazaru rzucała `MISSING_MESSAGE: Bazaar.filters.vocation.none` | Dodano opcję „None" do UI, ale brakowało klucza tłumaczenia w `messages/{pl,en}.json`                     | Klucz dodany (PL „Bez profesji", EN „None") (`590575c`)                                   |
 
 ### Znane drobiazgi (do zrobienia)
 
@@ -478,8 +481,14 @@ Pełna lista: `git log --oneline`
 - **Paginacja itemów** — czytana tylko strona 1 sekcji Item Summary.
 - **Reference loop (T32)** — pełny skan `static.tibia.com` nie idzie przez
   browser transport; harvest z detali pokrywa na razie słowniki.
-- **`Vocation: None`** — obsłużone (tabela #6); `None` widoczne w filtrach
-  UI jako osobna opcja (neutralny kolor).
+- **Regiony/PvP światów = 0 w filtrach** — harvest wstawia światy z samym
+  `(id, name)`; `region`/`pvp_type`/`battleye` są NULL, więc facet „Świat"
+  i „Typ PvP" pokazują zera (fallback TibiaData na VPS zwraca 502).
+  Do uzupełnienia: jednorazowy fetch `api.tibiadata.com/v4/worlds` przez
+  WARP (socks5h://127.0.0.1:40000) + UPDATE `worlds`.
+- **„Zakończona" w tabeli bazaar** — część wierszy na liście „kończące się
+  najwcześniej" ma status zakończonej; zbadać czy strona nie powinna
+  filtrować `ended` przy sortowaniu po czasie zakończenia.
 
 ---
 
