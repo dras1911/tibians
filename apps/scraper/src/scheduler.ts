@@ -878,9 +878,44 @@ export function createScheduler(
     intervals_.add(scheduleLoop("endingSoon", intervals.endingSoonMs, runEndingSoonIteration));
     intervals_.add(scheduleLoop("reference", intervals.referenceMs, runReferenceIteration));
     stats.intervalsActive = intervals_.size;
+
+    /**
+     * Natychmiastowy pierwszy przebieg (kickoff) — bez czekania pełnego
+     * interwału. `setInterval` odpala pierwszą iterację dopiero po
+     * `intervalMs`, więc po każdym restarcie kontenera świeży deployment
+     * czekałby 15 min na pierwszy scrape (a po restarcie z pustą bazą —
+     * godzinę na backfill). Kickoff startuje od razu:
+     *   - full       — pobierz listę + detale (backfill przy pustej bazie),
+     *   - endingSoon — zasil SSE dla aukcji kończących się < 1 h.
+     *
+     * Reference NIE ma kickoffu: pełny skan słowników jest ciężki i nie
+     * blokuje głównego przepływu (harvest z detali uzupełnia tabele
+     * referencyjne na bieżąco).
+     */
+    const kickoff = (name: LoopName, fn: () => Promise<void>): void => {
+      const promise = (async () => {
+        try {
+          await fn();
+        } catch (err) {
+          logger.error(`Loop "${name}" kickoff uncaught error`, {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      })();
+      inFlight.add(promise);
+      stats.inFlight = inFlight.size;
+      void promise.finally(() => {
+        inFlight.delete(promise);
+        stats.inFlight = inFlight.size;
+      });
+    };
+    kickoff("full", runFullIteration);
+    kickoff("endingSoon", runEndingSoonIteration);
+
     logger.info("Scheduler started", {
       intervals,
       loops: Object.keys(LOOP_LOCK_KEYS),
+      kickoff: ["full", "endingSoon"],
     });
   }
 

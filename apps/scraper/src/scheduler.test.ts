@@ -358,7 +358,7 @@ afterEach(() => {
 });
 
 describe("createScheduler — start/stop lifecycle", () => {
-  it("start() aktywuje 3 niezależne timery (intervalsActive=3)", () => {
+  it("start() aktywuje 3 timery + natychmiastowy kickoff (full + endingSoon)", () => {
     const db = makeMockDb();
     const fake = makeFakeRequester();
     const handle = createScheduler(db, makeFastClient(fake), {
@@ -371,7 +371,9 @@ describe("createScheduler — start/stop lifecycle", () => {
 
     handle.start();
     expect(handle.getStats().intervalsActive).toBe(3);
-    expect(handle.getStats().inFlight).toBe(0);
+    // Kickoff: 2 iteracje (full + endingSoon) startują od razu, bez czekania
+    // interwału — po restarcie kontenera dane płyną natychmiast, nie po 15 min.
+    expect(handle.getStats().inFlight).toBe(2);
 
     void handle.stop();
   });
