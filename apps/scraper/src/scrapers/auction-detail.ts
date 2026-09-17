@@ -954,50 +954,68 @@ function extractRelations($: CheerioAPI, auctionId: bigint, warnings: string[]):
   const refMounts: ReferenceMount[] = [];
   const familiars: Array<{ id: number; name: string; imageUrl: string }> = [];
 
+  // Dedupe GLOBALNY (nie per-kontener!): ten sam item/outfit/mount może
+  // wystąpić i w sekcji regularnej, i w „Store …" — klucz (auction_id,
+  // item_id, tier) musi być unikalny w auction_items, więc scalamy wiersze
+  // (quantity sumujemy; isStore podnosimy do true, jeśli występuje w store).
+  const itemById = new Map<number, AuctionItem>();
+  const refItemById = new Map<number, ReferenceItem>();
+
   const addItems = (containerType: number, isStoreItem: boolean): void => {
-    // Dedupe po itemId — sumujemy quantity (stacki mogą wystąpić wielokrotnie).
-    const byId = new Map<number, AuctionItem>();
     for (const { src, title, amount } of readCvIcons($, containerType)) {
       const m = /\/objects\/(\d+)\.gif/i.exec(src);
       if (!m?.[1]) continue;
       const itemId = Number(m[1]);
       if (!Number.isInteger(itemId) || itemId <= 0) continue;
       const quantity = amount ?? quantityFromTitle(title) ?? 1;
-      const existing = byId.get(itemId);
+      const existing = itemById.get(itemId);
       if (existing) {
-        byId.set(itemId, { ...existing, quantity: existing.quantity + quantity });
+        itemById.set(itemId, { ...existing, quantity: existing.quantity + quantity });
+        const ref = refItemById.get(itemId);
+        if (ref && isStoreItem && !ref.isStoreItem) {
+          refItemById.set(itemId, { ...ref, isStoreItem: true });
+        }
         continue;
       }
-      byId.set(itemId, { auctionId, itemId, quantity, tier: 0 });
-      refItems.push({
+      itemById.set(itemId, { auctionId, itemId, quantity, tier: 0 });
+      refItemById.set(itemId, {
         id: itemId,
         name: itemNameFromTitle(title) || `item ${itemId}`,
         imageUrl: src,
         isStoreItem,
       });
     }
-    items.push(...byId.values());
   };
 
   addItems(0, false);
   addItems(1, true);
+  items.push(...itemById.values());
+  refItems.push(...refItemById.values());
+
+  const outfitById = new Map<number, AuctionOutfit>();
+  const refOutfitById = new Map<number, ReferenceOutfit>();
 
   const addOutfits = (containerType: number, isStore: boolean): void => {
-    const seen = new Set<number>();
     for (const { src, title } of readCvIcons($, containerType)) {
       const m = /\/outfits\/(\d+)(?:_(\d+))?\.gif/i.exec(src);
       if (!m?.[1]) continue;
       const outfitId = Number(m[1]);
-      if (!Number.isInteger(outfitId) || outfitId <= 0 || seen.has(outfitId)) continue;
-      seen.add(outfitId);
+      if (!Number.isInteger(outfitId) || outfitId <= 0) continue;
+      if (outfitById.has(outfitId)) {
+        const ref = refOutfitById.get(outfitId);
+        if (ref && isStore && !ref.isStore) {
+          refOutfitById.set(outfitId, { ...ref, isStore: true });
+        }
+        continue;
+      }
       const addonStr = m[2];
       const addons = addonStr ? Number(addonStr) : 0;
-      outfits.push({
+      outfitById.set(outfitId, {
         auctionId,
         outfitId,
         addons: Number.isInteger(addons) && addons >= 0 && addons <= 3 ? addons : 0,
       });
-      refOutfits.push({
+      refOutfitById.set(outfitId, {
         id: outfitId,
         name: outfitNameFromTitle(title) || `outfit ${outfitId}`,
         imageUrl: src,
@@ -1008,17 +1026,27 @@ function extractRelations($: CheerioAPI, auctionId: bigint, warnings: string[]):
 
   addOutfits(4, false);
   addOutfits(5, true);
+  outfits.push(...outfitById.values());
+  refOutfits.push(...refOutfitById.values());
+
+  const mountById = new Map<number, AuctionMount>();
+  const refMountById = new Map<number, ReferenceMount>();
 
   const addMounts = (containerType: number, isStore: boolean): void => {
-    const seen = new Set<number>();
     for (const { src, title } of readCvIcons($, containerType)) {
       const m = /\/mounts\/(\d+)\.gif/i.exec(src);
       if (!m?.[1]) continue;
       const mountId = Number(m[1]);
-      if (!Number.isInteger(mountId) || mountId <= 0 || seen.has(mountId)) continue;
-      seen.add(mountId);
-      mounts.push({ auctionId, mountId });
-      refMounts.push({
+      if (!Number.isInteger(mountId) || mountId <= 0) continue;
+      if (mountById.has(mountId)) {
+        const ref = refMountById.get(mountId);
+        if (ref && isStore && !ref.isStore) {
+          refMountById.set(mountId, { ...ref, isStore: true });
+        }
+        continue;
+      }
+      mountById.set(mountId, { auctionId, mountId });
+      refMountById.set(mountId, {
         id: mountId,
         name: norm(title) || `mount ${mountId}`,
         imageUrl: src,
@@ -1029,6 +1057,8 @@ function extractRelations($: CheerioAPI, auctionId: bigint, warnings: string[]):
 
   addMounts(2, false);
   addMounts(3, true);
+  mounts.push(...mountById.values());
+  refMounts.push(...refMountById.values());
 
   for (const { src, title } of readCvIcons($, 6)) {
     const m = /\/summons\/(\d+)\.gif/i.exec(src);

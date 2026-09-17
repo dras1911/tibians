@@ -332,9 +332,10 @@ describe("parseAuctionDetail — Fuurius (live 2255748)", () => {
     expect(a?.skillMagic).toBe(6);
   });
 
-  it("stacki potionów: 118x great health potion, 8x health potion", () => {
+  it("stacki potionów: 164x great health potion (118 bp + 46 store), 8x health potion", () => {
     const greatHealth = result.items.find((i) => i.itemId === 239);
-    expect(greatHealth?.quantity).toBe(118);
+    // Dedupe globalny: quantity = suma z obu sekcji (backpack 118 + store 46).
+    expect(greatHealth?.quantity).toBe(164);
     const health = result.items.find((i) => i.itemId === 266);
     expect(health?.quantity).toBe(8);
   });
@@ -386,8 +387,8 @@ describe("parseAuctionDetail — Crazy Persil (live 2258274)", () => {
     expect(ultimate?.isStoreItem).toBe(true);
   });
 
-  it("mount Sparkion + 31 itemów + 12 outfitów", () => {
-    expect(result.items).toHaveLength(31);
+  it("mount Sparkion + 28 itemów (dedupe bp+store) + 12 outfitów", () => {
+    expect(result.items).toHaveLength(28);
     expect(result.outfits).toHaveLength(12);
     expect(result.mounts).toHaveLength(1);
     expect(result.reference.mounts[0]?.name).toBe("Sparkion");
@@ -509,4 +510,47 @@ describe("rawJsonHash", () => {
     expect(rawJsonHash("<html>a</html>")).not.toBe(rawJsonHash("<html>b</html>"));
     expect(rawJsonHash("")).toHaveLength(16);
   });
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// 8. Unikalność relacji (PK safety) — regresja po bugu duplicate key
+// ══════════════════════════════════════════════════════════════════════════
+//
+// Bug produkcyjny (2026-09-17): item obecny i w sekcji regularnej, i w
+// „Store Item Summary" dawał DWA wiersze auction_items z tym samym
+// (auction_id, item_id, tier) → `duplicate key value violates unique
+// constraint auction_items_auction_id_item_id_tier_pk` → cała aukcja nie
+// wchodziła do bazy. Fix: dedupe globalny (suma quantity, isStore OR).
+
+describe("relacje — unikalność kluczy (PK safety)", () => {
+  const fixtures: Array<[string, bigint]> = [
+    ["auction-detail-live-2259395.html", 2259395n],
+    ["auction-detail-live-2252245.html", 2252245n],
+    ["auction-detail-live-2258972.html", 2258972n],
+    ["auction-detail-live-2255748.html", 2255748n],
+    ["auction-detail-live-2258274.html", 2258274n],
+  ];
+
+  for (const [file, id] of fixtures) {
+    it(`${file}: items/outfits/mounts bez duplikatów`, () => {
+      const result = parseAuctionDetail(loadFixture(file), id);
+
+      const itemIds = result.items.map((i) => i.itemId);
+      expect(new Set(itemIds).size).toBe(itemIds.length);
+
+      const outfitIds = result.outfits.map((o) => o.outfitId);
+      expect(new Set(outfitIds).size).toBe(outfitIds.length);
+
+      const mountIds = result.mounts.map((m) => m.mountId);
+      expect(new Set(mountIds).size).toBe(mountIds.length);
+
+      // Harvest słowników też musi być unikalny (id = PK w items/outfits/mounts).
+      const refItemIds = result.reference.items.map((i) => i.id);
+      expect(new Set(refItemIds).size).toBe(refItemIds.length);
+      const refOutfitIds = result.reference.outfits.map((o) => o.id);
+      expect(new Set(refOutfitIds).size).toBe(refOutfitIds.length);
+      const refMountIds = result.reference.mounts.map((m) => m.id);
+      expect(new Set(refMountIds).size).toBe(refMountIds.length);
+    });
+  }
 });
