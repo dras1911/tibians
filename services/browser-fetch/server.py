@@ -72,14 +72,56 @@ CHALLENGE_MARKERS = (
     "Verifying you are human",
 )
 
-# ── Stan przeglądarki (lazy init + lock) ────────────────────────────────────
+# ── Stan przeglądarki (dedykowany wątek + kolejka) ──────────────────────────
+#
+# KLUCZOWE: Playwright sync API NIE jest thread-safe — obiekt browser/page
+# utworzony w wątku A nie może być używany z wątku B ("Cannot switch to a
+# different thread" — zielone greenlety). ThreadingHTTPServer obsługuje każdy
+# request w INNYM wątku, więc wszystkie operacje przeglądarki muszą iść przez
+# JEDEN dedykowany wątek roboczy. Reszta serwera tylko kolejkuje zadania.
+
+import queue as _queue
 
 _browser = None
-_lock = threading.Lock()
+_jobs: "_queue.Queue[object]" = _queue.Queue()
+
+
+def _browser_worker() -> None:
+    """Pętla wątku roboczego: wykonuje wszystkie operacje na przeglądarce."""
+    while True:
+        job = _jobs.get()
+        if job is None:  # sygnał zamknięcia
+            return
+        fn, args, box = job
+        try:
+            box["result"] = fn(*args)
+        except BaseException as err:  # noqa: BLE001 — przekazujemy do handlera
+            box["error"] = err
+        finally:
+            box["done"].set()
+
+
+def run_on_browser_thread(fn, *args):
+    """Wykonaj `fn(*args)` w dedykowanym wątku przeglądarki i czekaj na wynik."""
+    box: dict = {"done": threading.Event()}
+    _jobs.put((fn, args, box))
+    box["done"].wait()
+    if "error" in box:
+        raise box["error"]
+    return box["result"]
+
+
+_worker_thread = threading.Thread(
+    target=_browser_worker, name="browser-worker", daemon=True
+)
+_worker_thread.start()
 
 
 def _get_browser():
-    """Zwraca (i w razie potrzeby tworzy) singleton CloakBrowser."""
+    """Zwraca (i w razie potrzeby tworzy) singleton CloakBrowser.
+
+    UWAGA: wywoływać WYŁĄCZNIE z wątku roboczego (`run_on_browser_thread`).
+    """
     global _browser
     if _browser is None:
         kwargs: dict = {"headless": HEADLESS}
@@ -93,7 +135,7 @@ def _get_browser():
 
 
 def _reset_browser(reason: str) -> None:
-    """Zamyka i unieważnia singleton (po crashu Chrome)."""
+    """Zamyka i unieważnia singleton (po crashu Chrome). Tylko wątek roboczy."""
     global _browser
     log.warning("reset browser: %s", reason)
     try:
@@ -119,41 +161,48 @@ def _wait_out_challenge(page) -> str:
 
 
 def _fetch_once(url: str, timeout_ms: int) -> dict:
-    """Jedno pobranie strony (współdzielony lock — jeden page naraz)."""
-    with _lock:
-        browser = _get_browser()
-        page = browser.new_page()
+    """Jedno pobranie strony. UWAGA: tylko z wątku roboczego (patrz _get_browser)."""
+    browser = _get_browser()
+    page = browser.new_page()
+    try:
+        response = page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
+        status = response.status if response is not None else 0
+        headers = {}
         try:
-            response = page.goto(url, wait_until="domcontentloaded", timeout=timeout_ms)
-            status = response.status if response is not None else 0
+            headers = response.all_headers() if response is not None else {}
+        except Exception:  # noqa: BLE001 — nagłówki są opcjonalne
             headers = {}
-            try:
-                headers = response.all_headers() if response is not None else {}
-            except Exception:  # noqa: BLE001 — nagłówki są opcjonalne
-                headers = {}
-            html = _wait_out_challenge(page)
-            return {
-                "url": page.url,
-                "status": status,
-                "response": html,
-                "headers": headers,
-            }
-        finally:
-            try:
-                page.close()
-            except Exception:  # noqa: BLE001
-                pass
+        html = _wait_out_challenge(page)
+        return {
+            "url": page.url,
+            "status": status,
+            "response": html,
+            "headers": headers,
+        }
+    finally:
+        try:
+            page.close()
+        except Exception:  # noqa: BLE001
+            pass
 
 
 def do_request_get(url: str, timeout_ms: int) -> dict:
-    """request.get z jednorazową autoregeneracją przeglądarki."""
-    try:
-        return _fetch_once(url, timeout_ms)
-    except Exception as first_err:  # noqa: BLE001
-        msg = f"{type(first_err).__name__}: {first_err}"
-        # Chrome mógł umrzeć — spróbuj raz jeszcze na świeżej instancji.
-        _reset_browser(msg)
-        return _fetch_once(url, timeout_ms)
+    """request.get z jednorazową autoregeneracją przeglądarki.
+
+    Całość wykonuje się w dedykowanym wątku roboczym (Playwright sync API
+    nie toleruje używania obiektów browser/page z różnych wątków).
+    """
+
+    def _attempt() -> dict:
+        try:
+            return _fetch_once(url, timeout_ms)
+        except Exception as first_err:  # noqa: BLE001
+            msg = f"{type(first_err).__name__}: {first_err}"
+            # Chrome mógł umrzeć — spróbuj raz jeszcze na świeżej instancji.
+            _reset_browser(msg)
+            return _fetch_once(url, timeout_ms)
+
+    return run_on_browser_thread(_attempt)
 
 
 # ── HTTP handler ─────────────────────────────────────────────────────────────
@@ -168,11 +217,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def _send_json(self, code: int, payload: dict) -> None:
         body = json.dumps(payload).encode("utf-8")
-        self.send_response(code)
-        self.send_header("Content-Type", "application/json")
-        self.send_header("Content-Length", str(len(body)))
-        self.end_headers()
-        self.wfile.write(body)
+        try:
+            self.send_response(code)
+            self.send_header("Content-Type", "application/json")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+        except (BrokenPipeError, ConnectionResetError):
+            # Klient (scraper) rozłączył się przed wysłaniem odpowiedzi —
+            # np. jego timeout minął. Nie zaśmiecamy logów tracebackiem.
+            log.warning("klient rozłączył się przed wysłaniem odpowiedzi")
 
     def _authorized(self) -> bool:
         if TOKEN is None:

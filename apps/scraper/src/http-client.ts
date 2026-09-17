@@ -336,6 +336,11 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
     (fetchConfig.mode === "browser" && fetchConfig.url != null
       ? makeBrowserRequester(fetchConfig)
       : makeUndiciRequester());
+  // W trybie browser Chromium renderuje dłużej niż undici (challenge CF, JS,
+  // zimny start Chrome) — dajemy większy budżet na request, żeby nie ciąć
+  // wolnych stron i nie wywoływać retry-stormu.
+  const defaultTimeoutMs =
+    fetchConfig.mode === "browser" ? Math.max(config.timeoutMs, 90_000) : config.timeoutMs;
   const random = options.random ?? Math.random;
   const sleepFn = options.sleepFn ?? defaultSleep;
 
@@ -398,7 +403,7 @@ export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
         };
 
         // Timeout per-request — ustawiany w każdej iteracji, bo retries są świeże.
-        const timeoutMs = opts.timeoutMs ?? config.timeoutMs;
+        const timeoutMs = opts.timeoutMs ?? defaultTimeoutMs;
         const timeoutController = new AbortController();
         const timeoutId = setTimeout(() => timeoutController.abort(), timeoutMs);
         // Połącz timeoutAbort + nasz controller.shutdownAbort.
