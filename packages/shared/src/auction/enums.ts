@@ -34,10 +34,14 @@ export const VocationSchema = z.enum(["Knight", "Paladin", "Druid", "Sorcerer", 
 export type Vocation = z.infer<typeof VocationSchema>;
 
 /**
- * Promowane warianty (widoczne w nagłówku aukcji Tibii) + `None`
- * (postacie bez profesji nie mają wariantu promowanego).
+ * Wyświetlana klasa postaci — dokładnie to, co tibia.com pokazuje
+ * w „Vocation:" na liście i w detalu aukcji.
  *
- * Arch. §7.2 `auctions.vocation` — DB trzyma je jako TEXT.
+ * UWAGA: to NIE jest wyłącznie forma promowana — postacie bez promocji
+ * (np. świeże postacie przed level 20) mają tu swoją BAZOWĄ nazwę
+ * („Paladin"), a promowane — formę promowaną („Royal Paladin").
+ * DB trzyma to jako `auctions.vocation` (TEXT); do filtrowania służy
+ * `auctions.vocation_base` (`VocationSchema`).
  */
 export const VocationPromotedSchema = z.enum([
   "Elite Knight",
@@ -45,6 +49,12 @@ export const VocationPromotedSchema = z.enum([
   "Elder Druid",
   "Master Sorcerer",
   "Exalted Monk",
+  // Formy bazowe — postacie niepromowane (tibia.com pokazuje je dosłownie).
+  "Knight",
+  "Paladin",
+  "Druid",
+  "Sorcerer",
+  "Monk",
   "None",
 ]);
 export type VocationPromoted = z.infer<typeof VocationPromotedSchema>;

@@ -190,7 +190,8 @@ const LIST_ANCHORS: Readonly<Record<number, ListAnchor>> = {
       id: 2250105n,
       name: "Solstitium",
       level: 301,
-      vocation: "Elite Knight",
+      // Niepromowany Knight (tibia.com dosłownie: „Level: 301 | Vocation: Knight").
+      vocation: "Knight",
       bid: 57,
       bidType: "minimum",
       world: "Gentebra",
@@ -578,6 +579,7 @@ describe("T33 — matryca fixture × parser", () => {
     "auction-detail-live-2258972.html": true,
     "auction-detail-live-2255748.html": true,
     "auction-detail-live-2258274.html": true,
+    "auction-detail-live-2254825.html": true,
   };
 
   /** Parse z jawnym komunikatem zamiast gołego throw (czytelny FAIL). */

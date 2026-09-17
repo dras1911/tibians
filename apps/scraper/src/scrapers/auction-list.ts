@@ -194,24 +194,23 @@ export function parseBidAmount(raw: string): number {
   return Number.parseInt(cleaned, 10);
 }
 
-/** Mapowanie vocation: akceptuje promowane LUB bazowe (knight → Elite Knight). */
+/**
+ * Normalizacja vocation z listy tibia.com — zachowuje DOKŁADNĄ formę
+ * z serwisu (promowaną albo bazową; postacie niepromowane mają bazową).
+ *
+ * NIE awansujemy nazw: kiedyś „Paladin" było mapowane na „Royal Paladin"
+ * i wszystkie niepromowane postacie w bazie miały fałszywą promocję
+ * (np. „Royal Paladin" na level 8 — patrz fix 2026-09-17).
+ */
 export function normalizeVocation(raw: string): z.infer<typeof VocationPromotedSchema> {
   const v = raw.trim();
-  // Akceptuj wariant promowany bezpośrednio
-  const promoted = VocationPromotedSchema.safeParse(v);
-  if (promoted.success) return promoted.data;
-  // Fallback: bazowy → promowany (arch §13.1 + character-context)
-  const baseToPromoted: Record<string, z.infer<typeof VocationPromotedSchema>> = {
-    Knight: "Elite Knight",
-    Paladin: "Royal Paladin",
-    Druid: "Elder Druid",
-    Sorcerer: "Master Sorcerer",
-    Monk: "Exalted Monk",
-    // Postacie bez profesji — tibia.com renderuje dosłownie „None".
-    None: "None",
-  };
-  const mapped = baseToPromoted[v];
-  if (mapped !== undefined) return mapped;
+  const direct = VocationPromotedSchema.safeParse(v);
+  if (direct.success) return direct.data;
+  // Case-insensitive fallback po pełnym słowniku (promowane + bazowe + None).
+  const lower = v.toLowerCase();
+  for (const option of VocationPromotedSchema.options) {
+    if (option.toLowerCase() === lower) return option;
+  }
   throw new Error(`Nieznana vocation: "${raw}"`);
 }
 

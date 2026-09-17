@@ -170,9 +170,7 @@ describe("parseAuctionList — real Tibia fixture (page 1, 25 aukcji)", () => {
     expect(a?.level).toBe(1717);
     expect(a?.vocation).toBe("Royal Paladin");
     expect(a?.world).toBe("Quelibra");
-    expect(a?.outfitUrl).toBe(
-      "https://static.tibia.com/images/charactertrade/outfits/129_2.gif",
-    );
+    expect(a?.outfitUrl).toBe("https://static.tibia.com/images/charactertrade/outfits/129_2.gif");
   });
 
   it("wszystkie aukcje mają poprawne outfitUrl (static.tibia.com)", () => {
@@ -194,7 +192,7 @@ describe("parseAuctionList — real Tibia fixture (page 1, 25 aukcji)", () => {
     }
   });
 
-  it("wszystkie aukcje mają poprawne vocation (5 wariantów promowanych)", () => {
+  it("wszystkie aukcje mają poprawne vocation (promowane lub bazowe)", () => {
     const html = loadFixture("auction-list-page-1.html");
     const result = parseAuctionList(html);
     const validVocations = [
@@ -203,6 +201,13 @@ describe("parseAuctionList — real Tibia fixture (page 1, 25 aukcji)", () => {
       "Elder Druid",
       "Master Sorcerer",
       "Exalted Monk",
+      // Postacie niepromowane — tibia.com pokazuje bazową formę.
+      "Knight",
+      "Paladin",
+      "Druid",
+      "Sorcerer",
+      "Monk",
+      "None",
     ] as const;
     for (const a of result.auctions) {
       expect(validVocations).toContain(a.vocation);
@@ -246,9 +251,7 @@ describe("parseAuctionList — real Tibia fixture (page 50, 25 aukcji)", () => {
 
   it("aukcje ze strony 50 mają unikalne ID (brak kolizji ze stroną 1)", () => {
     const page1Ids = new Set(
-      parseAuctionList(loadFixture("auction-list-page-1.html")).auctions.map(
-        (a) => a.auctionId,
-      ),
+      parseAuctionList(loadFixture("auction-list-page-1.html")).auctions.map((a) => a.auctionId),
     );
     const result = parseAuctionList(loadFixture("auction-list-page-50.html"));
     for (const a of result.auctions) {
@@ -297,32 +300,20 @@ describe("parseAuctionList — real Tibia fixture (page 107, partial page, 14 au
 
 describe("parseAuctionList — bid parsing", () => {
   it("EN locale: '1,253' → 1253", () => {
-    const html = wrapPage(
-      [mockAuction({ auctionId: 1001, bidText: "1,253" })],
-      1,
-      1,
-    );
+    const html = wrapPage([mockAuction({ auctionId: 1001, bidText: "1,253" })], 1, 1);
     const result = parseAuctionList(html);
     expect(result.auctions[0]?.bid).toBe(1253);
   });
 
   it("EN locale: '230,000' → 230000", () => {
-    const html = wrapPage(
-      [mockAuction({ auctionId: 1002, bidText: "230,000" })],
-      1,
-      1,
-    );
+    const html = wrapPage([mockAuction({ auctionId: 1002, bidText: "230,000" })], 1, 1);
     const result = parseAuctionList(html);
     expect(result.auctions[0]?.bid).toBe(230000);
   });
 
   it("PL locale (NBSP U+00A0): '25 501' → 25501 (real fixture)", () => {
     // Auction #2252233 — "85" (no separator) — sanity check that parser handles plain numbers
-    const html = wrapPage(
-      [mockAuction({ auctionId: 1003, bidText: "85" })],
-      1,
-      1,
-    );
+    const html = wrapPage([mockAuction({ auctionId: 1003, bidText: "85" })], 1, 1);
     const result = parseAuctionList(html);
     expect(result.auctions[0]?.bid).toBe(85);
   });
@@ -367,11 +358,7 @@ describe("parseAuctionList — bid parsing", () => {
   });
 
   it("reject nieprawidłowej kwoty → skip + warning (nie crash)", () => {
-    const html = wrapPage(
-      [mockAuction({ auctionId: 2003, bidText: "abc" })],
-      1,
-      1,
-    );
+    const html = wrapPage([mockAuction({ auctionId: 2003, bidText: "abc" })], 1, 1);
     const warn = vi.fn();
     const result = parseAuctionList(html, { warn });
     expect(result.auctions).toEqual([]);
@@ -383,33 +370,24 @@ describe("parseAuctionList — bid parsing", () => {
 // 11-12. Vocation normalization
 // ──────────────────────────────────────────────────────────────────────────
 
-describe("normalizeVocation — bazowy → promowany + passthrough", () => {
-  it("bazowy 'Knight' → 'Elite Knight'", () => {
-    expect(normalizeVocation("Knight")).toBe("Elite Knight");
+describe("normalizeVocation — zachowuje formę z tibia.com (BEZ awansu)", () => {
+  it("bazowe zostają bazowe (postacie niepromowane)", () => {
+    expect(normalizeVocation("Knight")).toBe("Knight");
+    expect(normalizeVocation("Paladin")).toBe("Paladin");
+    expect(normalizeVocation("Druid")).toBe("Druid");
+    expect(normalizeVocation("Sorcerer")).toBe("Sorcerer");
+    expect(normalizeVocation("Monk")).toBe("Monk");
   });
 
-  it("bazowy 'Paladin' → 'Royal Paladin'", () => {
-    expect(normalizeVocation("Paladin")).toBe("Royal Paladin");
-  });
-
-  it("bazowy 'Druid' → 'Elder Druid'", () => {
-    expect(normalizeVocation("Druid")).toBe("Elder Druid");
-  });
-
-  it("bazowy 'Sorcerer' → 'Master Sorcerer'", () => {
-    expect(normalizeVocation("Sorcerer")).toBe("Master Sorcerer");
-  });
-
-  it("bazowy 'Monk' → 'Exalted Monk'", () => {
-    expect(normalizeVocation("Monk")).toBe("Exalted Monk");
-  });
-
-  it("promowany passthrough: 'Elder Druid' → 'Elder Druid'", () => {
+  it("promowane zostają promowane (passthrough)", () => {
+    expect(normalizeVocation("Elite Knight")).toBe("Elite Knight");
     expect(normalizeVocation("Elder Druid")).toBe("Elder Druid");
+    expect(normalizeVocation("  Master Sorcerer  ")).toBe("Master Sorcerer");
   });
 
-  it("promowany z trim: '  Master Sorcerer  ' → 'Master Sorcerer'", () => {
-    expect(normalizeVocation("  Master Sorcerer  ")).toBe("Master Sorcerer");
+  it("case-insensitive → kanoniczna forma", () => {
+    expect(normalizeVocation("paladin")).toBe("Paladin");
+    expect(normalizeVocation("ROYAL PALADIN")).toBe("Royal Paladin");
   });
 
   it("nieznana vocation → throw", () => {
@@ -439,10 +417,7 @@ describe("parseAuctionList — edge cases", () => {
   it("wiersz bez linku auctionid → skip + warning, parser nie crashuje", () => {
     const corrupt = `<div class="Auction"><div class="AuctionHeader"><div class="AuctionCharacterName"><a>No Link</a></div></div><div class="AuctionBody"><div class="ShortAuctionData"><div class="AuctionTimer" data-timestamp="1788955200"></div><div class="ShortAuctionDataBidRow"><div class="ShortAuctionDataLabel">Current Bid:</div><div class="ShortAuctionDataValue"><b>100</b></div></div></div></div></div>`;
     const warn = vi.fn();
-    const result = parseAuctionList(
-      `<html><body>${corrupt}</body></html>`,
-      { warn },
-    );
+    const result = parseAuctionList(`<html><body>${corrupt}</body></html>`, { warn });
     expect(result.auctions).toEqual([]);
     expect(warn).toHaveBeenCalled();
     expect(warn.mock.calls[0]?.[0]).toMatch(/Missing auction link/);
@@ -451,15 +426,10 @@ describe("parseAuctionList — edge cases", () => {
   it("wiersz bez outfitImage → skip + warning", () => {
     const corrupt = `<div class="Auction"><div class="AuctionHeader"><div class="AuctionCharacterName"><a href="?auctionid=9999">X</a></div>Level: 100 | Vocation: Elite Knight | Male | World: Antica</div><div class="AuctionBody"><div class="ShortAuctionData"><div class="AuctionTimer" data-timestamp="1788955200"></div><div class="ShortAuctionDataBidRow"><div class="ShortAuctionDataLabel">Current Bid:</div><div class="ShortAuctionDataValue"><b>100</b></div></div></div></div></div>`;
     const warn = vi.fn();
-    const result = parseAuctionList(
-      `<html><body>${corrupt}</body></html>`,
-      { warn },
-    );
+    const result = parseAuctionList(`<html><body>${corrupt}</body></html>`, { warn });
     expect(result.auctions).toEqual([]);
     expect(warn).toHaveBeenCalled();
-    expect(warn.mock.calls.some(([msg]) => /outfit/i.test(String(msg)))).toBe(
-      true,
-    );
+    expect(warn.mock.calls.some(([msg]) => /outfit/i.test(String(msg)))).toBe(true);
   });
 
   it("mieszane: 1 dobry + 1 uszkodzony → 1 aukcja, 1 warning", () => {
@@ -654,10 +624,7 @@ describe("compareAuctionLists — diff dla scheduler (task 36)", () => {
   });
 
   it("usunięta aukcja (removed) → removedAuctions, newAuctions=[]", () => {
-    const prev = [
-      baseAuction({ auctionId: 1n }),
-      baseAuction({ auctionId: 2n }),
-    ];
+    const prev = [baseAuction({ auctionId: 1n }), baseAuction({ auctionId: 2n })];
     const curr = [baseAuction({ auctionId: 1n })];
     const diff = compareAuctionLists(prev, curr);
     expect(diff.newAuctions).toEqual([]);
@@ -683,12 +650,8 @@ describe("compareAuctionLists — diff dla scheduler (task 36)", () => {
   });
 
   it("updated: zmiana auctionEnd → changedFields=['auctionEnd']", () => {
-    const prev = [
-      baseAuction({ auctionId: 1n, auctionEnd: "2026-09-09T12:00:00.000Z" }),
-    ];
-    const curr = [
-      baseAuction({ auctionId: 1n, auctionEnd: "2026-09-09T13:00:00.000Z" }),
-    ];
+    const prev = [baseAuction({ auctionId: 1n, auctionEnd: "2026-09-09T12:00:00.000Z" })];
+    const curr = [baseAuction({ auctionId: 1n, auctionEnd: "2026-09-09T13:00:00.000Z" })];
     const diff = compareAuctionLists(prev, curr);
     expect(diff.updatedAuctions[0]?.changedFields).toEqual(["auctionEnd"]);
   });

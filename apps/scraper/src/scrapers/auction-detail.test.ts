@@ -223,7 +223,8 @@ describe("parseAuctionDetail — Misericuerdia (live 2252245, finished)", () => 
     expect(a?.name).toBe("Misericuerdia");
     expect(a?.level).toBe(15);
     expect(a?.vocation).toBe("Knight");
-    expect(a?.vocationPromoted).toBe("Elite Knight");
+    // Niepromowana (lvl 15) — wyświetlana wokacja = bazowa, BEZ awansu.
+    expect(a?.vocationPromoted).toBe("Knight");
     expect(a?.worldId).toBe(122);
     expect(a?.outfitId).toBe(131);
   });
@@ -529,6 +530,7 @@ describe("relacje — unikalność kluczy (PK safety)", () => {
     ["auction-detail-live-2258972.html", 2258972n],
     ["auction-detail-live-2255748.html", 2255748n],
     ["auction-detail-live-2258274.html", 2258274n],
+    ["auction-detail-live-2254825.html", 2254825n],
   ];
 
   for (const [file, id] of fixtures) {
@@ -553,4 +555,28 @@ describe("relacje — unikalność kluczy (PK safety)", () => {
       expect(new Set(refMountIds).size).toBe(refMountIds.length);
     });
   }
+});
+
+// ══════════════════════════════════════════════════════════════════════════
+// 7. Walipaxy Eldas (live 2254825) — postać NIEPROMOWANA (Paladin, lvl 8).
+//    Regresja 2026-09-17: parser awansował „Paladin" → „Royal Paladin"
+//    i niepromowane postacie w bazie miały fałszywą promocję.
+// ══════════════════════════════════════════════════════════════════════════
+
+describe("parseAuctionDetail — Walipaxy Eldas (live 2254825, niepromowany)", () => {
+  const html = loadFixture("auction-detail-live-2254825.html");
+  const result = parseAuctionDetail(html, 2254825n);
+
+  it("parsuje się bez błędu", () => {
+    expect(result.parseError).toBeNull();
+    expect(result.auction).not.toBeNull();
+  });
+
+  it("vocation: bazowa 'Paladin' — BEZ awansu do 'Royal Paladin'", () => {
+    const a = result.auction;
+    expect(a?.name).toBe("Walipaxy Eldas");
+    expect(a?.level).toBe(8);
+    expect(a?.vocation).toBe("Paladin");
+    expect(a?.vocationPromoted).toBe("Paladin");
+  });
 });

@@ -260,16 +260,24 @@ function vocationToBase(raw: string): string {
   return raw;
 }
 
-/** Rozwiąż nazwę vocation (bazową lub promowaną) → promowaną. */
+/**
+ * Znormalizuj nazwę vocation z tibia.com do formy wyświetlanej.
+ *
+ * Semantyka: tibia.com w „Vocation:" pokazuje DOKŁADNIE stan postaci —
+ * formę promowaną („Royal Paladin") dla promowanych, bazową („Paladin")
+ * dla niepromowanych. NIE awansujemy nazw: kiedyś „Paladin" było tu
+ * mapowane na „Royal Paladin" i wszystkie niepromowane postacie w bazie
+ * miały fałszywą promocję (np. „Royal Paladin" na level 8).
+ */
 function vocationToPromoted(raw: string): string {
   for (const [promoted] of VOCATION_PROMOTED_TO_BASE) {
     if (promoted === raw) return raw;
   }
   const lower = raw.toLowerCase();
-  for (const [promoted, base] of VOCATION_PROMOTED_TO_BASE) {
-    if (base.toLowerCase() === lower) return promoted;
+  for (const [promoted] of VOCATION_PROMOTED_TO_BASE) {
     if (promoted.toLowerCase() === lower) return promoted;
   }
+  // Bazowa (lub None) — zostaje sobą (postać niepromowana).
   return vocationToBase(raw);
 }
 
@@ -1160,7 +1168,18 @@ export function parseAuctionDetail(
   const safeVocation = (identity.vocation ?? "Knight") as
     "Knight" | "Paladin" | "Druid" | "Sorcerer" | "Monk" | "None";
   const safeVocationPromoted = (identity.vocationPromoted ?? "Elite Knight") as
-    "Elite Knight" | "Royal Paladin" | "Elder Druid" | "Master Sorcerer" | "Exalted Monk" | "None";
+    | "Elite Knight"
+    | "Royal Paladin"
+    | "Elder Druid"
+    | "Master Sorcerer"
+    | "Exalted Monk"
+    // Postacie niepromowane — wyświetlana wokacja = bazowa.
+    | "Knight"
+    | "Paladin"
+    | "Druid"
+    | "Sorcerer"
+    | "Monk"
+    | "None";
   const safeSex: "M" | "F" = identity.sex ?? "M";
   const safeWorldId = identity.worldId ?? 1;
 

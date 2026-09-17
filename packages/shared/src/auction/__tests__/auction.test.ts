@@ -166,6 +166,25 @@ describe("pozytywne fixture'y", () => {
     expect(a.vocationPromoted).toBe("Royal Paladin");
   });
 
+  it("akceptuje postać NIEPROMOWANĄ (vocation == vocationPromoted)", () => {
+    const a = minimalAuction({
+      name: "Fresh Paladin",
+      level: 8,
+      vocation: "Paladin",
+      vocationPromoted: "Paladin",
+    });
+    expect(a.vocationPromoted).toBe("Paladin");
+  });
+
+  it("odrzuca niespójną promocję (vocation Paladin + Elite Knight)", () => {
+    const result = AuctionSchema.safeParse({
+      ...minimalAuction(),
+      vocation: "Paladin",
+      vocationPromoted: "Elite Knight",
+    });
+    expect(result.success).toBe(false);
+  });
+
   it("akceptuje Elder Druid (Female)", () => {
     const a = minimalAuction({
       name: "Druidka",
@@ -403,7 +422,7 @@ describe("cross-validation refinements", () => {
         vocation: "Knight",
         vocationPromoted: "Royal Paladin",
       }),
-    ).toThrow(/vocationPromoted musi odpowiadać vocation/);
+    ).toThrow(/vocationPromoted musi być promowaną formą/);
   });
 
   it("odrzuca vocationPromoted niezgodny (Druid → Master Sorcerer)", () => {

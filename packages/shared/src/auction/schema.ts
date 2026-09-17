@@ -104,22 +104,14 @@ const IsoDateTimeSchema = z
  */
 export const AuctionSkillSchema = z
   .object({
-    auctionId: z
-      .bigint()
-      .positive("auctionId musi być dodatni (bigint PK z auctions.auction_id)"),
+    auctionId: z.bigint().positive("auctionId musi być dodatni (bigint PK z auctions.auction_id)"),
     skill: AuctionSkillKeySchema,
     baseValue: z
       .number()
       .int()
       .min(0, "Bazowy skill nie może być ujemny")
       .max(250, "Skill powyżej 250 jest niemożliwy w Tibii"),
-    loyaltyValue: z
-      .number()
-      .int()
-      .min(0)
-      .max(500)
-      .nullable()
-      .optional(),
+    loyaltyValue: z.number().int().min(0).max(500).nullable().optional(),
   })
   .strict();
 export type AuctionSkill = z.infer<typeof AuctionSkillSchema>;
@@ -137,14 +129,8 @@ export type AuctionSkill = z.infer<typeof AuctionSkillSchema>;
 export const AuctionItemSchema = z
   .object({
     auctionId: z.bigint().positive(),
-    itemId: z
-      .number()
-      .int()
-      .positive("itemId musi być dodatni (FK do items.id)"),
-    quantity: z
-      .number()
-      .int()
-      .min(1, "Ilość itemu musi wynosić co najmniej 1"),
+    itemId: z.number().int().positive("itemId musi być dodatni (FK do items.id)"),
+    quantity: z.number().int().min(1, "Ilość itemu musi wynosić co najmniej 1"),
     tier: AuctionTierSchema,
   })
   .strict();
@@ -232,11 +218,7 @@ export const AuctionSkillLoyaltySchema = z
   .object({
     auctionId: z.bigint().positive(),
     skill: AuctionSkillKeySchema,
-    baseValue: z
-      .number()
-      .int()
-      .min(0)
-      .max(250, "Bazowy skill nie może przekraczać 250"),
+    baseValue: z.number().int().min(0).max(250, "Bazowy skill nie może przekraczać 250"),
     loyaltyPct: LoyaltyPctRangeSchema.nullable().optional(),
   })
   .strict();
@@ -266,9 +248,7 @@ export const AuctionSchema = z
   .object({
     // ── 1. Tożsamość postaci ──────────────────────────────────────────
     /** PK z tibia.com (`?auctionid=2173376`). bigint bo ID > Number.MAX_SAFE_INTEGER. */
-    id: z
-      .bigint()
-      .positive("id aukcji musi być dodatnie (PK z tibia.com)"),
+    id: z.bigint().positive("id aukcji musi być dodatnie (PK z tibia.com)"),
     /** Nazwa postaci (1-50 znaków). */
     name: z
       .string()
@@ -289,19 +269,11 @@ export const AuctionSchema = z
     /** FK do `worlds.id` (smallint). */
     worldId: z.number().int().positive("worldId musi być dodatni (FK)"),
     /** ID outfitu (FK do outfits.id). Nullable — postać może nie mieć outfitu. */
-    outfitId: z
-      .number()
-      .int()
-      .positive()
-      .nullable()
-      .optional(),
+    outfitId: z.number().int().positive().nullable().optional(),
 
     // ── 2. Aukcja ─────────────────────────────────────────────────────
     /** Aktualna lub minimalna oferta w TC. ≥ 0. */
-    bid: z
-      .number()
-      .int()
-      .min(0, "Oferta nie może być ujemna"),
+    bid: z.number().int().min(0, "Oferta nie może być ujemna"),
     /** `current` (ktoś licytuje) lub `minimum` (aukcja bez licytacji). */
     bidType: BidTypeSchema,
     /** ISO datetime rozpoczęcia aukcji. */
@@ -401,43 +373,37 @@ export const AuctionSchema = z
   // Cross-validation refinements (arch. §7.2 + task 28 spec)
   // ─────────────────────────────────────────────────────────────────────
   /** auctionEnd musi być po auctionStart. */
-  .refine(
-    (a) => Date.parse(a.auctionEnd) > Date.parse(a.auctionStart),
-    {
-      message: "auctionEnd musi być po auctionStart",
-      path: ["auctionEnd"],
-    },
-  )
+  .refine((a) => Date.parse(a.auctionEnd) > Date.parse(a.auctionStart), {
+    message: "auctionEnd musi być po auctionStart",
+    path: ["auctionEnd"],
+  })
   /** questsCompleted ≤ questsTotal. */
-  .refine(
-    (a) => a.questsCompleted <= a.questsTotal,
-    {
-      message: "questsCompleted nie może przekraczać questsTotal",
-      path: ["questsCompleted"],
-    },
-  )
+  .refine((a) => a.questsCompleted <= a.questsTotal, {
+    message: "questsCompleted nie może przekraczać questsTotal",
+    path: ["questsCompleted"],
+  })
   /** imbuementsUnlocked ≤ imbuementsTotal. */
-  .refine(
-    (a) => a.imbuementsUnlocked <= a.imbuementsTotal,
-    {
-      message: "imbuementsUnlocked nie może przekraczać imbuementsTotal",
-      path: ["imbuementsUnlocked"],
-    },
-  )
+  .refine((a) => a.imbuementsUnlocked <= a.imbuementsTotal, {
+    message: "imbuementsUnlocked nie może przekraczać imbuementsTotal",
+    path: ["imbuementsUnlocked"],
+  })
   /** status='sold' → finalPrice required (nie może być null). */
+  .refine((a) => a.status !== "sold" || (a.finalPrice !== null && a.finalPrice !== undefined), {
+    message: "finalPrice jest wymagany gdy status='sold'",
+    path: ["finalPrice"],
+  })
+  /**
+   * vocationPromoted musi być spójne z vocation: albo formą promowaną
+   * (Knight→Elite Knight), albo samą bazową (postać niepromowana —
+   * tibia.com pokazuje wtedy np. „Paladin").
+   */
   .refine(
-    (a) => a.status !== "sold" || a.finalPrice !== null && a.finalPrice !== undefined,
-    {
-      message: "finalPrice jest wymagany gdy status='sold'",
-      path: ["finalPrice"],
-    },
-  )
-  /** vocationPromoted musi odpowiadać bazowej (VOCATION_BASE_TO_PROMOTED). */
-  .refine(
-    (a) => VOCATION_BASE_TO_PROMOTED[a.vocation] === a.vocationPromoted,
+    (a) =>
+      VOCATION_BASE_TO_PROMOTED[a.vocation] === a.vocationPromoted ||
+      a.vocation === a.vocationPromoted,
     {
       message:
-        "vocationPromoted musi odpowiadać vocation (Knight→Elite Knight itd.)",
+        "vocationPromoted musi być promowaną formą vocation albo samą vocation (postać niepromowana)",
       path: ["vocationPromoted"],
     },
   )
@@ -448,8 +414,7 @@ export const AuctionSchema = z
       // tolerancja 0.01 (NUMERIC(10,2) w DB)
       Math.abs(a.pricePerLevel - a.bid / a.level) < 0.01,
     {
-      message:
-        "pricePerLevel musi odpowiadać bid/level (GENERATED w DB, tolerancja 0.01)",
+      message: "pricePerLevel musi odpowiadać bid/level (GENERATED w DB, tolerancja 0.01)",
       path: ["pricePerLevel"],
     },
   )
@@ -462,16 +427,14 @@ export const AuctionSchema = z
      * (`bid::numeric / NULLIF(level, 0)`). Pozwala API odpowiadać bez
      * konieczności przeliczania po stronie klienta.
      */
-    const computedPricePerLevel =
-      a.pricePerLevel ?? (a.level > 0 ? a.bid / a.level : 0);
+    const computedPricePerLevel = a.pricePerLevel ?? (a.level > 0 ? a.bid / a.level : 0);
     /**
      * searchVector (TSVECTOR) — auto-generujemy prostą formę tekstową
      * z `name`. W DB wygeneruje `to_tsvector('simple', name)`, my robimy
      * spacje-normalizowanego lowercasa (wystarczające do wyszukiwania
      * bez potrzeby parsowania leksera PostgreSQL).
      */
-    const computedSearchVector =
-      a.searchVector ?? a.name.toLowerCase().trim();
+    const computedSearchVector = a.searchVector ?? a.name.toLowerCase().trim();
 
     return {
       ...a,
