@@ -199,7 +199,7 @@ function AddedAgo({ addedAt }: { addedAt: string }) {
 
   return (
     <div
-      className="numeric inline-flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 px-2.5 py-1 text-xs font-medium text-success"
+      className="numeric inline-flex items-center gap-1.5 rounded-md border border-success/40 bg-success/10 px-2.5 py-1 text-sm font-medium text-success"
       aria-label={label}
       title={label}
     >
