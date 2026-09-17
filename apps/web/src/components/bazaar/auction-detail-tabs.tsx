@@ -24,24 +24,10 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useFormatter, useTranslations } from "next-intl";
-import {
-  ArrowRight,
-  Gem,
-  Package,
-  Sparkles,
-  Sword,
-  ShieldCheck,
-  Shirt,
-} from "lucide-react";
+import { ArrowRight, Gem, Package, Sparkles, Sword, ShieldCheck, Shirt } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Link } from "@/i18n/routing";
 import { cn } from "@/lib/utils";
@@ -62,13 +48,7 @@ import {
   suggestNextSkillTarget,
 } from "@/lib/bazaar/cross-link-helpers";
 
-const TAB_KEYS = [
-  "skills",
-  "items",
-  "outfitsMounts",
-  "charmsBlessings",
-  "gems",
-] as const;
+const TAB_KEYS = ["skills", "items", "outfitsMounts", "charmsBlessings", "gems"] as const;
 
 type TabKey = (typeof TAB_KEYS)[number];
 
@@ -173,11 +153,7 @@ export function AuctionDetailTabs({
             )}
           >
             {TAB_KEYS.map((key) => (
-              <TabsTrigger
-                key={key}
-                value={key}
-                className="h-11 px-3 text-sm font-medium"
-              >
+              <TabsTrigger key={key} value={key} className="h-11 px-3 text-sm font-medium">
                 <BazaarTabIcon tab={key} className="mr-1.5 h-4 w-4" />
                 <BazaarTabLabel tab={key} />
               </TabsTrigger>
@@ -201,18 +177,12 @@ export function AuctionDetailTabs({
         </TabsContent>
 
         {/* ── Outfits & Mounts ───────────────────────────────────── */}
-        <TabsContent
-          value="outfitsMounts"
-          className="mt-6 focus-visible:outline-none"
-        >
+        <TabsContent value="outfitsMounts" className="mt-6 focus-visible:outline-none">
           <OutfitsMountsTab detail={detail} />
         </TabsContent>
 
         {/* ── Charms & Blessings ─────────────────────────────────── */}
-        <TabsContent
-          value="charmsBlessings"
-          className="mt-6 focus-visible:outline-none"
-        >
+        <TabsContent value="charmsBlessings" className="mt-6 focus-visible:outline-none">
           <CharmsBlessingsTab linkCtx={linkCtx} detail={detail} />
         </TabsContent>
 
@@ -229,13 +199,7 @@ export function AuctionDetailTabs({
 // Sub-komponenty — Tab icons + labels (i18n)
 // ───────────────────────────────────────────────────────────────────────
 
-function BazaarTabIcon({
-  tab,
-  className,
-}: {
-  tab: TabKey;
-  className?: string;
-}) {
+function BazaarTabIcon({ tab, className }: { tab: TabKey; className?: string }) {
   switch (tab) {
     case "skills":
       return <Sword className={className} aria-hidden="true" />;
@@ -294,12 +258,11 @@ function SkillsTab({ detail, linkCtx, auctionId, characterName }: SkillsTabProps
   }
 
   // `noUncheckedIndexedAccess` sprawia, że `skillsByKey[k]` zwraca
-    // `number | undefined` — defaults do 0 bo schema gwarantuje wartości.
-    const highestKey = SKILL_KEYS_ORDER.reduce(
-      (best, k) =>
-        (skillsByKey[k] ?? 0) > (skillsByKey[best] ?? 0) ? k : best,
-      "magic" as (typeof SKILL_KEYS_ORDER)[number],
-    );
+  // `number | undefined` — defaults do 0 bo schema gwarantuje wartości.
+  const highestKey = SKILL_KEYS_ORDER.reduce(
+    (best, k) => ((skillsByKey[k] ?? 0) > (skillsByKey[best] ?? 0) ? k : best),
+    "magic" as (typeof SKILL_KEYS_ORDER)[number],
+  );
 
   return (
     <Card>
@@ -316,12 +279,7 @@ function SkillsTab({ detail, linkCtx, auctionId, characterName }: SkillsTabProps
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <ul
-          className={cn(
-            "grid gap-2",
-            "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4",
-          )}
-        >
+        <ul className={cn("grid gap-2", "grid-cols-1 sm:grid-cols-2 lg:grid-cols-4")}>
           {SKILL_KEYS_ORDER.map((key) => {
             const value = skillsByKey[key];
             const loyalty = loyaltyByKey.get(key);
@@ -343,10 +301,7 @@ function SkillsTab({ detail, linkCtx, auctionId, characterName }: SkillsTabProps
                       {SKILL_LABELS[key]}
                     </p>
                     {loyaltyPct !== null && loyaltyPct > 0 ? (
-                      <Badge
-                        variant="outline"
-                        className="mt-1 border-info/40 bg-info/10 text-info"
-                      >
+                      <Badge variant="outline" className="mt-1 border-info/40 bg-info/10 text-info">
                         {t("loyaltyBadge", { pct: loyaltyPct })}
                       </Badge>
                     ) : (
@@ -405,12 +360,10 @@ function SkillsTab({ detail, linkCtx, auctionId, characterName }: SkillsTabProps
                       target,
                       loyaltyPct,
                     })}
-                    className="inline-flex h-11 items-center gap-1.5 rounded-md border border-dashed bg-background px-2.5 text-xs font-medium text-info-foreground transition-colors hover:bg-info/10"
+                    className="inline-flex h-11 items-center gap-1.5 rounded-md border border-dashed bg-background px-2.5 text-xs font-medium text-info transition-colors hover:bg-info/10"
                   >
                     <Sparkles className="h-3 w-3" aria-hidden="true" />
-                    <span className="truncate">
-                      {t("openCalculatorTrueSkill")}
-                    </span>
+                    <span className="truncate">{t("openCalculatorTrueSkill")}</span>
                   </Link>
                 ) : null}
                 <Link
@@ -430,9 +383,7 @@ function SkillsTab({ detail, linkCtx, auctionId, characterName }: SkillsTabProps
                   className="inline-flex h-11 items-center gap-1.5 rounded-md border border-dashed bg-background px-2.5 text-xs font-medium text-muted-foreground transition-colors hover:bg-accent"
                 >
                   <Sparkles className="h-3 w-3" aria-hidden="true" />
-                  <span className="truncate">
-                    {t("openCalculatorSkillTraining")}
-                  </span>
+                  <span className="truncate">{t("openCalculatorSkillTraining")}</span>
                 </Link>
               </li>
             );
@@ -489,17 +440,12 @@ function ItemsTab({ detail, linkCtx }: ItemsTabProps) {
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-base">
           <Package className="h-4 w-4 text-primary" aria-hidden="true" />
-          <span>
-            {t("totalLabel", { count: detail.items.length })}
-          </span>
+          <span>{t("totalLabel", { count: detail.items.length })}</span>
         </CardTitle>
       </CardHeader>
       <CardContent>
         <ul
-          className={cn(
-            "grid gap-2",
-            "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6",
-          )}
+          className={cn("grid gap-2", "grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6")}
         >
           {detail.items.map((it: AuctionItemEntry) => (
             <li
@@ -635,9 +581,7 @@ function CharmsBlessingsTab({
   const a = detail.auction;
 
   const charmPct =
-    a.charmPoints > 0
-      ? Math.min(100, Math.round((a.charmPointsUnused / a.charmPoints) * 100))
-      : 0;
+    a.charmPoints > 0 ? Math.min(100, Math.round((a.charmPointsUnused / a.charmPoints) * 100)) : 0;
   const blessingsPct = Math.round((a.blessingsActive / 7) * 100);
 
   return (
@@ -651,9 +595,7 @@ function CharmsBlessingsTab({
         </CardHeader>
         <CardContent className="space-y-3">
           <div className="flex items-baseline justify-between">
-            <span className="text-sm text-muted-foreground">
-              {t("charmsPointsLabel")}
-            </span>
+            <span className="text-sm text-muted-foreground">{t("charmsPointsLabel")}</span>
             <span className="numeric font-mono text-2xl font-bold tabular-nums text-foreground">
               {format.number(a.charmPoints, { useGrouping: true })}
             </span>
@@ -667,10 +609,7 @@ function CharmsBlessingsTab({
               aria-valuenow={charmPct}
               aria-label={`${t("charmsUnusedLabel")} (${charmPct}%)`}
             >
-              <div
-                className="h-full bg-primary transition-all"
-                style={{ width: `${charmPct}%` }}
-              />
+              <div className="h-full bg-primary transition-all" style={{ width: `${charmPct}%` }} />
             </div>
             <p className="mt-1 text-xs text-muted-foreground">
               {t("charmsUnusedLabel")}:{" "}
@@ -712,9 +651,7 @@ function CharmsBlessingsTab({
                 style={{ width: `${blessingsPct}%` }}
               />
             </div>
-            <p className="mt-2 text-sm font-medium text-foreground">
-              {a.blessingsActive} / 7
-            </p>
+            <p className="mt-2 text-sm font-medium text-foreground">{a.blessingsActive} / 7</p>
           </div>
           <Link
             href={buildBlessingsLink(linkCtx)}
