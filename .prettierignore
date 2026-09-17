@@ -1,0 +1,19 @@
+# Prettier — pliki wykluczone z formatowania
+#
+# Fixture'y HTML z tibia.com: MUSZĄ pozostać 1:1 z oryginałem
+# (ubezpieczenie regresyjne R1 — patrz __fixtures__/README.md).
+# Prettier psuje strukturę HTML Tibii (i tak rzuca na nim SyntaxError).
+apps/scraper/src/scrapers/__fixtures__/
+
+# Lokalne pliki robocze / scratch (nie commitowane)
+tmp-verify/
+*.tmp.mts
+
+# Standardowe
+node_modules/
+dist/
+.next/
+.turbo/
+coverage/
+pnpm-lock.yaml
+.omo/

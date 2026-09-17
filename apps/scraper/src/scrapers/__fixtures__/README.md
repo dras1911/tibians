@@ -23,6 +23,7 @@
 | `auction-list-page-2.html` | 2 | 25 | **Mirror strukturalny** (T33) | inny zestaw aukcji niż strona 1 |
 | `auction-list-page-25.html` | 25 | 25 | **Mirror strukturalny** (T33) | granica wczesnego okna paginacji |
 | `auction-list-page-75.html` | 75 | 25 | **Mirror strukturalny** (T33) | późna strona (mid-end) |
+| `auction-list-live-2026-09-17.html` | 1 | 25 | **Realna kopia** (2026-09-17, FlareSolverr+WARP z VPS) | żywy HTML przez przeglądarkę: sentinel „First Page", 25 aukcji, aktualny layout CipSoft |
 
 **Czym jest „mirror strukturalny"?** Tibia.com blokuje requesty spoza
 przeglądarki (HTTP 403), więc część stron nie mogła zostać pobrana jako żywa
@@ -33,8 +34,16 @@ testów regresyjnych parsera — parser widzi identyczne selektory.
 
 ### Detal aukcji (`auction-detail-*.html`) — parser `auction-detail.ts`
 
+> ⚠️ **UWAGA (2026-09-17)**: mirror detalu okazał się **FIKCYJNY**. Parser T31
+> był pisany pod wymyśloną strukturę (`CharacterInfo`, `BidInfo`,
+> `SkillsContainer`, `UspSection`), której prawdziwy tibia.com **nie używa**.
+> Prawdziwy layout: `AuctionCharacterName`, `AuctionBody`, `ShortAuctionData*`,
+> `CharacterDetailsBlock`, `AuctionOutfitImage`, … (patrz HANDOFF.md §6.10).
+> Trwa przepisywanie parsera + wymiana fixture'ów na realne kopie.
+
 | Plik | ID aukcji | Pochodzenie | Przechwytuje |
 |---|---|---|---|
+| `auction-detail-live-2259395.html` | 2259395 | **Realna kopia** (2026-09-17, FlareSolverr+WARP z VPS) | prawdziwy layout CipSoft: identity inline („Level: 402 \| Vocation: Royal Paladin"), 21× CharacterDetailsBlock (skills, items, imbuements, charms, quests, bestiary, gems, …), taby AuctionBody |
 | `auction-detail-2173376.html` | 2173376 | **Mirror strukturalny** (T31) | pełna aukcja: 8 skilli, 2 itemy, 2 outifity, 2 mounty, 5 USP, loyalty 25%/10%, Soul War, World Transfer, Twist of Fate |
 | `auction-detail-empty.html` | (99999) | **Mirror strukturalny** (T31) | minimalna aukcja: brak itemów/outfitów/mountów/USP, brak progresji |
 | `auction-detail-en.html` | (11111) | **Mirror strukturalny** (T31) | locale EN: bid `1,234,567` z przecinkiem |

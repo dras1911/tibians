@@ -13,6 +13,7 @@
 ## 1. Co to jest
 
 **Tibians** — portal community dla graczy Tibii:
+
 - **Char Bazaar** — przeglądarka aukcji postaci (lista, filtry, detal, porównanie, SSE, statystyki)
 - **14 kalkulatorów** — Exercise Weapons, True Skill, Stamina, Character Value, Imbuement, Blessings, Weekly Tasks, Charms, Experience, Leech, Exp Share, Wheel of Destiny, plannery
 - **Workspace** — panel analizy postaci
@@ -25,16 +26,16 @@ Tibia jest znakiem towarowym CipSoft GmbH. Projekt nie jest powiązany z CipSoft
 
 ## 2. Gdzie to działa
 
-| Element | Wartość |
-|---|---|
-| **Domena** | `tibian.click` (+ `www` → 301 na apex) |
-| **Serwer** | `51.83.128.47` (OVH), Ubuntu 24.04.4 LTS |
-| **Zasoby** | 2 vCPU · 3.8 GB RAM · 38 GB dysku (37% zajęte) · swap 2 GB |
-| **SSH** | `ssh -i ~/.ssh/id_ed25519 ubuntu@51.83.128.47` (klucz BEZ hasła) |
-| **Repo** | https://github.com/dras1911/tibians (publiczne) |
-| **SSL** | Let's Encrypt, automatycznie (Caddy) |
-| **Katalog** | `/opt/tibians` |
-| **Docker** | 29.8.1, Compose v5.5.1 |
+| Element     | Wartość                                                          |
+| ----------- | ---------------------------------------------------------------- |
+| **Domena**  | `tibian.click` (+ `www` → 301 na apex)                           |
+| **Serwer**  | `51.83.128.47` (OVH), Ubuntu 24.04.4 LTS                         |
+| **Zasoby**  | 2 vCPU · 3.8 GB RAM · 38 GB dysku (37% zajęte) · swap 2 GB       |
+| **SSH**     | `ssh -i ~/.ssh/id_ed25519 ubuntu@51.83.128.47` (klucz BEZ hasła) |
+| **Repo**    | https://github.com/dras1911/tibians (publiczne)                  |
+| **SSL**     | Let's Encrypt, automatycznie (Caddy)                             |
+| **Katalog** | `/opt/tibians`                                                   |
+| **Docker**  | 29.8.1, Compose v5.5.1                                           |
 
 ### Kontenery (5)
 
@@ -50,17 +51,17 @@ tibians-tibiadata  — self-hosted API TibiaData (Go)
 
 ## 3. Stack techniczny
 
-| Warstwa | Technologia |
-|---|---|
-| Monorepo | pnpm 9.15.9 + Turborepo |
-| Język | TypeScript strict, `exactOptionalPropertyTypes`, zero `any` |
-| Web | Next.js 15 App Router, RSC, next-intl (PL/EN) |
-| Scraper | Node 22 + undici + cheerio |
-| Baza | PostgreSQL 17 + Drizzle ORM |
-| Walidacja | Zod |
-| Testy | Vitest — **1413 testów** |
-| UI | Tailwind 3 + własny design system (`packages/ui`, tokeny OKLCH) |
-| Auth | Discord OAuth2 (własna implementacja, zero zależności) |
+| Warstwa   | Technologia                                                     |
+| --------- | --------------------------------------------------------------- |
+| Monorepo  | pnpm 9.15.9 + Turborepo                                         |
+| Język     | TypeScript strict, `exactOptionalPropertyTypes`, zero `any`     |
+| Web       | Next.js 15 App Router, RSC, next-intl (PL/EN)                   |
+| Scraper   | Node 22 + undici + cheerio                                      |
+| Baza      | PostgreSQL 17 + Drizzle ORM                                     |
+| Walidacja | Zod                                                             |
+| Testy     | Vitest — **1413 testów**                                        |
+| UI        | Tailwind 3 + własny design system (`packages/ui`, tokeny OKLCH) |
+| Auth      | Discord OAuth2 (własna implementacja, zero zależności)          |
 
 **Rozmiar**: 370 plików TS/TSX (232 w `apps/`, 138 w `packages/`).
 
@@ -114,21 +115,21 @@ patrz sekcja 7.
 
 ## 5. Co DZIAŁA (zweryfikowane)
 
-| Funkcja | Stan | Weryfikacja |
-|---|---|---|
-| 14 kalkulatorów (UI, walidacja, layout) | ✅ | w przeglądarce |
-| **True Skill** (formuła + selektory) | ✅ | Knight/Sword 127+40% → **123,47** |
-| Bazaar: lista, filtry, detal, compare, SSE, statystyki | ✅ UI | 0 aukcji — patrz §6.1 |
-| Workspace, blog, bosses, reference | ✅ | w przeglądarce |
-| **Logowanie Discord** (sesja, OAuth2, 4 trasy) | ✅ kod | brak `CLIENT_ID/SECRET` — patrz §6.5 |
-| i18n PL/EN (parzystość kluczy) | ✅ | — |
-| Strona **Privacy** | ✅ | `/pl/privacy` → 200 |
-| OG images (dynamiczne) | ✅ | 200, `image/png` |
-| SEO: sitemap, robots, hreflang, JSON-LD | ✅ | — |
-| SSL, HTTP/3, security headers | ✅ | — |
-| Deploy: Docker, Caddy, firewall, swap | ✅ | — |
-| Scraper: parsery, scheduler, advisory lock | ✅ kod | **zablokowany przez Cloudflare** — §6.1 |
-| Baza: 26 tabel, migracje, seed | ✅ | 36+22+23 wierszy seeda |
+| Funkcja                                                | Stan   | Weryfikacja                             |
+| ------------------------------------------------------ | ------ | --------------------------------------- |
+| 14 kalkulatorów (UI, walidacja, layout)                | ✅     | w przeglądarce                          |
+| **True Skill** (formuła + selektory)                   | ✅     | Knight/Sword 127+40% → **123,47**       |
+| Bazaar: lista, filtry, detal, compare, SSE, statystyki | ✅ UI  | 0 aukcji — patrz §6.1                   |
+| Workspace, blog, bosses, reference                     | ✅     | w przeglądarce                          |
+| **Logowanie Discord** (sesja, OAuth2, 4 trasy)         | ✅ kod | brak `CLIENT_ID/SECRET` — patrz §6.5    |
+| i18n PL/EN (parzystość kluczy)                         | ✅     | —                                       |
+| Strona **Privacy**                                     | ✅     | `/pl/privacy` → 200                     |
+| OG images (dynamiczne)                                 | ✅     | 200, `image/png`                        |
+| SEO: sitemap, robots, hreflang, JSON-LD                | ✅     | —                                       |
+| SSL, HTTP/3, security headers                          | ✅     | —                                       |
+| Deploy: Docker, Caddy, firewall, swap                  | ✅     | —                                       |
+| Scraper: parsery, scheduler, advisory lock             | ✅ kod | **zablokowany przez Cloudflare** — §6.1 |
+| Baza: 26 tabel, migracje, seed                         | ✅     | 36+22+23 wierszy seeda                  |
 
 **Testy**: 1413 przechodzi · **typecheck**: 9/9 pakietów · **lint**: 0 błędów
 
@@ -136,38 +137,71 @@ patrz sekcja 7.
 
 ## 6. Co NIE DZIAŁA — lista znanych problemów
 
-### 🔴 6.1 Bazaar pusty — Cloudflare blokuje IP serwera
+### ✅ 6.1 ROZWIĄZANE (2026-09-17): WARP + headless browser (do wdrożenia na produkcję)
 
 **Objaw**: `0 aktywnych aukcji`, `scrape_runs` pokazuje `auctions_found: 0`.
 
-**Przyczyna** (potwierdzona):
-```
-VPS 51.83.128.47 → tibia.com → HTTP 403
-  cf-ray: ...-WAW · server: cloudflare
-  <title>Attention Required! | Cloudflare</title>
+**Przyczyna** (potwierdzona): twarda blokada Cloudflare dla VPS — Managed Challenge
+(`cf-mitigated: challenge`), przepuszcza TYLKO prawdziwą przeglądarkę. curl/undici/
+Go (TibiaData) nie przechodzą — także przez WARP.
 
-Moje domowe IP → tibia.com → HTTP 200 · 244 786 bajtów aukcji
-```
+**ROZWIĄZANIE przetestowane na VPS (0 €/mies.):**
 
-**To NIE jest blokada JS-challenge, tylko twarda blokada IP.** Kod scrapera jest
-poprawny — z domowego IP pobiera pełną listę.
+1. **WARP** (darmowy VPN Cloudflare) — tryb proxy SOCKS5 na `127.0.0.1:40000`,
+   zainstalowany na VPS, `warp-svc` enabled (auto-start).
+2. **FlareSolverr** (headless Chromium + HTTP API) z proxy WARP:
+   - 25/25 kolejnych stron listy → HTTP 200, ~0,8–1,2 s/strona,
+   - detal aukcji (487 KB) w ~1,15 s,
+   - „Challenge not detected!" — przez WARP challenge nie występuje.
+3. **CloakBrowser** (stealth Chromium) + WARP — działa równie dobrze (plan B).
+4. Ślepe uliczki: curl przez WARP → 403; GitHub Actions (Azure) → 403;
+   self-host TibiaData na tym VPS → throttle. Publiczne `api.tibiadata.com`
+   działa z VPS (→ przełączyć `TIBIADATA_BASE_URL`).
 
-**Opcje naprawy** (nie wybrano jeszcze):
-| Opcja | Koszt | Skuteczność |
-|---|---|---|
-| Proxy residential/ISP | ~5-15 €/mies. | wysoka |
-| Scraping API (ScrapingBee, ZenRows) | ~30-100 €/mies. | bardzo wysoka |
-| Zmiana VPS (Hetzner itp.) | ~7 €/mies. | niepewna — dużo DC-IP blokowanych |
-| Scraper na domowym IP | 0 € | wysoka, ale wymaga włączonego PC |
+**Wdrożenie w toku**: transport `flaresolverr` w scraperze + serwis w compose.
+Szczegóły: `.omo/notepads/tibians/cloudflare-warp-solution.md`.
 
-**Gdzie grzebać**: `apps/scraper/src/http-client.ts` (dodać obsługę proxy),
-`apps/scraper/src/config.ts`.
+### 🔴 6.10 KRYTYCZNE (odkryte 2026-09-17): parser detalu był pisany pod WYMYŚLONY HTML
+
+**Objaw**: parser detalu zwraca `isSuccessful: true` + puste dane
+(`name: undefined`, `skills: 0`, `items: 0`) na prawdziwym HTML z tibia.com.
+
+**Przyczyna**: fixture'y detalu (`auction-detail-*.html`, T31/T33) to
+**„mirror strukturalne"** — HTML zostało odtworzone/zmyślone przez agenta,
+bo nie mógł pobrać realnej strony (Cloudflare 403). Parser napisano pod te
+wymyślone klasy (`CharacterInfo`, `BidInfo`, `SkillsContainer`, `UspSection`),
+których **prawdziwy tibia.com NIE UŻYWA**.
+
+**Dowód**:
+
+- prawdziwy HTML listy (realna kopia 8 IX) używa `AuctionCharacterName` (8×),
+  `AuctionBody` (8×) — fixture detalu nie ma ANI JEDNEJ z tych klas;
+- żywy detal (17 IX) używa `AuctionCharacterName`, `AuctionBody`,
+  `ShortAuctionDataLabel/Value`, `CharacterDetailsBlock` — zero wystąpień klas
+  z fixture detalu.
+
+**Konsekwencja**: nawet po odblokowaniu CF scraper detali zapisywałby śmieci.
+**Lista aukcji JEST OK** — parser + realne fixture'y działają na żywym HTML
+(zweryfikowane: 25/25 aukcji sparsowanych poprawnie).
+
+**Plan naprawy**: przepisać parser detalu pod realny HTML. Realne kopie
+zapasowe: `auction-list-live-2026-09-17.html`, `auction-detail-live-2259395.html`
+(dodane do `__fixtures__`).
+
+**LEKCJA (jeszcze raz ta sama)**: test + implementacja pisane razem = wspólny
+błąd. Mirror „strukturalny" bez realnego źródła = fikcja. Zawsze konfrontuj
+z PRAWDZIWYM artefaktem (tu: realnym HTML), nie z własnym wyobrażeniem.
+
+**Odrzucone opcje** (dla historii): proxy residential/ISP (~5-15 €/mies.),
+scraping API (~30-100 €/mies.), zmiana VPS (niepewna). WARP+Browser = 0 €
+i przetestowane.
 
 ### 🔴 6.2 Wycena postaci (Character Value) — wagi z sufitu
 
 **Objaw**: postać kupiona za **2301 TC** wyceniona na **33 937 TC**.
 
 **Przyczyna**: wagi w `packages/db/src/seed/valuation-rules.ts` są **wymyślone**:
+
 ```
 base_level_weight:      50 TC × level  →  232 lvl = 11 600 TC
 feature_soul_war:   12 000 TC
@@ -233,14 +267,14 @@ wejść na stronę, bezsensowne to jest" — **słuszna**.
 Przykłady realnych błędów, które **przeszły** typecheck i 1412 testów,
 a użytkownik znalazł je **w przeglądarce**:
 
-| Błąd | Dlaczego testy nie złapały |
-|---|---|
-| **Cały CSS nie był podpięty** — portal wyglądał jak surowy HTML | `globals.css` nie był importowany przez nic; curl nie renderuje CSS |
-| **Formuła True Skill** — 123 → 90,71 | Test i implementacja miały **ten sam błąd** |
-| **20 etykiet nawigacji pustych** | next-intl zwracał obiekt zamiast stringa; `tsc` tego nie widzi |
-| **Strona główna 500** | `useAuctionLive` tworzył kontroler w `useState` (czyli też na SSR), a `EventSource` nie istnieje w Node |
-| **`INTERVAL 24 hour`** bez apostrofów | Błąd składni SQL — ujawnia się tylko z prawdziwą bazą |
-| **Wagi wyceny** | Wymyślone liczby; nikt ich nie skonfrontował z rynkiem |
+| Błąd                                                            | Dlaczego testy nie złapały                                                                              |
+| --------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------- |
+| **Cały CSS nie był podpięty** — portal wyglądał jak surowy HTML | `globals.css` nie był importowany przez nic; curl nie renderuje CSS                                     |
+| **Formuła True Skill** — 123 → 90,71                            | Test i implementacja miały **ten sam błąd**                                                             |
+| **20 etykiet nawigacji pustych**                                | next-intl zwracał obiekt zamiast stringa; `tsc` tego nie widzi                                          |
+| **Strona główna 500**                                           | `useAuctionLive` tworzył kontroler w `useState` (czyli też na SSR), a `EventSource` nie istnieje w Node |
+| **`INTERVAL 24 hour`** bez apostrofów                           | Błąd składni SQL — ujawnia się tylko z prawdziwą bazą                                                   |
+| **Wagi wyceny**                                                 | Wymyślone liczby; nikt ich nie skonfrontował z rynkiem                                                  |
 
 ### Zasady dla kontynuującego
 
@@ -268,18 +302,19 @@ browser_evaluate → document.querySelector('.mw-parser-output').innerText
 ## 8. Co ZOSTAŁO — lista zadań (w kolejności ustalonej z użytkownikiem)
 
 ### A) ✅ ZROBIONE — True Skill
+
 Formuła z TibiaWiki, stałe profesji, selektory, testy. Commit `aa2b6ae`.
 
 ### B) ⏳ NASTĘPNE — audyt formuł z TibiaWiki
 
 **Materiał źródłowy już zdobyty** (strona `Formulae`). Do porównania:
 
-| Kalkulator | Co sprawdzić | Źródło |
-|---|---|---|
-| **Exercise Weapons / Training** | Stałe A (Magic 1600, Melee 50, Distance 30, Shielding 100, Fishing 20) i `b` per profesja | Formulae §Skills |
-| **Experience** | `50·lvl³ − 150·lvl² + 400·lvl` — porównać z `xp-table.ts` | Formulae §Experience |
-| **Stamina** | Strefy regeneracji; **użytkownik zgłosił, że „nie działa"** — sprawdzić | Formulae (brak) / TibiaWiki Stamina |
-| Leech, Exp Share, Imbuing, Blessings, Charms | Kolejne | Formulae / TibiaWiki |
+| Kalkulator                                   | Co sprawdzić                                                                              | Źródło                              |
+| -------------------------------------------- | ----------------------------------------------------------------------------------------- | ----------------------------------- |
+| **Exercise Weapons / Training**              | Stałe A (Magic 1600, Melee 50, Distance 30, Shielding 100, Fishing 20) i `b` per profesja | Formulae §Skills                    |
+| **Experience**                               | `50·lvl³ − 150·lvl² + 400·lvl` — porównać z `xp-table.ts`                                 | Formulae §Experience                |
+| **Stamina**                                  | Strefy regeneracji; **użytkownik zgłosił, że „nie działa"** — sprawdzić                   | Formulae (brak) / TibiaWiki Stamina |
+| Leech, Exp Share, Imbuing, Blessings, Charms | Kolejne                                                                                   | Formulae / TibiaWiki                |
 
 **Metoda**: dla każdego kalkulatora pokazać użytkownikowi **konkretny wynik liczbowy**
 i **spytać czy się zgadza** z jego doświadczeniem w grze. Inaczej powtórzymy błąd
@@ -292,12 +327,14 @@ błąd w kodzie poza duplikatem w menu (duplikat już naprawiony).
 
 Użytkownik chce **sam pisać artykuły** bez dotykania plików `.mdx`.
 Wymagania:
+
 - logowanie Discordem (już działa)
 - lista postów, edytor, zapis do bazy
 - dostęp tylko dla właściciela (weryfikacja po Discord ID)
 
 **Obecny stan bloga**: pliki MDX w `apps/web/src/content/blog/{pl,en}/*.mdx`
 z frontmatterem:
+
 ```yaml
 ---
 title: "..."
@@ -308,15 +345,18 @@ tags: [...]
 locale: "pl"
 ---
 ```
+
 Loader: `apps/web/src/lib/blog/index.ts`.
 
 ### D) ⏳ PO B — wygląd (redesign)
 
 **Kierunek od użytkownika**:
+
 > „wygląd ma być **nowoczesny ale unikatowy**, nie ma być kopią żadnej strony.
 > Tak aby nie było, że to **wygenerowano przez AI**."
 
 **Konsekwencje** — uciec od generycznego „Tailwind/shadcn look":
+
 - własna skala typograficzna i rytm odstępów (nie `gap-4` wszędzie)
 - **asymetryczne** layouty (nie wszystko wyśrodkowane)
 - wyrazista tożsamość kolorystyczna (mamy OKLCH w `packages/ui`)
@@ -331,29 +371,29 @@ Loader: `apps/web/src/lib/blog/index.ts`.
 
 ## 9. Gdzie szukać — mapa plików
 
-| Czego szukasz | Plik |
-|---|---|
-| **Formuły kalkulatorów** | `packages/calc/src/formulas/*.ts` |
-| **True Skill (naprawiona formuła)** | `packages/calc/src/formulas/true-skill.ts` |
-| **Testy formuł** | `packages/calc/src/formulas/__tests__/*.test.ts` |
-| Kalkulatory UI | `apps/web/src/app/[locale]/calculators/*/` |
-| Bazaar UI | `apps/web/src/app/[locale]/bazaar/`, `apps/web/src/components/bazaar/` |
-| Zapytania DB (web) | `apps/web/src/lib/server/auctions.ts` |
-| Zapytania DB (scraper) | `packages/db/src/queries/` |
-| Schemat bazy | `packages/db/src/schema/*.ts` |
-| Migracje | `packages/db/migrations/*.sql` |
-| **Wagi wyceny (do wymiany)** | `packages/db/src/seed/valuation-rules.ts` |
-| Scraper — HTTP | `apps/scraper/src/http-client.ts` |
-| Scraper — scheduler | `apps/scraper/src/scheduler.ts` |
-| Scraper — bootstrap | `apps/scraper/src/start.ts` |
-| Auth | `apps/web/src/lib/auth/{session,discord,use-auth}.ts` |
-| Tłumaczenia | `apps/web/messages/{pl,en}.json` |
-| Design system | `packages/ui/src/{tokens,styles,typography}.css` |
-| Nagłówek / nawigacja | `apps/web/src/components/layout/{header,mobile-sheet}.tsx` |
-| **Instrukcja wdrożenia** | `DEPLOYMENT.md` |
-| **Blueprint scrapera** | `SCRAPER-BOOTSTRAP.md` |
-| Plan projektu (88 zadań) | `.omo/plans/tibians.md` |
-| Notatki z sesji | `.omo/notepads/tibians/{learnings,issues}.md` |
+| Czego szukasz                       | Plik                                                                   |
+| ----------------------------------- | ---------------------------------------------------------------------- |
+| **Formuły kalkulatorów**            | `packages/calc/src/formulas/*.ts`                                      |
+| **True Skill (naprawiona formuła)** | `packages/calc/src/formulas/true-skill.ts`                             |
+| **Testy formuł**                    | `packages/calc/src/formulas/__tests__/*.test.ts`                       |
+| Kalkulatory UI                      | `apps/web/src/app/[locale]/calculators/*/`                             |
+| Bazaar UI                           | `apps/web/src/app/[locale]/bazaar/`, `apps/web/src/components/bazaar/` |
+| Zapytania DB (web)                  | `apps/web/src/lib/server/auctions.ts`                                  |
+| Zapytania DB (scraper)              | `packages/db/src/queries/`                                             |
+| Schemat bazy                        | `packages/db/src/schema/*.ts`                                          |
+| Migracje                            | `packages/db/migrations/*.sql`                                         |
+| **Wagi wyceny (do wymiany)**        | `packages/db/src/seed/valuation-rules.ts`                              |
+| Scraper — HTTP                      | `apps/scraper/src/http-client.ts`                                      |
+| Scraper — scheduler                 | `apps/scraper/src/scheduler.ts`                                        |
+| Scraper — bootstrap                 | `apps/scraper/src/start.ts`                                            |
+| Auth                                | `apps/web/src/lib/auth/{session,discord,use-auth}.ts`                  |
+| Tłumaczenia                         | `apps/web/messages/{pl,en}.json`                                       |
+| Design system                       | `packages/ui/src/{tokens,styles,typography}.css`                       |
+| Nagłówek / nawigacja                | `apps/web/src/components/layout/{header,mobile-sheet}.tsx`             |
+| **Instrukcja wdrożenia**            | `DEPLOYMENT.md`                                                        |
+| **Blueprint scrapera**              | `SCRAPER-BOOTSTRAP.md`                                                 |
+| Plan projektu (88 zadań)            | `.omo/plans/tibians.md`                                                |
+| Notatki z sesji                     | `.omo/notepads/tibians/{learnings,issues}.md`                          |
 
 ---
 
@@ -363,21 +403,21 @@ Poprzednia sesja zakończyła 88-zadaniowy plan z 1413 testami **i portalem,
 który nie działał**. Ta sesja to głównie **naprawa błędów znalezionych
 przez uruchomienie produktu**.
 
-| Commit | Co naprawiono |
-|---|---|
+| Commit    | Co naprawiono                                                                                                                                             |
+| --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `ca7441e` | **Scraper w ogóle nie startował** — brakowało 13 metod `SchedulerDb`, adaptera, bootstrapu. `Dockerfile` wskazywał plik, który tylko eksportował funkcję. |
-| `ca7441e` | Usunięto 108 artefaktów builda zacommitowanych w `src/` + bug aliasu `@tibians/db/seed` w vitest |
-| `9409c49` | **Discord OAuth od zera** — w repo były tylko placeholdery |
-| `c5fc1c3` | **OG images 404** — jeden route handler zamiast ~20 plików |
-| `5f5bd52` | **20 etykiet nawigacji renderowało się puste** (obiekty zamiast stringów) |
-| `17eb32e` | **Strona główna 500** — `EventSource` w SSR |
-| `53060ec` | **Strona główna 500** — `INTERVAL 24 hour` bez apostrofów + `tsx` w złym miejscu |
-| `1695bf1` | **`/bazaar` 500** przy niedostępnej bazie — nieosłonięty `Promise.all` |
-| `7fda70e` | **CAŁY CSS NIE BYŁ PODPIĘTY** — `globals.css` bez importu |
-| `f2e9a59` | Brak faviconu + duplikat nagłówka sekcji |
-| `55ad59d` | **Formuła True Skill** — bonus mnoży PUNKTY, nie poziomy |
-| `94e96f1` | Duplikat Stamina w menu + brak strony Privacy |
-| `aa2b6ae` | Selektory profesji/skilla w True Skill |
+| `ca7441e` | Usunięto 108 artefaktów builda zacommitowanych w `src/` + bug aliasu `@tibians/db/seed` w vitest                                                          |
+| `9409c49` | **Discord OAuth od zera** — w repo były tylko placeholdery                                                                                                |
+| `c5fc1c3` | **OG images 404** — jeden route handler zamiast ~20 plików                                                                                                |
+| `5f5bd52` | **20 etykiet nawigacji renderowało się puste** (obiekty zamiast stringów)                                                                                 |
+| `17eb32e` | **Strona główna 500** — `EventSource` w SSR                                                                                                               |
+| `53060ec` | **Strona główna 500** — `INTERVAL 24 hour` bez apostrofów + `tsx` w złym miejscu                                                                          |
+| `1695bf1` | **`/bazaar` 500** przy niedostępnej bazie — nieosłonięty `Promise.all`                                                                                    |
+| `7fda70e` | **CAŁY CSS NIE BYŁ PODPIĘTY** — `globals.css` bez importu                                                                                                 |
+| `f2e9a59` | Brak faviconu + duplikat nagłówka sekcji                                                                                                                  |
+| `55ad59d` | **Formuła True Skill** — bonus mnoży PUNKTY, nie poziomy                                                                                                  |
+| `94e96f1` | Duplikat Stamina w menu + brak strony Privacy                                                                                                             |
+| `aa2b6ae` | Selektory profesji/skilla w True Skill                                                                                                                    |
 
 Pełna lista: `git log --oneline`
 

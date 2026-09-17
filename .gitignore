@@ -19,11 +19,15 @@ coverage/
 npm-debug.log*
 pnpm-debug.log*
 
+# Scratch / pliki robocze (weryfikacja integracji, tymczasowe skrypty)
+tmp-verify/
+*.tmp.mts
+
 # OS / editor
 .DS_Store
 Thumbs.db
 .idea/
 .vscode/
 
-# Playwright MCP — artefakty zrzutów/snapshotow (nie commitujemy)
+# Playwright MCP â€” artefakty zrzutÃ³w/snapshotÃ³w (nie commitujemy)
 .playwright-mcp/
