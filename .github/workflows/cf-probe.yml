@@ -51,7 +51,12 @@ jobs:
           } > .omo/evidence/cf-probe-github-actions.txt
           cat .omo/evidence/cf-probe-github-actions.txt
 
-      - name: Commit results
+      - name: Report via ntfy (readable without repo admin)
+        run: |
+          curl -s -m 30 -d "$(cat .omo/evidence/cf-probe-github-actions.txt)" "https://ntfy.sh/tibians-cf-probe-9f3a7c" || true
+
+      - name: Commit results (may fail on read-only token — non-fatal)
+        continue-on-error: true
         run: |
           git config user.name "tibians-bot"
           git config user.email "bot@tibians.local"
