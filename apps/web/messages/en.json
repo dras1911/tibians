@@ -260,7 +260,8 @@
         "paladin": "Paladin",
         "druid": "Druid",
         "sorcerer": "Sorcerer",
-        "monk": "Monk"
+        "monk": "Monk",
+        "none": "None"
       },
       "levelPresets": {
         "label": "Presets",
