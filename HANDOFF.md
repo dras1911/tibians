@@ -534,11 +534,42 @@ ZASADY:
 ## 13. Stan zapisany
 
 ```
-Commit:     aa2b6ae (local == remote)
-Testy:      1413 przechodzi
-Typecheck:  9/9 pakietów
-Lint:       0 błędów
-Plan:       75 [x] · 13 [~] · 0 [ ]
+Commit:     4234aff (local == remote)
+Testy:      scraper 296 · web 138 · shared 106 — zielone
+Typecheck:  ruszane pakiety (shared/db/web/scraper) — 0 błędów
 Kontenery:  5/5 działają
-Strona:     https://tibian.click (11/11 stron → 200)
+MCP:        tibians_db podłączony (read-only, tunel 15432) — patrz §14
+Strona:     https://tibian.click (200)
+Wokacje:    dane naprawiają się po fixie (bazowe formy wracają: Knight/Paladin/…)
 ```
+
+---
+
+## 14. MCP Postgres (dev tooling — bezpośredni dostęp do bazy prod)
+
+Skonfigurowane 2026-09-17. Pozwala asystentowi (Hermes) czytać bazę produkcyjną
+przez MCP — bez ręcznego SSH do VPS przy każdym zapytaniu.
+
+**Architektura (bezpieczeństwo):**
+
+- Baza na VPS wystawiona **tylko na `127.0.0.1:5432`** VPS-a
+  (`docker-compose.prod.yml`: `db.ports: "127.0.0.1:5432:5432"`) — nie do świata.
+- **Tunel SSH** z lokalnej maszyny: `ssh -N -L 15432:127.0.0.1:5432 ubuntu@51.83.128.47`
+  → baza dostępna lokalnie na porcie **15432**.
+- Serwer MCP (read-only — jedyne narzędzie to `query`):
+  `npx -y @modelcontextprotocol/server-postgres 'postgresql://tibians:${env:TIBIANS_DB_PASSWORD}@127.0.0.1:15432/tibians'`
+- Sekret: `TIBIANS_DB_PASSWORD` w `.env` **Hermesa** (`$LOCALAPPDATA/hermes/.env`),
+  w `config.yaml` tylko referencja `${env:TIBIANS_DB_PASSWORD}` — hasła NIE ma w repo.
+- Rejestracja: `hermes mcp add tibians_db --command npx --args -y @modelcontextprotocol/server-postgres '<conn>'`
+  (prompt „Enable all tools?" — odpowiedź `Y`; nieinteraktywnie: `printf 'Y\n' | hermes mcp add ...`).
+
+**Weryfikacja (zrobiona):**
+
+- `hermes mcp test tibians_db` → ✓ Connected, 1 tool (`query`).
+- E2E: `query` przez stdio → `SELECT COUNT(*) FROM auctions` → liczba z bazy prod. ✅
+- `hermes mcp list` może pokazać warning o nierozwiniętym `${env:...}` (kolejność
+  ładowania `.env` w CLI) — kosmetyczny; agent rozwija referencję przy starcie serwera
+  (`tools/mcp_tool_config.py:_interpolate_env_vars`).
+
+**Eksploatacja:** tunel musi żyć (proces `ssh -N -L ...`); po restarcie maszyny odtworzyć.
+Narzędzia MCP ładują się przy starcie Hermesa — po `hermes mcp add` potrzebna nowa sesja.
