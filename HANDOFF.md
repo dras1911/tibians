@@ -435,8 +435,31 @@ przez uruchomienie produktu**.
 | `55ad59d` | **Formuła True Skill** — bonus mnoży PUNKTY, nie poziomy                                                                                                  |
 | `94e96f1` | Duplikat Stamina w menu + brak strony Privacy                                                                                                             |
 | `aa2b6ae` | Selektory profesji/skilla w True Skill                                                                                                                    |
+| `aeb6aa0` | Diagnoza CF + odkrycie: fixture'y detalu były FIKCYJNE (mirror, nie realny HTML)                                                                          |
+| `8e9f52f` | **Parser detalu v2 pod REALNY layout tibia.com** + harvest słowników (items/outfits/mounts/worlds → FK spełnione) + migracja 0002 + 5 żywych fixture'ów   |
+| `cf56987` | **Transport browser**: serwis `browser-fetch` (CloakBrowser+WARP, API FlareSolverr-compatible) + adapter Requester + compose (fallback profil)            |
+| `6863533` | Docs: DEPLOYMENT §8b (WARP + browser-fetch: instalacja, ufw, token, test, troubleshooting)                                                                |
+| `7e86ebf` | Fix: pnpm w obrazie scrapera (naprawa `db:migrate` w kontenerze)                                                                                          |
 
 Pełna lista: `git log --oneline`
+
+### Sesja 2026-09-17 (nr 2) — co ustalono i zrobiono
+
+1. **Parser detalu v2** — przepisany na realny DOM (patrz §6.10). Testy 292/292.
+   Detale testowane na 5 ŻYWYCH kopiach 1:1; mirror-fixture'y usunięte.
+2. **Harvest słowników** — detal zwraca `reference` (świat + items/outfits/mounts
+   z nazwami); `upsertAuction` robi `ensureReferenceData` przed relacjami.
+   Baza wypełnia tabele referencyjne sama przy scrape'ie (koniec pustych FK).
+3. **Transport przez przeglądarkę** — serwis `browser-fetch` (CloakBrowser +
+   WARP) z API zgodnym z FlareSolverr; scraper wybiera transport env-em
+   (`SCRAPER_FETCH_MODE=browser`). FlareSolverr = fallback (profil `fallback`).
+   **Przetestowane na produkcji**: fetch Bazaar przez serwis → HTTP 200,
+   246 KB, 50 auctionid, 0 challenge markers, ~4 s (z pierwszym startem Chrome).
+4. **Bezpieczeństwo**: port 8192 tylko dla sieci dockerowych (ufw) + token
+   `BROWSER_FETCH_TOKEN`; serwis w host network (dostęp do WARP).
+5. **Deploy**: migracja 0002 (worlds nullable) + restart scrapera na nowym kodzie.
+6. **Następny krok**: backfill — pierwszy Full loop pobiera ~121 stron listy
+   i detale dla ~3000 nowych aukcji (~1 godz. przez browser @ ~1 str/s).
 
 ---
 
