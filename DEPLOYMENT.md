@@ -8,20 +8,23 @@
 ## 0. Czego potrzebujesz (checklist)
 
 ### Obowiązkowe
-| Zasób | Wymagania | Koszt |
-|---|---|---|
-| **VPS** | 4 vCPU / 8 GB RAM / 80 GB SSD, Ubuntu 24.04 LTS | ~7 €/mies. (Hetzner CX32) |
-| **Domena** | dowolna (`.pl`, `.com`, `.tools`) z dostępem do DNS | ~10 €/rok |
-| **Dostęp SSH** | klucz publiczny wgrany do VPS | — |
+
+| Zasób          | Wymagania                                           | Koszt                     |
+| -------------- | --------------------------------------------------- | ------------------------- |
+| **VPS**        | 4 vCPU / 8 GB RAM / 80 GB SSD, Ubuntu 24.04 LTS     | ~7 €/mies. (Hetzner CX32) |
+| **Domena**     | dowolna (`.pl`, `.com`, `.tools`) z dostępem do DNS | ~10 €/rok                 |
+| **Dostęp SSH** | klucz publiczny wgrany do VPS                       | —                         |
 
 > **Minimum absolutne**: 2 vCPU / 4 GB RAM / 40 GB — wystarczy, ale pełny scrape (2500 aukcji) może być wolny. 8 GB daje komfort.
 
 ### Opcjonalne (dla pełnych funkcji — patrz §13)
+
 - Konto **Discord** + aplikacja OAuth (login użytkowników, Faza 6)
 - Konto **Lemon Squeezy** lub **Paddle** (premium, Faza 7)
 - **GitHub** repo z prawem push (albo fork)
 
 ### Czego NIE potrzebujesz
+
 - ❌ Osobnego serwera bazy — PostgreSQL siedzi w tym samym compose
 - ❌ Cloudflare — Caddy sam wystawia SSL
 - ❌ Conta CipSoft — dane są publiczne
@@ -31,6 +34,7 @@
 ## 1. VPS: zamówienie i pierwsze wejście
 
 ### 1.1 Zamów Hetzner CX32
+
 1. https://console.hetzner.cloud → **New Project** → `tibians`
 2. **Add Server**:
    - Location: `Nuremberg` lub `Helsinki` (EU, blisko graczy PL)
@@ -41,6 +45,7 @@
 3. Zapisz **publiczne IP** (np. `203.0.113.42`)
 
 ### 1.2 Pierwsze logowanie i hardening
+
 ```bash
 ssh root@203.0.113.42
 
@@ -67,6 +72,7 @@ timedatectl set-timezone Europe/Warsaw
 ```
 
 ### 1.3 Utwórz użytkownika (nie pracuj jako root)
+
 ```bash
 adduser --disabled-password --gecos "" tibians
 usermod -aG sudo tibians
@@ -87,16 +93,18 @@ ssh tibians@203.0.113.42
 
 W panelu swojego rejestratora domeny dodaj rekordy:
 
-| Typ | Nazwa | Wartość | TTL |
-|---|---|---|---|
+| Typ | Nazwa                     | Wartość        | TTL |
+| --- | ------------------------- | -------------- | --- |
 | `A` | `@` (lub `tibians.tools`) | `203.0.113.42` | 300 |
-| `A` | `www` | `203.0.113.42` | 300 |
+| `A` | `www`                     | `203.0.113.42` | 300 |
 
 > **Caddy** użyje tego rekordu do wystawienia certyfikatu Let's Encrypt. Sprawdź propagację:
+>
 > ```bash
 > dig +short tibians.tools
 > # powinno zwrócić Twoje IP
 > ```
+>
 > Jeśli używasz Cloudflare — **wyłącz pomarańczową chmurkę (proxy OFF)** na czas pierwszego startu. Caddy musi widzieć publiczne IP do challenge'u ACME.
 
 ---
@@ -211,6 +219,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml ps
 ```
 
 **Oczekiwany wynik:**
+
 ```
 NAME                  STATUS
 tibians-caddy         Up (healthy)
@@ -221,6 +230,7 @@ tibians-tibiadata     Up (healthy)
 ```
 
 ### Jeśli coś nie wstaje
+
 ```bash
 # Logi konkretnego serwisu
 docker compose --env-file .env.production -f docker-compose.prod.yml logs -f web
@@ -269,10 +279,19 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
 # 1. Health endpoint
 curl -s https://tibians.tools/api/health | jq
 ```
+
 **Oczekiwane:**
+
 ```json
-{ "status": "ok", "db": "ok", "tibiadata": "ok", "scrapeFreshnessMinutes": null, "scrapeStale": false }
+{
+  "status": "ok",
+  "db": "ok",
+  "tibiadata": "ok",
+  "scrapeFreshnessMinutes": null,
+  "scrapeStale": false
+}
 ```
+
 `scrapeFreshnessMinutes: null` = jeszcze nie było scrape'a (poprawnie przed §9).
 
 ```bash
@@ -294,15 +313,91 @@ curl -s -o /dev/null -w "%{http_code}\n" https://tibians.tools/robots.txt
 
 ---
 
+## 8b. 🔴 KRYTYCZNE: Cloudflare — WARP + browser-fetch
+
+**Problem**: tibia.com jest za Cloudflare Managed Challenge. Bezpośrednie
+żądania z IP VPS dostają `403 Attention Required!` — scraper nie pobierze
+NICZEGO, dopóki nie przejdzie challenge'u. Rozwiązanie (0 zł/mies.,
+przetestowane): **Cloudflare WARP (proxy) + headless CloakBrowser**.
+
+> Pełna diagnoza: `HANDOFF.md` §6.1 + `.omo/notepads/tibians/cloudflare-warp-solution.md`.
+> Implementacja: `services/browser-fetch/` (serwis) + `apps/scraper/src/browser-requester.ts` (klient).
+
+### 8b.1 WARP (proxy przez sieć Cloudflare)
+
+```bash
+# Instalacja (jednorazowo na VPS)
+curl -fsSL https://pkg.cloudflareclient.com/pubkey.gpg | sudo gpg --yes --dearmor -o /usr/share/keyrings/cloudflare-warp-archive-keyring.gpg
+echo "deb [signed-by=/usr/share/keyrings/cloudflare-warp-archive-keyring.gpg] https://pkg.cloudflareclient.com/ $(lsb_release -cs) main" | sudo tee /etc/apt/sources.list.d/cloudflare-client.list
+sudo apt-get update && sudo apt-get install -y cloudflare-warp
+
+# Tryb proxy (SOCKS5 na 127.0.0.1:40000) — NIE tryb VPN
+warp-cli --accept-tos registration new
+warp-cli --accept-tos mode proxy
+warp-cli --accept-tos proxy port 40000
+warp-cli --accept-tos connect
+sudo systemctl enable warp-svc          # przetrwa restart VPS
+
+# Weryfikacja: curl przez WARP powinien pokazać inne IP niż VPS
+curl -s --socks5-hostname 127.0.0.1:40000 https://api.ipify.org; echo
+```
+
+### 8b.2 Uprawnienia sieciowe (ufw) + token
+
+Porty 8191/8192 muszą być dostępne **tylko z sieci dockerowych**:
+
+```bash
+sudo ufw allow from 172.16.0.0/12 to any port 8192 proto tcp comment 'browser-fetch (docker nets)'
+sudo ufw allow from 172.16.0.0/12 to any port 8191 proto tcp comment 'flaresolverr (docker nets)'
+```
+
+Token serwisu (opcjonalny, dodatkowa warstwa): `BROWSER_FETCH_TOKEN` w `.env.production`
+(np. `openssl rand -hex 24`). Ten sam token trafia do scrapera przez compose.
+
+### 8b.3 Start serwisu browser-fetch
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml up -d browser
+docker logs --tail=20 tibians-browser     # → "browser-fetch listening on 0.0.0.0:8192"
+
+# TEST — pobierz stronę Bazaar przez serwis:
+curl -s http://127.0.0.1:8192/v1 -X POST -H 'Content-Type: application/json' \
+  -d '{"cmd":"request.get","url":"https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades","maxTimeout":60000}' \
+  | python3 -c "import json,sys; d=json.load(sys.stdin); s=d.get('solution',{}); print('status:', d.get('status'), '| http:', s.get('status'), '| html:', len(s.get('response','')), 'znaków | auctionid:', s.get('response','').count('auctionid='))"
+# Oczekiwane: status: ok | http: 200 | html: ~200-250 tys. znaków | auctionid: 50
+```
+
+### 8b.4 Fallback: FlareSolverr (profil `fallback`)
+
+Gdy CloakBrowser ma problem, włącz fallback (scraper sam go użyje — jest
+skonfigurowany jako `SCRAPER_BROWSER_FETCH_FALLBACK_URL`):
+
+```bash
+docker compose --env-file .env.production -f docker-compose.prod.yml --profile fallback up -d flaresolverr
+docker logs --tail=10 tibians-flaresolverr
+```
+
+### 8b.5 Troubleshooting
+
+| Objaw                                           | Przyczyna                       | Fix                                                                               |
+| ----------------------------------------------- | ------------------------------- | --------------------------------------------------------------------------------- |
+| `403` z serwisu mimo WARP                       | WARP nie połączony              | `warp-cli --accept-tos status` → `Connected`; `warp-cli --accept-tos connect`     |
+| `Connection refused` scraper→8192               | Serwis nie wstał / ufw          | `docker logs tibians-browser`; sprawdź reguły `sudo ufw status numbered`          |
+| HTML z „Just a moment"                          | Challenge nie przeszedł         | `docker logs tibians-browser`; restart serwisu (`docker restart tibians-browser`) |
+| Timeout 60s                                     | Tibia wolna / Chrome zawieszony | Restart serwisu; sprawdź RAM (`free -m`) — CloakBrowser ~600 MB                   |
+| Scraper: „challenge CF nadal widoczny" w logach | WARP IP sfiltrowany             | Włącz fallback FlareSolverr (§8b.4) i zgłoś                                       |
+
+---
+
 ## 9. Pierwszy scrape (scraper działa automatycznie)
 
 Kontener `scraper` uruchamia 3 pętle schedulera **od razu po starcie**:
 
-| Pętla | Interwał | Co robi |
-|---|---|---|
-| **Full** | 15 min | lista 101 stron Bazaar → diff → fan-out detali → upsert do DB |
-| **EndingSoon** | 30 s | aukcje kończące się <1 h (zasila SSE) |
-| **Reference** | 24 h | items / outfits / mounts + kalibracja wyceny |
+| Pętla          | Interwał | Co robi                                                       |
+| -------------- | -------- | ------------------------------------------------------------- |
+| **Full**       | 15 min   | lista 101 stron Bazaar → diff → fan-out detali → upsert do DB |
+| **EndingSoon** | 30 s     | aukcje kończące się <1 h (zasila SSE)                         |
+| **Reference**  | 24 h     | items / outfits / mounts + kalibracja wyceny                  |
 
 Pierwsze dane pojawiają się w ciągu kilku minut od `docker compose up`.
 
@@ -373,6 +468,7 @@ IP (403/429 — patrz §14), albo brak migracji (§7).
 ## 10. Monitoring
 
 ### 10.1 Codzienne komendy
+
 ```bash
 cd /opt/tibians
 
@@ -388,6 +484,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs -f --t
 ```
 
 ### 10.2 Alert na padnięcie (UptimeRobot / BetterStack — darmowe)
+
 1. Załóż konto na https://uptimerobot.com
 2. **Add Monitor**:
    - Type: `HTTP(s)`
@@ -396,10 +493,13 @@ docker compose --env-file .env.production -f docker-compose.prod.yml logs -f --t
    - Alert contact: Twój e-mail / Discord webhook
 
 ### 10.3 Cron: sprawdzanie świeżości scrape'a
+
 ```bash
 crontab -e
 ```
+
 Dodaj:
+
 ```cron
 # Co 30 min: ostrzeż jeśli dane starsze niż 45 min
 */30 * * * * curl -s https://tibians.tools/api/health | grep -q '"scrapeStale":false' || echo "STALE SCRAPE $(date)" >> /var/log/tibians-alerts.log
@@ -410,9 +510,11 @@ Dodaj:
 ## 11. Backup (KRYTYCZNE dla R5)
 
 ### 11.1 Skrypt backupu
+
 ```bash
 nano /opt/tibians/backup.sh
 ```
+
 ```bash
 #!/usr/bin/env bash
 set -euo pipefail
@@ -425,6 +527,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec -T db 
 find /opt/tibians/backups -name "tibians-*.sql.gz" -mtime +14 -delete
 echo "[backup] $(date) OK"
 ```
+
 ```bash
 chmod +x /opt/tibians/backup.sh
 # Cron: codziennie 03:00
@@ -432,6 +535,7 @@ chmod +x /opt/tibians/backup.sh
 ```
 
 ### 11.2 TEST RESTORE (obowiązkowy — backup bez testu nie istnieje)
+
 ```bash
 # 1. Rozpakuj najnowszy backup do tymczasowej bazy
 LATEST=$(ls -t /opt/tibians/backups/tibians-*.sql.gz | head -1)
@@ -448,6 +552,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
 docker compose --env-file .env.production -f docker-compose.prod.yml exec db \
   psql -U tibians -d postgres -c "DROP DATABASE tibians_restore_test;"
 ```
+
 > Wykonuj ten test **raz w miesiącu**. Backup, którego nie odtworzyłeś, nie jest backupem.
 
 ---
@@ -473,6 +578,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml ps
 ```
 
 **Rollback awaryjny:**
+
 ```bash
 git log --oneline -5              # znajdź dobry commit
 git checkout <SHA>                 # przełącz
@@ -484,6 +590,7 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 ## 13. Po starcie (kolejne kroki)
 
 ### 13.1 Aplikacja do CipSoft Fansite Programme (§18.2) — **priorytet**
+
 1. Przeczytaj: https://www.tibia.com/community/?subtopic=fansites&page=programme
 2. Przeczytaj: https://www.tibia.com/community/?subtopic=fansites&page=agreement
 3. Upewnij się że spełniasz:
@@ -499,14 +606,14 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d --bui
 
 > **Bot NIE jest potrzebny. Serwer Discord NIE jest potrzebny.**
 > „Sign in with Discord" używa **Aplikacji Discord** (OAuth2), nie bota.
-> Bot przydałby się wyłącznie, gdyby portal miał *działać wewnątrz* serwera
+> Bot przydałby się wyłącznie, gdyby portal miał _działać wewnątrz_ serwera
 > Discord (nadawać role, pisać wiadomości) — czego nie robimy.
 
 **Nazwa „Tibians Tools" a Twój prywatny nick**
 
 OAuth pokazuje **nazwę aplikacji**, a nie nazwę konta właściciela. Twój osobisty
 nick nie pojawi się nigdzie — jesteś właścicielem aplikacji wyłącznie technicznie.
-Ekran zgody powie: *„Tibians Tools chce uzyskać dostęp do Twojego konta"*.
+Ekran zgody powie: _„Tibians Tools chce uzyskać dostęp do Twojego konta"_.
 
 **Krok po kroku:**
 
@@ -532,6 +639,7 @@ faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
 > Zero nowych zależności — cały przepływ to dwa `fetch`e do Discorda.
 >
 > Co powstało:
+>
 > - `apps/web/src/lib/auth/session.ts` — sesja w podpisanym HMAC cookie
 >   (bez tabeli sesji; TTL wymuszany serwerowo przez `<iat>`)
 > - `apps/web/src/lib/auth/discord.ts` — klient OAuth2 (scope `identify`)
@@ -545,6 +653,7 @@ faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
 > **Nie trzeba dopisywać żadnego kodu.**
 >
 > Weryfikacja po wdrożeniu:
+>
 > ```bash
 > # 1. Czy konfiguracja jest widoczna (powinno przekierować na discord.com)
 > curl -sI https://tibians.tools/api/auth/login/discord | head -1
@@ -563,6 +672,7 @@ faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
 > `CREATE TABLE IF NOT EXISTS` — i przy pierwszym wdrożeniu po prostu ją utworzy.
 
 ### 13.3 Premium — Lemon Squeezy / Paddle (Faza 7, T82)
+
 1. Załóż konto (MoR — oni obsługują VAT i faktury)
 2. Utwórz produkt (subskrypcję miesięczną/roczną)
 3. Ustaw webhook na `https://tibians.tools/api/billing/webhook`
@@ -570,24 +680,26 @@ faktycznie będziesz jej używać — mniej danych = lepiej dla prywatności.
 5. Uzupełnij `LEMON_SQUEEZY_*` w env
 
 ### 13.4 Analytics — Plausible (T88, opcjonalnie)
+
 Self-hosted kontener lub https://plausible.io (płatne).
 
 ---
 
 ## 14. Troubleshooting
 
-| Objaw | Przyczyna | Rozwiązanie |
-|---|---|---|
-| `web` nie startuje (unhealthy) | DB niedostępna / złe `DATABASE_URL` | `docker compose logs db web`; sprawdź hasło w `DATABASE_URL` vs `POSTGRES_PASSWORD` |
-| Caddy nie wystawia SSL | DNS nie propagował się / Cloudflare proxy ON | `dig +short twojadomena.pl` musi zwrócić IP VPS; wyłącz proxy w CF |
-| `curl /api/health` → 503 | DB down lub brak tabel | Sprawdź `db: ok` w odpowiedzi; uruchom §7 (migracje) |
-| Portal pokazuje 0 aukcji | Scraper nie zdążył / pada (patrz §9) | Sprawdź `logs scraper` + `scrape_runs` (§9.4) |
-| `scrapeFreshnessMinutes` > 30 | Scraper padł / rate-limit | `docker compose logs scraper`; sprawdź czy Tibia nie blokuje IP |
-| Brakuje miejsca na dysku | Historia aukcji rośnie | `docker system prune -a`; rozważ większy wolumen |
-| Wolne odpowiedzi | Brak cache / za mały VPS | Sprawdź `docker stats`; rozważ CX42 |
-| Tibia blokuje IP (403/429) | Zbyt agresywny scraping | Zwiększ `DELAY_MS` w `apps/scraper/src/config.ts`, zmniejsz `MAX_CONCURRENT` |
+| Objaw                          | Przyczyna                                    | Rozwiązanie                                                                         |
+| ------------------------------ | -------------------------------------------- | ----------------------------------------------------------------------------------- |
+| `web` nie startuje (unhealthy) | DB niedostępna / złe `DATABASE_URL`          | `docker compose logs db web`; sprawdź hasło w `DATABASE_URL` vs `POSTGRES_PASSWORD` |
+| Caddy nie wystawia SSL         | DNS nie propagował się / Cloudflare proxy ON | `dig +short twojadomena.pl` musi zwrócić IP VPS; wyłącz proxy w CF                  |
+| `curl /api/health` → 503       | DB down lub brak tabel                       | Sprawdź `db: ok` w odpowiedzi; uruchom §7 (migracje)                                |
+| Portal pokazuje 0 aukcji       | Scraper nie zdążył / pada (patrz §9)         | Sprawdź `logs scraper` + `scrape_runs` (§9.4)                                       |
+| `scrapeFreshnessMinutes` > 30  | Scraper padł / rate-limit                    | `docker compose logs scraper`; sprawdź czy Tibia nie blokuje IP                     |
+| Brakuje miejsca na dysku       | Historia aukcji rośnie                       | `docker system prune -a`; rozważ większy wolumen                                    |
+| Wolne odpowiedzi               | Brak cache / za mały VPS                     | Sprawdź `docker stats`; rozważ CX42                                                 |
+| Tibia blokuje IP (403/429)     | Zbyt agresywny scraping                      | Zwiększ `DELAY_MS` w `apps/scraper/src/config.ts`, zmniejsz `MAX_CONCURRENT`        |
 
 ### Diagnostyka krok po kroku
+
 ```bash
 # 1. Czy kontenery żyją?
 docker compose --env-file .env.production -f docker-compose.prod.yml ps
@@ -670,11 +782,11 @@ docker compose --env-file .env.production -f docker-compose.prod.yml up -d
 
 ### Otwarte
 
-| # | Luka | Wpływ | Gdzie |
-|---|---|---|---|
-| 1 | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier, nawet po zapłacie | Faza 7 |
-| 2 | Płatności (Lemon Squeezy / Paddle) — brak konta i webhooka | Nie da się kupić premium | §13.3 |
-| 3 | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"` | **Tylko lokalny Windows** — symlinki wymagają trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | — |
+| #   | Luka                                                                    | Wpływ                                                                                                                                      | Gdzie  |
+| --- | ----------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ | ------ |
+| 1   | Gating premium nie jest wpięty w strony (mechanizm gotowy: T83/T85/T86) | Wszyscy widzą free tier, nawet po zapłacie                                                                                                 | Faza 7 |
+| 2   | Płatności (Lemon Squeezy / Paddle) — brak konta i webhooka              | Nie da się kupić premium                                                                                                                   | §13.3  |
+| 3   | `pnpm build` na Windows pada na `EPERM` przy `output: "standalone"`     | **Tylko lokalny Windows** — symlinki wymagają trybu deweloperskiego. Kompilacja się udaje (`BUILD_ID` powstaje). W Dockerze/Linuxie działa | —      |
 
 > **Uwaga o premium**: logowanie i tabela `subscriptions` są gotowe, więc po
 > podłączeniu dostawcy płatności wystarczy wpiąć `hasFeature()` w komponenty
