@@ -1,0 +1,60 @@
+name: CF Probe (tibia.com reachability)
+
+# Diagnostyka: czy IP runnerów GitHub Actions (Azure) przechodzi Cloudflare
+# na tibia.com / tibia.fandom.com. Wynik jest commitowany do
+# .omo/evidence/cf-probe-github-actions.txt.
+#
+# Kontekst: VPS OVH (51.83.128.47) dostaje `cf-mitigated: challenge` i jest
+# zablokowany także dla headless Chromium (FlareSolverr: "Cloudflare has
+# blocked this request"). Szukamy alternatywnego źródła IP dla scrapingu.
+
+on:
+  push:
+    paths:
+      - '.github/workflows/cf-probe.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Probe tibia.com endpoints
+        run: |
+          mkdir -p .omo/evidence
+          {
+            echo "# CF Probe — $(date -u +%Y-%m-%dT%H:%M:%SZ)"
+            echo "# Runner: GitHub Actions (Azure), IP: $(curl -s -m 10 https://api.ipify.org || echo '?')"
+            echo ""
+            for url in \
+              "https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades" \
+              "https://www.tibia.com/community/?subtopic=worlds" \
+              "https://static.tibia.com/images/charactertrade/outfits/128_0.gif" \
+              "https://tibia.fandom.com/wiki/Formulae"; do
+              code=$(curl -s -o /tmp/resp -w "%{http_code}" -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" -m 30 "$url" || echo "ERR")
+              title=$(grep -o '<title>[^<]*</title>' /tmp/resp 2>/dev/null | head -1 || true)
+              bytes=$(wc -c < /tmp/resp 2>/dev/null || echo 0)
+              echo "- $url -> HTTP $code | $bytes bytes | $title"
+            done
+            echo ""
+            echo "## Headers (bazaar list)"
+            curl -sI -m 30 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" "https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades" 2>/dev/null | grep -iE '^(HTTP|server|cf-|content-type|content-length)' || echo "(no headers)"
+            echo ""
+            echo "## Bazaar HTML sanity (auction links present?)"
+            curl -s -m 30 -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/131.0.0.0 Safari/537.36" "https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades" -o /tmp/bazaar.html
+            count=$(grep -c "auctionid=" /tmp/bazaar.html 2>/dev/null || echo 0)
+            echo "auctionid= occurrences: $count"
+          } > .omo/evidence/cf-probe-github-actions.txt
+          cat .omo/evidence/cf-probe-github-actions.txt
+
+      - name: Commit results
+        run: |
+          git config user.name "tibians-bot"
+          git config user.email "bot@tibians.local"
+          git add .omo/evidence/cf-probe-github-actions.txt
+          git diff --staged --quiet || git commit -m "chore(evidence): CF probe results from GitHub Actions"
+          git push
