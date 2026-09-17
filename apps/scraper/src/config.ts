@@ -65,6 +65,9 @@ export const SCRAPER_CONFIG: ScraperConfig = {
    * Pula obejmuje: Chrome/Win, Chrome/Mac, Firefox/Win, Firefox/Mac, Safari/Mac.
    * WAŻNE: rotacja zmniejsza fingerprinting tibia.com (R1 — zmiana HTML/klas
    * botów) i obniża ryzyko wzbudzenia alarmu anty-bot.
+   *
+   * Uwaga: w trybie `browser` (patrz `fetchMode`) nagłówki UA są ignorowane —
+   * przeglądarka ma własny, spójny fingerprint (i tak lepszy).
    */
   userAgents: [
     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/144.0.0.0 Safari/537.36",
@@ -74,6 +77,46 @@ export const SCRAPER_CONFIG: ScraperConfig = {
     "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/18.2 Safari/605.1.15",
   ],
 };
+
+/**
+ * Tryb transportu HTTP scrapera.
+ *
+ *   - `direct`  — undici prosto do tibia.com (dev/testy; na produkcji OVH
+ *                 dostaje Cloudflare 403),
+ *   - `browser` — przez serwis `browser-fetch` (CloakBrowser + WARP) lub
+ *                 fallback `flaresolverr`; oba mówią tym samym API.
+ */
+export type FetchMode = "direct" | "browser";
+
+/** Konfiguracja transportu przez przeglądarkę (env `SCRAPER_FETCH_*`). */
+export interface BrowserFetchConfig {
+  readonly mode: FetchMode;
+  /** Endpoint główny (np. `http://host.docker.internal:8192/v1`). */
+  readonly url: string | null;
+  /** Token do nagłówka `X-BF-Token` (opcjonalny). */
+  readonly token: string | null;
+  /** Endpoint fallback (np. FlareSolverr na `:8191/v1`) — opcjonalny. */
+  readonly fallbackUrl: string | null;
+  /** Token fallbacku (FlareSolverr nie używa — zwykle null). */
+  readonly fallbackToken: string | null;
+  /** maxTimeout przekazywany serwisowi (ms). */
+  readonly timeoutMs: number;
+}
+
+/** Odczytaj konfigurację transportu z env (produkcja: `browser`). */
+export function readBrowserFetchConfig(env: NodeJS.ProcessEnv = process.env): BrowserFetchConfig {
+  const modeRaw = (env.SCRAPER_FETCH_MODE ?? "direct").toLowerCase();
+  const mode: FetchMode = modeRaw === "browser" ? "browser" : "direct";
+  const timeoutRaw = Number(env.SCRAPER_FETCH_TIMEOUT_MS ?? "60000");
+  return {
+    mode,
+    url: env.SCRAPER_BROWSER_FETCH_URL ?? null,
+    token: env.SCRAPER_BROWSER_FETCH_TOKEN ?? null,
+    fallbackUrl: env.SCRAPER_BROWSER_FETCH_FALLBACK_URL ?? null,
+    fallbackToken: env.SCRAPER_BROWSER_FETCH_FALLBACK_TOKEN ?? null,
+    timeoutMs: Number.isFinite(timeoutRaw) && timeoutRaw > 0 ? timeoutRaw : 60000,
+  };
+}
 
 /** Zwrot typów `SCRAPER_CONFIG.userAgents` (string literal union). */
 export type UserAgent = (typeof SCRAPER_CONFIG.userAgents)[number];

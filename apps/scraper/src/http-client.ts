@@ -26,15 +26,15 @@
 
 import { fetch as undiciFetch } from "undici";
 
+import { makeBrowserRequester } from "./browser-requester.js";
 import {
   DEFAULT_REQUEST_HEADERS,
+  readBrowserFetchConfig,
   SCRAPER_CONFIG,
+  type BrowserFetchConfig,
   type UserAgent,
 } from "./config.js";
-import {
-  recordOutboundRequest,
-  throttleIfNeeded,
-} from "./r11-budget.js";
+import { recordOutboundRequest, throttleIfNeeded } from "./r11-budget.js";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Typy
@@ -99,6 +99,12 @@ export interface HttpClientOptions {
   maxConcurrent?: number;
   /** Per-host delay override (ms). */
   delayMs?: number;
+  /**
+   * Konfiguracja transportu (env `SCRAPER_FETCH_*`). Gdy `mode === "browser"`
+   * i podano `url`, żądania idą przez serwis browser-fetch zamiast undici.
+   * Domyślnie: `readBrowserFetchConfig()` (env).
+   */
+  fetchConfig?: BrowserFetchConfig;
 }
 
 /** Publiczny kontrakt HttpClient. */
@@ -161,9 +167,9 @@ class HostRateLimiter {
   }
 
   /**
- * Zdobądź slot. Zwraca funkcję `release()` do zwolnienia.
- * Jeśli `signal` abortuje w trakcie oczekiwania → promise reject'uje się.
- */
+   * Zdobądź slot. Zwraca funkcję `release()` do zwolnienia.
+   * Jeśli `signal` abortuje w trakcie oczekiwania → promise reject'uje się.
+   */
   async acquire(host: string, signal?: AbortSignal): Promise<() => void> {
     let state = this.states.get(host);
     if (!state) {
@@ -324,7 +330,12 @@ function makeUndiciRequester(): Requester {
  */
 export function createHttpClient(options: HttpClientOptions = {}): HttpClient {
   const config = { ...SCRAPER_CONFIG, ...(options.config ?? {}) } as typeof SCRAPER_CONFIG;
-  const requester = options.requester ?? makeUndiciRequester();
+  const fetchConfig = options.fetchConfig ?? readBrowserFetchConfig();
+  const requester =
+    options.requester ??
+    (fetchConfig.mode === "browser" && fetchConfig.url != null
+      ? makeBrowserRequester(fetchConfig)
+      : makeUndiciRequester());
   const random = options.random ?? Math.random;
   const sleepFn = options.sleepFn ?? defaultSleep;
 
@@ -510,9 +521,4 @@ export {
 } from "./advisory-lock.js";
 
 /** Re-eksport stałych konfiguracyjnych. */
-export {
-  SCRAPER_CONFIG,
-  TIBIA_URLS,
-  DEFAULT_REQUEST_HEADERS,
-  type UserAgent,
-} from "./config.js";
+export { SCRAPER_CONFIG, TIBIA_URLS, DEFAULT_REQUEST_HEADERS, type UserAgent } from "./config.js";

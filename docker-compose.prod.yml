@@ -20,13 +20,13 @@ services:
     ports:
       - "80:80"
       - "443:443"
-      - "443:443/udp"   # HTTP/3
+      - "443:443/udp" # HTTP/3
     environment:
       DOMAIN: ${DOMAIN:?DOMAIN jest wymagany (np. tibians.tools)}
       ACME_EMAIL: ${ACME_EMAIL:?ACME_EMAIL jest wymagany (Let's Encrypt)}
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - caddy-data:/data      # certyfikaty Let's Encrypt (persistent!)
+      - caddy-data:/data # certyfikaty Let's Encrypt (persistent!)
       - caddy-config:/config
     networks:
       - tibians-net
@@ -65,7 +65,7 @@ services:
       NODE_ENV: production
       HOSTNAME: 0.0.0.0
       PORT: "3000"
-      TIBIADATA_BASE_URL: http://tibiadata:8080   # self-host (§18.1)
+      TIBIADATA_BASE_URL: http://tibiadata:8080 # self-host (§18.1)
     networks:
       - tibians-net
     depends_on:
@@ -94,6 +94,16 @@ services:
     environment:
       NODE_ENV: production
       TIBIADATA_BASE_URL: http://tibiadata:8080
+      # Transport przez przeglądarkę (Cloudflare!): CloakBrowser + WARP.
+      # Fallback: FlareSolverr (profil `fallback` — patrz niżej).
+      SCRAPER_FETCH_MODE: browser
+      SCRAPER_BROWSER_FETCH_URL: http://host.docker.internal:8192/v1
+      SCRAPER_BROWSER_FETCH_TOKEN: ${BROWSER_FETCH_TOKEN:-}
+      SCRAPER_BROWSER_FETCH_FALLBACK_URL: http://host.docker.internal:8191/v1
+      SCRAPER_FETCH_TIMEOUT_MS: "60000"
+    # Dostęp do serwisów w host network (browser-fetch :8192, flaresolverr :8191).
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     networks:
       - tibians-net
     depends_on:
@@ -101,10 +111,81 @@ services:
         condition: service_healthy
       tibiadata:
         condition: service_healthy
-    stop_grace_period: 30s   # graceful shutdown scheduler'a (T36)
+      browser:
+        condition: service_healthy
+    stop_grace_period: 30s # graceful shutdown scheduler'a (T36)
     logging: *default-logging
     labels:
       - "com.tibians.service=scraper"
+
+  # ─── browser-fetch: CloakBrowser + WARP (render stron za Cloudflare) ─────
+  #
+  # DLACZEGO host network:
+  #   (a) dostęp do lokalnego proxy WARP (127.0.0.1:40000 — bind localhost),
+  #   (b) scraper (w bridge) łączy się przez host.docker.internal:8192.
+  #
+  # BEZPIECZEŃSTWO: port 8192 nie może być publiczny. Chronimy na dwa sposoby:
+  #   1. ufw: allow from 172.16.0.0/12 (sieci dockerowe), reszta DROP
+  #      (jednorazowa konfiguracja — patrz DEPLOYMENT.md §WARP/browser),
+  #   2. opcjonalny token `BROWSER_FETCH_TOKEN` (nagłówek X-BF-Token).
+  browser:
+    image: cloakhq/cloakbrowser:latest
+    container_name: tibians-browser
+    restart: unless-stopped
+    network_mode: host
+    environment:
+      BF_BIND: 0.0.0.0
+      BF_PORT: "8192"
+      CB_PROXY: socks5://127.0.0.1:40000
+      BF_TOKEN: ${BROWSER_FETCH_TOKEN:-}
+      BF_HEADLESS: "1"
+    volumes:
+      - ./services/browser-fetch:/service:ro
+    command: ["python", "/service/server.py"]
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8192/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s # pierwszy start = init Chromium (wolno na małym VPS)
+    logging: *default-logging
+    labels:
+      - "com.tibians.service=browser"
+
+  # ─── FlareSolverr: FALLBACK transportu (profil `fallback`) ───────────────
+  #
+  # Domyślnie NIE startuje (oszczędność ~700 MB RAM). Włącz gdy CloakBrowser
+  # ma problem:  docker compose --profile fallback up -d flaresolverr
+  flaresolverr:
+    image: ghcr.io/flaresolverr/flaresolverr:latest
+    container_name: tibians-flaresolverr
+    restart: unless-stopped
+    network_mode: host
+    profiles: ["fallback"]
+    environment:
+      LOG_LEVEL: info
+      PROXY_URL: socks5://127.0.0.1:40000
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8191/health', timeout=5)",
+        ]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 60s
+    logging: *default-logging
+    labels:
+      - "com.tibians.service=flaresolverr"
 
   # ─── PostgreSQL 17 ───────────────────────────────────────────────────────
   db:
