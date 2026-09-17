@@ -40,6 +40,12 @@ ENV NODE_ENV=production
 RUN addgroup --system --gid 1001 nodejs \
  && adduser --system --uid 1001 --ingroup nodejs scraper
 
+# pnpm w runnerze — wymagany do operacji serwisowych wykonywanych W KONTENERZE
+# (db:migrate / db:seed / scrap:* — patrz DEPLOYMENT.md §7). Bez tego
+# `docker compose exec scraper pnpm ...` kończy się "Cannot find module '/app/pnpm'"
+# (node entrypoint próbuje uruchomić nieistniejący binarny pnpm).
+RUN npm install -g pnpm@9.15.9 && npm cache clean --force
+
 # Scraper używa tsx/runtime z node_modules (nie bundlujemy — mniej ryzyka).
 COPY --from=builder --chown=scraper:nodejs /repo/package.json ./package.json
 COPY --from=builder --chown=scraper:nodejs /repo/pnpm-workspace.yaml ./pnpm-workspace.yaml
