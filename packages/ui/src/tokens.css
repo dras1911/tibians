@@ -45,6 +45,7 @@
   --success-subtle: oklch(95% 0.04 150);
   --warning: oklch(70% 0.15 80); /* < 1h do końca */
   --warning-subtle: oklch(96% 0.05 80);
+  --warning-foreground: oklch(42% 0.12 80); /* tekst na warning-subtle (czytelny w light) */
   --danger: oklch(55% 0.2 25); /* < 5 min / przepłacone */
   --danger-subtle: oklch(95% 0.04 25);
   --info: oklch(58% 0.13 245);
@@ -108,6 +109,7 @@
   --success-subtle: oklch(26% 0.06 150);
   --warning: oklch(78% 0.15 80);
   --warning-subtle: oklch(28% 0.06 80);
+  --warning-foreground: oklch(84% 0.13 80); /* tekst na warning-subtle (czytelny w dark) */
   --danger: oklch(70% 0.19 25);
   --danger-subtle: oklch(27% 0.07 25);
   --info: oklch(72% 0.13 245);

@@ -75,7 +75,8 @@ const config: Config = {
         },
         warning: {
           DEFAULT: "var(--warning)",
-          foreground: "var(--bg-base)",
+          // NIE var(--bg-base)! Timer ma być CZYTELNY na subtle tle (bg-warning/10).
+          foreground: "var(--warning-foreground)",
         },
         info: {
           DEFAULT: "var(--info)",

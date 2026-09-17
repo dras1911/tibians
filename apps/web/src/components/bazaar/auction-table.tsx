@@ -51,6 +51,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useDensity, densityRowClass } from "@/components/density-provider";
 import { Link } from "@/i18n/routing";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
+import { REGION_FLAG, REGION_FLAG_FALLBACK } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 import { AuctionCountdownCell } from "./auction-countdown-cell";
@@ -230,6 +231,9 @@ export function AuctionTable({
               variant="outline"
               className={cn("border text-[0.65rem]", REGION_TONE[a.worldRegion])}
             >
+              <span aria-hidden="true" className="mr-1">
+                {REGION_FLAG[a.worldRegion] ?? REGION_FLAG_FALLBACK}
+              </span>
               {a.world}
               <span className="ml-1 font-mono text-[0.6rem] opacity-70">{a.worldRegion}</span>
             </Badge>

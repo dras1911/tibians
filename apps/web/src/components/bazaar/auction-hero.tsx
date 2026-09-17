@@ -29,6 +29,7 @@ import { Button } from "@/components/ui/button";
 import { AuctionCountdownCell } from "@/components/bazaar/auction-countdown-cell";
 import { Link } from "@/i18n/routing";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
+import { REGION_FLAG, REGION_FLAG_FALLBACK } from "@/lib/regions";
 import { cn } from "@/lib/utils";
 
 import type { AuctionDetail } from "@/lib/server/auction-detail";
@@ -40,13 +41,6 @@ const VOCATION_TONE: Record<string, string> = {
   Druid: "bg-voc-druid/15 text-voc-druid border-voc-druid/40",
   Sorcerer: "bg-voc-sorcerer/15 text-voc-sorcerer border-voc-sorcerer/40",
   Monk: "bg-voc-monk/15 text-voc-monk border-voc-monk/40",
-};
-
-const REGION_FLAG: Record<string, string> = {
-  EU: "🇪🇺",
-  NA: "🇺🇸",
-  BR: "🇧🇷",
-  OCE: "🇦🇺",
 };
 
 const BATTLEYE_TONE: Record<string, string> = {
@@ -149,7 +143,7 @@ export function AuctionHero({ detail, locale, className }: AuctionHeroProps) {
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
                 <Globe className="h-3.5 w-3.5" aria-hidden="true" />
-                {REGION_FLAG[a.worldRegion] ?? "🌍"} {a.world}
+                {REGION_FLAG[a.worldRegion] ?? REGION_FLAG_FALLBACK} {a.world}
               </span>
               <span aria-hidden="true">·</span>
               <span className="inline-flex items-center gap-1">
