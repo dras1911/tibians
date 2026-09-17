@@ -8,20 +8,12 @@
 
 export type WorldRegion = "EU" | "NA" | "BR" | "OCE";
 
-/** Flaga emoji per region (NA → 🇺🇸, bo serwery stoją w USA). */
-export const REGION_FLAG: Record<WorldRegion, string> = {
-  EU: "🇪🇺",
-  NA: "🇺🇸",
-  BR: "🇧🇷",
-  OCE: "🇦🇺",
-};
-
 /**
  * Kod pliku flagi SVG (`public/flags/<code>.svg`, flag-icons MIT).
  *
- * UWAGA: emoji flag (wyżej) NIE renderują się jako flagi na Windows ani
- * w headless Chromium — pokazują się jako litery („BR", „EU"). Do UI używaj
- * komponentu `<RegionFlag>` (obrazek SVG); emoji zostają tylko jako zapas.
+ * UWAGA: emoji flag (🇧🇷 itd.) NIE renderują się jako flagi na Windows ani
+ * w headless Chromium — systemowe fonty pokazują litery („BR", „EU").
+ * Dlatego w UI używamy WYŁĄCZNIE obrazków SVG przez komponent `<RegionFlag>`.
  */
 export const REGION_FLAG_CODE: Record<WorldRegion, string> = {
   EU: "eu",
@@ -29,6 +21,3 @@ export const REGION_FLAG_CODE: Record<WorldRegion, string> = {
   BR: "br",
   OCE: "au",
 };
-
-/** Fallback dla nieznanej wartości z DB (np. NULL). */
-export const REGION_FLAG_FALLBACK = "🌍";
