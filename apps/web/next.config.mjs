@@ -24,10 +24,7 @@ const withNextIntl = createNextIntlPlugin("./src/i18n/request.ts");
 const withMDX = createMDX({
   extension: /\.mdx?$/u,
   options: {
-    remarkPlugins: [
-      remarkFrontmatter,
-      [remarkMdxFrontmatter, { name: "frontmatter" }],
-    ],
+    remarkPlugins: [remarkFrontmatter, [remarkMdxFrontmatter, { name: "frontmatter" }]],
   },
 });
 
@@ -45,8 +42,17 @@ const nextConfig = {
   ],
   webpack(config) {
     config.resolve = config.resolve ?? {};
-    const existingExtensionAlias =
-      (config.resolve.extensionAlias ?? {});
+    // Preferuj źródła `.ts`/`.tsx` nad ewentualnymi artefaktami `.js` w
+    // workspace packages — skompilowany `.js` leżący obok `.ts` potrafi
+    // wygrać rozwiązywanie importów bez rozszerzenia i rozjechać build
+    // web (przypadek: stare `packages/db/src/**/*.js`).
+    const existingExtensions = config.resolve.extensions ?? [".js", ".jsx", ".json"];
+    config.resolve.extensions = [
+      ".ts",
+      ".tsx",
+      ...existingExtensions.filter((ext) => ext !== ".ts" && ext !== ".tsx"),
+    ];
+    const existingExtensionAlias = config.resolve.extensionAlias ?? {};
     const tsExtensions = [".ts", ".tsx", ".js", ".jsx", ".json", ".mdx"];
     config.resolve.extensionAlias = {
       ...existingExtensionAlias,
