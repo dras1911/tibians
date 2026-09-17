@@ -46,6 +46,8 @@ const VOCATION_OPTIONS = [
   "Druid",
   "Sorcerer",
   "Monk",
+  // Postacie bez profesji (realny przypadek z tibia.com).
+  "None",
 ] as const;
 type VocationOption = (typeof VOCATION_OPTIONS)[number];
 
@@ -85,6 +87,7 @@ const VOCATION_TONE: Record<VocationOption, string> = {
   Druid: "bg-voc-druid/15 text-voc-druid border-voc-druid/40",
   Sorcerer: "bg-voc-sorcerer/15 text-voc-sorcerer border-voc-sorcerer/40",
   Monk: "bg-voc-monk/15 text-voc-monk border-voc-monk/40",
+  None: "bg-muted/30 text-muted-foreground border-muted-foreground/40",
 };
 
 // ─────────────────────────────────────────────────────────────────────
@@ -136,8 +139,7 @@ export function HistoryFilters({
   // Konwersja `YYYY-MM-DD` → `Date` dla tooltipa pomocniczego
   const dateRangeLabel = React.useMemo(() => {
     if (!value.dateFrom && !value.dateTo) return null;
-    const fmt = (d: string) =>
-      format.dateTime(new Date(`${d}T00:00:00`), { dateStyle: "medium" });
+    const fmt = (d: string) => format.dateTime(new Date(`${d}T00:00:00`), { dateStyle: "medium" });
     if (value.dateFrom && value.dateTo) {
       return `${fmt(value.dateFrom)} — ${fmt(value.dateTo)}`;
     }
@@ -148,10 +150,7 @@ export function HistoryFilters({
 
   return (
     <div
-      className={cn(
-        "flex flex-col gap-4 rounded-lg border bg-card p-4",
-        className,
-      )}
+      className={cn("flex flex-col gap-4 rounded-lg border bg-card p-4", className)}
       aria-label={t("title")}
     >
       {/* ── Header ────────────────────────────────────────────────── */}
@@ -161,12 +160,7 @@ export function HistoryFilters({
           {t("title")}
         </h2>
         {activeCount > 0 ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReset}
-            className="h-9 gap-1.5 px-2 text-xs"
-          >
+          <Button variant="ghost" size="sm" onClick={onReset} className="h-9 gap-1.5 px-2 text-xs">
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             {tFilters("reset")}
           </Button>
@@ -188,16 +182,12 @@ export function HistoryFilters({
               <button
                 key={voc}
                 type="button"
-                onClick={() =>
-                  update({ vocation: active ? undefined : voc })
-                }
+                onClick={() => update({ vocation: active ? undefined : voc })}
                 aria-pressed={active}
                 className={cn(
                   "inline-flex h-11 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  active
-                    ? VOCATION_TONE[voc]
-                    : "bg-background text-foreground hover:bg-accent",
+                  active ? VOCATION_TONE[voc] : "bg-background text-foreground hover:bg-accent",
                 )}
               >
                 {tFilters(`vocation.${voc.toLowerCase()}`)}
@@ -266,9 +256,7 @@ export function HistoryFilters({
         </h3>
         <Select
           value={value.world ?? "__any"}
-          onValueChange={(v) =>
-            update({ world: v === "__any" ? undefined : v })
-          }
+          onValueChange={(v) => update({ world: v === "__any" ? undefined : v })}
         >
           <SelectTrigger id="history-filter-world" className="h-11">
             <SelectValue placeholder={tFilters("sections.world")} />
@@ -332,13 +320,7 @@ export function HistoryFilters({
 // FilterChip — lokalny helper, spójny z AuctionFiltersSidebar
 // ─────────────────────────────────────────────────────────────────────
 
-function FilterChip({
-  label,
-  onRemove,
-}: {
-  label: string;
-  onRemove: () => void;
-}) {
+function FilterChip({ label, onRemove }: { label: string; onRemove: () => void }) {
   return (
     <button
       type="button"

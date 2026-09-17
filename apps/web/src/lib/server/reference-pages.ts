@@ -66,9 +66,7 @@ export async function listReferenceItems(
   const conditions = [];
   const q = options.query?.trim() ?? "";
   if (q.length >= 2) {
-    conditions.push(
-      sql`(${ilike(items.name, `%${q}%`)}) OR (${ilike(items.namePl, `%${q}%`)})`,
-    );
+    conditions.push(sql`(${ilike(items.name, `%${q}%`)}) OR (${ilike(items.namePl, `%${q}%`)})`);
   }
   if (options.category !== undefined && options.category.length > 0) {
     // SQL wrapper pozwala ominąć wąski enum type Drizzle — walidacja
@@ -184,9 +182,12 @@ export function listReferenceMounts(
 export interface ReferenceWorldRow {
   id: number;
   name: string;
-  region: "EU" | "NA" | "BR";
-  pvpType: string;
-  battleye: string;
+  // NULL-owalne — harvest aukcji wstawia światy z samym (id, name);
+  // pełne dane (region/pvp/battleye) uzupełnia scraper referencji.
+  // Fallback TibiaData zawsze wypełnia te pola wartościami.
+  region: "EU" | "NA" | "BR" | null;
+  pvpType: string | null;
+  battleye: string | null;
   isRetro: boolean;
   isActive: boolean;
   playersOnline: number | null;
@@ -252,7 +253,10 @@ export async function getReferenceStats(): Promise<ReferenceStats> {
     db.select({ c: sql<number>`COUNT(*)::int` }).from(items),
     db.select({ c: sql<number>`COUNT(*)::int` }).from(outfits),
     db.select({ c: sql<number>`COUNT(*)::int` }).from(mounts),
-    db.select({ c: sql<number>`COUNT(*)::int` }).from(worlds).where(isNotNull(worlds.id)),
+    db
+      .select({ c: sql<number>`COUNT(*)::int` })
+      .from(worlds)
+      .where(isNotNull(worlds.id)),
   ]);
   return {
     items: itemsRow[0]?.c ?? 0,

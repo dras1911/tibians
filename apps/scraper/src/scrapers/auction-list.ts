@@ -40,11 +40,7 @@ import type { Cheerio, CheerioAPI } from "cheerio";
 import type { AnyNode } from "domhandler";
 import { z } from "zod";
 
-import {
-  BidTypeSchema,
-  SexSchema,
-  VocationPromotedSchema,
-} from "@tibians/shared/auction";
+import { BidTypeSchema, SexSchema, VocationPromotedSchema } from "@tibians/shared/auction";
 
 // ──────────────────────────────────────────────────────────────────────────
 // Typy + Zod schema (kanoniczne dla listy)
@@ -65,9 +61,7 @@ import {
  */
 export const AuctionSummarySchema = z
   .object({
-    auctionId: z
-      .bigint()
-      .positive("auctionId musi być dodatni (bigint z `?auctionid=`)"),
+    auctionId: z.bigint().positive("auctionId musi być dodatni (bigint z `?auctionid=`)"),
     characterName: z
       .string()
       .min(1, "Nazwa postaci nie może być pusta")
@@ -86,10 +80,7 @@ export const AuctionSummarySchema = z
       .startsWith("https://static.tibia.com/", {
         message: "Outfit URL musi być hostowany na static.tibia.com",
       }),
-    bid: z
-      .number()
-      .int("Bid w TC musi być integerem")
-      .min(0, "Bid nie może być ujemny"),
+    bid: z.number().int("Bid w TC musi być integerem").min(0, "Bid nie może być ujemny"),
     bidType: BidTypeSchema,
     auctionEnd: z
       .string()
@@ -216,6 +207,8 @@ export function normalizeVocation(raw: string): z.infer<typeof VocationPromotedS
     Druid: "Elder Druid",
     Sorcerer: "Master Sorcerer",
     Monk: "Exalted Monk",
+    // Postacie bez profesji — tibia.com renderuje dosłownie „None".
+    None: "None",
   };
   const mapped = baseToPromoted[v];
   if (mapped !== undefined) return mapped;
@@ -265,9 +258,7 @@ function parseAuctionBlock(
 
   // 3-6. Level / Vocation / Sex / World — z tekstu w `.AuctionHeader`
   // Tekst to `Shaman Aragon\nLevel: 126 | Vocation: Elder Druid | Male | World: Nefera<br/>`
-  const headerText = normalizeText(
-    $auction.find(".AuctionHeader").text().replace(/\s+/g, " "),
-  );
+  const headerText = normalizeText($auction.find(".AuctionHeader").text().replace(/\s+/g, " "));
 
   const levelMatch = HEADER_FIELD_REGEX.level.exec(headerText);
   if (levelMatch === null || levelMatch[1] === undefined) {
@@ -285,10 +276,10 @@ function parseAuctionBlock(
   try {
     vocation = normalizeVocation(vocationMatch[1]);
   } catch (err) {
-    warn(
-      `Invalid vocation: ${err instanceof Error ? err.message : String(err)}`,
-      { index, auctionId: auctionId.toString() },
-    );
+    warn(`Invalid vocation: ${err instanceof Error ? err.message : String(err)}`, {
+      index,
+      auctionId: auctionId.toString(),
+    });
     return null;
   }
 
@@ -316,18 +307,20 @@ function parseAuctionBlock(
   // 8-9. Bid + Bid type — `<div class="ShortAuctionDataBidRow">`
   const bidRow = $auction.find(".ShortAuctionDataBidRow");
   const bidLabelRaw = bidRow.find(".ShortAuctionDataLabel").text().trim();
-  const bidType: z.infer<typeof BidTypeSchema> =
-    bidLabelRaw.startsWith("Current Bid") ? "current" : "minimum";
+  const bidType: z.infer<typeof BidTypeSchema> = bidLabelRaw.startsWith("Current Bid")
+    ? "current"
+    : "minimum";
 
   const bidBoldRaw = bidRow.find(".ShortAuctionDataValue b").text();
   let bid: number;
   try {
     bid = parseBidAmount(bidBoldRaw);
   } catch (err) {
-    warn(
-      `Invalid bid amount: ${err instanceof Error ? err.message : String(err)}`,
-      { index, auctionId: auctionId.toString(), bidBoldRaw },
-    );
+    warn(`Invalid bid amount: ${err instanceof Error ? err.message : String(err)}`, {
+      index,
+      auctionId: auctionId.toString(),
+      bidBoldRaw,
+    });
     return null;
   }
 
@@ -341,10 +334,10 @@ function parseAuctionBlock(
   try {
     auctionEnd = unixToIso(timerTimestamp);
   } catch (err) {
-    warn(
-      `Invalid auction timestamp: ${err instanceof Error ? err.message : String(err)}`,
-      { index, auctionId: auctionId.toString() },
-    );
+    warn(`Invalid auction timestamp: ${err instanceof Error ? err.message : String(err)}`, {
+      index,
+      auctionId: auctionId.toString(),
+    });
     return null;
   }
 
@@ -363,10 +356,11 @@ function parseAuctionBlock(
   };
   const parsed = AuctionSummarySchema.safeParse(candidate);
   if (!parsed.success) {
-    warn(
-      `Zod validation failed for auction`,
-      { index, auctionId: auctionId.toString(), issues: parsed.error.issues },
-    );
+    warn(`Zod validation failed for auction`, {
+      index,
+      auctionId: auctionId.toString(),
+      issues: parsed.error.issues,
+    });
     return null;
   }
   return parsed.data;
@@ -505,7 +499,7 @@ export function parseAuctionList(
   const $ = cheerio.load(html);
 
   const auctions: AuctionSummary[] = [];
-$(".Auction").each((index, el) => {
+  $(".Auction").each((index, el) => {
     const $auction = $(el);
     const parsed = parseAuctionBlock($auction, warn, index);
     if (parsed !== null) auctions.push(parsed);

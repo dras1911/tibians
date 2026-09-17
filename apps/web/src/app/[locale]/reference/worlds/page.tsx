@@ -31,8 +31,7 @@ import { listWorldsByRegion } from "@/lib/server/reference-pages";
 import { getWorlds } from "@tibians/shared/tibiadata";
 import { routing } from "@/i18n/routing";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
 
 /** ISR: 24h (plan T61). */
 export const revalidate = 86_400;
@@ -107,13 +106,15 @@ export default async function ReferenceWorldsPage({
   try {
     grouped = await listWorldsByRegion();
   } catch (error) {
-    // eslint-disable-next-line no-console
     console.error("[reference/worlds] DB query failed:", error);
     grouped = null;
   }
 
   // Fallback: TibiaData `/v4/worlds` gdy DB puste / błąd.
-  if (grouped === null || (grouped.EU.length === 0 && grouped.NA.length === 0 && grouped.BR.length === 0)) {
+  if (
+    grouped === null ||
+    (grouped.EU.length === 0 && grouped.NA.length === 0 && grouped.BR.length === 0)
+  ) {
     try {
       const td = await getWorlds();
       const rawList = td.worlds?.regular_worlds ?? [];
@@ -124,8 +125,8 @@ export default async function ReferenceWorldsPage({
         const region: "EU" | "NA" | "BR" = location.startsWith("eu")
           ? "EU"
           : location.startsWith("br")
-          ? "BR"
-          : "NA";
+            ? "BR"
+            : "NA";
         grouped[region].push({
           id: 0,
           name: w.name,
@@ -138,7 +139,6 @@ export default async function ReferenceWorldsPage({
         });
       }
     } catch (error) {
-      // eslint-disable-next-line no-console
       console.error("[reference/worlds] TibiaData fallback failed:", error);
       grouped = grouped ?? { EU: [], NA: [], BR: [] };
     }
@@ -158,17 +158,11 @@ export default async function ReferenceWorldsPage({
     name: t("pageTitle"),
     description: t("pageDescription"),
     numberOfItems: totalCount,
-    itemListElement: [
-      ...grouped.EU,
-      ...grouped.NA,
-      ...grouped.BR,
-    ]
-      .slice(0, 25)
-      .map((w, idx) => ({
-        "@type": "ListItem",
-        position: idx + 1,
-        name: w.name,
-      })),
+    itemListElement: [...grouped.EU, ...grouped.NA, ...grouped.BR].slice(0, 25).map((w, idx) => ({
+      "@type": "ListItem",
+      position: idx + 1,
+      name: w.name,
+    })),
   };
 
   if (totalCount === 0) {
@@ -197,9 +191,7 @@ export default async function ReferenceWorldsPage({
           <Globe2 className="h-6 w-6 text-primary" aria-hidden="true" />
           {t("pageTitle")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {t("pageDescription")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">{t("pageDescription")}</p>
         <p
           className="numeric mt-2 font-mono text-xs tabular-nums text-muted-foreground"
           aria-live="polite"
@@ -280,9 +272,9 @@ function WorldCard({
 }: {
   world: {
     name: string;
-    region: "EU" | "NA" | "BR";
-    pvpType: string;
-    battleye: string;
+    region: "EU" | "NA" | "BR" | null;
+    pvpType: string | null;
+    battleye: string | null;
     isRetro: boolean;
     isActive: boolean;
     playersOnline: number | null;
@@ -299,31 +291,32 @@ function WorldCard({
     world.battleye === "protected"
       ? protectedLabel
       : world.battleye === "initially protected"
-      ? protectedPartialLabel
-      : unprotectedLabel;
+        ? protectedPartialLabel
+        : world.battleye === "not protected"
+          ? unprotectedLabel
+          : "—";
 
   const battleyeTone =
     world.battleye === "protected"
       ? "success"
       : world.battleye === "initially protected"
-      ? "warning"
-      : "destructive";
+        ? "warning"
+        : world.battleye === "not protected"
+          ? "destructive"
+          : "outline";
 
   return (
     <Card className="h-full">
       <CardContent className="flex flex-col gap-2 p-4">
         <div className="flex items-start justify-between gap-2">
           <div className="min-w-0">
-            <h3 className="truncate text-base font-semibold text-foreground">
-              {world.name}
-            </h3>
+            <h3 className="truncate text-base font-semibold text-foreground">{world.name}</h3>
             <p className="numeric font-mono text-xs tabular-nums text-muted-foreground">
               {world.isActive
                 ? world.playersOnline !== null
                   ? world.playersOnline.toLocaleString("en-US")
                   : "—"
-                : offlineLabel}
-              {" "}
+                : offlineLabel}{" "}
               {world.isActive && world.playersOnline !== null
                 ? pvpLabel.toLowerCase() === "pvp"
                   ? ""
@@ -339,7 +332,7 @@ function WorldCard({
         </div>
         <div className="flex flex-wrap gap-1.5">
           <Badge variant="outline" className="text-xs">
-            {world.pvpType}
+            {world.pvpType ?? "—"}
           </Badge>
           <Badge variant={battleyeTone} className="text-xs">
             {battleyeLabel}: {battleyeLabelResolved}

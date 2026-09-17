@@ -20,25 +20,24 @@ import { z } from "zod";
 // ──────────────────────────────────────────────────────────────────────────
 
 /**
- * Pięć bazowych klas postaci (niezależnie od promocji).
+ * Bazowe klasy postaci (niezależnie od promocji).
  *
  * Arch. §7.2 `auctions.vocation_base` — DB trzyma je jako TEXT, ale Tibia
- * zwraca dokładnie te 5 stringów w HTML listy aukcji i detalu.
+ * zwraca dokładnie te stringi w HTML listy aukcji i detalu.
+ *
+ * UWAGA: `None` to realny przypadek z tibia.com — postacie BEZ profesji
+ * (challenge/Rookgaard-style, poziom potrafi być wysoki; obserwowane
+ * 2026-09-17, np. „Digi mortal" lvl 207). Tibia.com dosłownie renderuje
+ * `Vocation: None` — musimy je akceptować, bo to ~kilka % aukcji.
  */
-export const VocationSchema = z.enum([
-  "Knight",
-  "Paladin",
-  "Druid",
-  "Sorcerer",
-  "Monk",
-]);
+export const VocationSchema = z.enum(["Knight", "Paladin", "Druid", "Sorcerer", "Monk", "None"]);
 export type Vocation = z.infer<typeof VocationSchema>;
 
 /**
- * Pięć promowanych wariantów (widocznych w nagłówku aukcji Tibii).
+ * Promowane warianty (widoczne w nagłówku aukcji Tibii) + `None`
+ * (postacie bez profesji nie mają wariantu promowanego).
  *
- * Arch. §7.2 `auctions.vocation` — DB trzyma je jako TEXT. Tibia.com używa
- * tych stringów dosłownie w `<div class="AuctionHeader">`.
+ * Arch. §7.2 `auctions.vocation` — DB trzyma je jako TEXT.
  */
 export const VocationPromotedSchema = z.enum([
   "Elite Knight",
@@ -46,6 +45,7 @@ export const VocationPromotedSchema = z.enum([
   "Elder Druid",
   "Master Sorcerer",
   "Exalted Monk",
+  "None",
 ]);
 export type VocationPromoted = z.infer<typeof VocationPromotedSchema>;
 
@@ -63,6 +63,7 @@ export const VOCATION_BASE_TO_PROMOTED = {
   Druid: "Elder Druid",
   Sorcerer: "Master Sorcerer",
   Monk: "Exalted Monk",
+  None: "None",
 } as const satisfies Record<Vocation, VocationPromoted>;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -92,12 +93,7 @@ export type BidType = z.infer<typeof BidTypeSchema>;
  * `sold` wymaga pola `finalPrice`, `finished` bez finalPrice (aukcja
  * zakończyła się bez kupca).
  */
-export const AuctionStatusSchema = z.enum([
-  "active",
-  "finished",
-  "cancelled",
-  "sold",
-]);
+export const AuctionStatusSchema = z.enum(["active", "finished", "cancelled", "sold"]);
 export type AuctionStatus = z.infer<typeof AuctionStatusSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────
@@ -125,11 +121,7 @@ export type PvPType = z.infer<typeof PvPTypeSchema>;
  * Status ochrony BattlEye — `initially protected` znika po pewnym czasie
  * od założenia konta. Gracze premium często filtrują tylko `protected`.
  */
-export const BattlEyeTypeSchema = z.enum([
-  "protected",
-  "initially protected",
-  "not protected",
-]);
+export const BattlEyeTypeSchema = z.enum(["protected", "initially protected", "not protected"]);
 export type BattlEyeType = z.infer<typeof BattlEyeTypeSchema>;
 
 // ──────────────────────────────────────────────────────────────────────────

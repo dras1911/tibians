@@ -58,11 +58,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
+import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
@@ -77,9 +73,7 @@ import { Separator } from "@/components/ui/separator";
 import { Slider } from "@/components/ui/slider";
 import { cn } from "@/lib/utils";
 
-import {
-  type BazaarFiltersUi,
-} from "@/lib/hooks/use-bazaar-filters";
+import { type BazaarFiltersUi } from "@/lib/hooks/use-bazaar-filters";
 
 import { RareItemCombobox } from "./rare-item-combobox";
 
@@ -151,6 +145,8 @@ const VOCATION_ORDER: VocationFilter[] = [
   "Druid",
   "Sorcerer",
   "Monk",
+  // Postacie bez profesji (realny przypadek z tibia.com).
+  "None",
 ];
 
 const VOCATION_TONE: Record<VocationFilter, string> = {
@@ -159,6 +155,7 @@ const VOCATION_TONE: Record<VocationFilter, string> = {
   Druid: "bg-voc-druid/15 text-voc-druid border-voc-druid/40",
   Sorcerer: "bg-voc-sorcerer/15 text-voc-sorcerer border-voc-sorcerer/40",
   Monk: "bg-voc-monk/15 text-voc-monk border-voc-monk/40",
+  None: "bg-muted/30 text-muted-foreground border-muted-foreground/40",
 };
 
 // ─────────────────────────────────────────────────────────────────────
@@ -178,15 +175,15 @@ const VOCATION_TONE: Record<VocationFilter, string> = {
  * (domyślny fallback dla graczy, którzy chcą filtrować tylko po skille,
  * bez zawężania do konkretnej klasy).
  */
-const SKILLS_BY_VOCATION: Record<
-  VocationFilter,
-  ReadonlyArray<SkillFilterKey>
-> = {
+const SKILLS_BY_VOCATION: Record<VocationFilter, ReadonlyArray<SkillFilterKey>> = {
   Knight: ["sword", "club", "axe", "shielding", "magic"],
   Paladin: ["distance", "magic"],
   Druid: ["magic"],
   Sorcerer: ["magic"],
   Monk: ["magic", "fist"],
+  // Postacie bez profesji (realny przypadek z tibia.com) — handlowo
+  // liczy się tylko fist; nie mają czarów ani bonusów klasowych.
+  None: ["fist"],
 };
 
 const ALL_SKILLS: ReadonlyArray<SkillFilterKey> = [
@@ -228,11 +225,7 @@ const PVP_TYPES: PvPTypeFilter[] = [
   "Retro Hardcore PvP",
 ];
 
-const BATTLEYE_TYPES: BattlEyeFilter[] = [
-  "protected",
-  "initially protected",
-  "not protected",
-];
+const BATTLEYE_TYPES: BattlEyeFilter[] = ["protected", "initially protected", "not protected"];
 
 const REGIONS: RegionFilter[] = ["EU", "NA", "BR"];
 
@@ -322,19 +315,11 @@ export function AuctionFiltersSidebar({
       } else if (key === "skillType" || key === "skillMin") {
         delete next.skillType;
         delete next.skillMin;
-      } else if (
-        key === "gemsMinLesser" ||
-        key === "gemsMinRegular" ||
-        key === "gemsMinGreater"
-      ) {
+      } else if (key === "gemsMinLesser" || key === "gemsMinRegular" || key === "gemsMinGreater") {
         delete next.gemsMinLesser;
         delete next.gemsMinRegular;
         delete next.gemsMinGreater;
-      } else if (
-        key === "storeMinOutfits" ||
-        key === "storeMinMounts" ||
-        key === "storeMinItems"
-      ) {
+      } else if (key === "storeMinOutfits" || key === "storeMinMounts" || key === "storeMinItems") {
         delete next.storeMinOutfits;
         delete next.storeMinMounts;
         delete next.storeMinItems;
@@ -356,9 +341,7 @@ export function AuctionFiltersSidebar({
     filters.bidMax !== undefined ? String(filters.bidMax) : "",
   );
   React.useEffect(() => {
-    setBidMaxInput(
-      filters.bidMax !== undefined ? String(filters.bidMax) : "",
-    );
+    setBidMaxInput(filters.bidMax !== undefined ? String(filters.bidMax) : "");
   }, [filters.bidMax]);
   const commitBidMax = React.useCallback(() => {
     const value = bidMaxInput.trim();
@@ -378,9 +361,7 @@ export function AuctionFiltersSidebar({
     const result: Record<RegionFilter, string[]> = { EU: [], NA: [], BR: [] };
     for (const region of REGIONS) {
       const worlds = worldsByRegion[region] ?? [];
-      result[region] = worlds.filter((w) =>
-        q === "" ? true : w.toLowerCase().includes(q),
-      );
+      result[region] = worlds.filter((w) => (q === "" ? true : w.toLowerCase().includes(q)));
     }
     return result;
   }, [worldsByRegion, worldSearch]);
@@ -395,24 +376,14 @@ export function AuctionFiltersSidebar({
 
   return (
     <div
-      className={cn(
-        "flex flex-col gap-4 rounded-lg border bg-card p-4",
-        className,
-      )}
+      className={cn("flex flex-col gap-4 rounded-lg border bg-card p-4", className)}
       aria-label={t("title")}
     >
       {/* ── Header ────────────────────────────────────────────────── */}
       <div className="flex items-center justify-between gap-2">
-        <h2 className="text-base font-semibold tracking-tight text-foreground">
-          {t("title")}
-        </h2>
+        <h2 className="text-base font-semibold tracking-tight text-foreground">{t("title")}</h2>
         {activeCount > 0 ? (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onReset}
-            className="h-9 gap-1.5 px-2 text-xs"
-          >
+          <Button variant="ghost" size="sm" onClick={onReset} className="h-9 gap-1.5 px-2 text-xs">
             <RotateCcw className="h-3.5 w-3.5" aria-hidden="true" />
             {t("reset")}
           </Button>
@@ -435,17 +406,13 @@ export function AuctionFiltersSidebar({
               <button
                 key={voc}
                 type="button"
-                onClick={() =>
-                  update({ vocation: active ? undefined : voc })
-                }
+                onClick={() => update({ vocation: active ? undefined : voc })}
                 aria-pressed={active}
                 disabled={count === 0 && !active}
                 className={cn(
                   "inline-flex h-11 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors",
                   "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
-                  active
-                    ? VOCATION_TONE[voc]
-                    : "bg-background text-foreground hover:bg-accent",
+                  active ? VOCATION_TONE[voc] : "bg-background text-foreground hover:bg-accent",
                   count === 0 && !active && "opacity-40",
                 )}
               >
@@ -524,8 +491,7 @@ export function AuctionFiltersSidebar({
               onChange={(e) => {
                 const value = e.target.value;
                 update({
-                  levelMin:
-                    value === "" ? undefined : Number.parseInt(value, 10),
+                  levelMin: value === "" ? undefined : Number.parseInt(value, 10),
                 });
               }}
               className="numeric mt-1 h-11 font-mono tabular-nums"
@@ -546,8 +512,7 @@ export function AuctionFiltersSidebar({
               onChange={(e) => {
                 const value = e.target.value;
                 update({
-                  levelMax:
-                    value === "" ? undefined : Number.parseInt(value, 10),
+                  levelMax: value === "" ? undefined : Number.parseInt(value, 10),
                 });
               }}
               className="numeric mt-1 h-11 font-mono tabular-nums"
@@ -586,9 +551,7 @@ export function AuctionFiltersSidebar({
             {t("priceSuffix")}
           </span>
         </div>
-        <p className="mt-1 text-xs text-muted-foreground">
-          {t("priceHint", { rate: "0,42" })}
-        </p>
+        <p className="mt-1 text-xs text-muted-foreground">{t("priceHint", { rate: "0,42" })}</p>
       </section>
 
       <Separator />
@@ -609,9 +572,7 @@ export function AuctionFiltersSidebar({
               <button
                 key={region}
                 type="button"
-                onClick={() =>
-                  update({ region: active ? undefined : region })
-                }
+                onClick={() => update({ region: active ? undefined : region })}
                 aria-pressed={active}
                 disabled={count === 0 && !active}
                 className={cn(
@@ -661,12 +622,8 @@ export function AuctionFiltersSidebar({
         </div>
 
         <ScrollArea className="mt-2 h-48 rounded-md border bg-background">
-          {REGIONS.every(
-            (region) => filteredWorldsByRegion[region].length === 0,
-          ) ? (
-            <p className="p-3 text-center text-xs text-muted-foreground">
-              {t("worldEmpty")}
-            </p>
+          {REGIONS.every((region) => filteredWorldsByRegion[region].length === 0) ? (
+            <p className="p-3 text-center text-xs text-muted-foreground">{t("worldEmpty")}</p>
           ) : (
             REGIONS.map((region) => {
               const worlds = filteredWorldsByRegion[region];
@@ -693,17 +650,12 @@ export function AuctionFiltersSidebar({
                           className={cn(
                             "inline-flex h-9 w-full items-center justify-between gap-1.5 rounded-sm px-2 text-left text-sm transition-colors",
                             "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-1",
-                            active
-                              ? "bg-accent text-accent-foreground"
-                              : "hover:bg-muted",
+                            active ? "bg-accent text-accent-foreground" : "hover:bg-muted",
                           )}
                         >
                           <span className="inline-flex items-center gap-2 truncate">
                             {active ? (
-                              <Check
-                                className="h-3.5 w-3.5 text-primary"
-                                aria-hidden="true"
-                              />
+                              <Check className="h-3.5 w-3.5 text-primary" aria-hidden="true" />
                             ) : (
                               <span className="h-3.5 w-3.5" />
                             )}
@@ -783,10 +735,7 @@ export function AuctionFiltersSidebar({
           value={filters.battleye ?? "__any"}
           onValueChange={(value) => {
             update({
-              battleye:
-                value === "__any"
-                  ? undefined
-                  : (value as BattlEyeFilter),
+              battleye: value === "__any" ? undefined : (value as BattlEyeFilter),
             });
           }}
         >
@@ -814,42 +763,31 @@ export function AuctionFiltersSidebar({
             "rounded-md border border-dashed bg-muted/30 px-3",
             advancedOpen && "bg-muted/60",
           )}
-          aria-label={
-            advancedOpen ? tAdvanced("close") : tAdvanced("open")
-          }
+          aria-label={advancedOpen ? tAdvanced("close") : tAdvanced("open")}
         >
-          <SlidersHorizontal
-            className="h-3.5 w-3.5"
-            aria-hidden="true"
-          />
+          <SlidersHorizontal className="h-3.5 w-3.5" aria-hidden="true" />
           <span className="text-xs font-semibold uppercase tracking-wider">
             {tAdvanced("title")}
           </span>
-          {(filters.skillType ||
-            filters.skillMin !== undefined ||
-            filters.hasSoulWar ||
-            filters.hasPrimalOrdeal ||
-            filters.hasWorldTransfer ||
-            filters.hasPreySlot ||
-            filters.hasCharmExpansion ||
-            filters.hasWeeklyTaskExp ||
-            filters.hasTwistOfFate ||
-            filters.imbuesFull ||
-            filters.mustHaveItemId !== undefined ||
-            filters.gemsMinLesser !== undefined ||
-            filters.gemsMinRegular !== undefined ||
-            filters.gemsMinGreater !== undefined ||
-            filters.storeMinOutfits !== undefined ||
-            filters.storeMinMounts !== undefined ||
-            filters.storeMinItems !== undefined) ? (
-            <Badge
-              variant="secondary"
-              className="ml-1 h-5 px-1.5 text-[0.65rem]"
-            >
-              {format.number(
-                countAdvancedActive(filters),
-                { useGrouping: true },
-              )}
+          {filters.skillType ||
+          filters.skillMin !== undefined ||
+          filters.hasSoulWar ||
+          filters.hasPrimalOrdeal ||
+          filters.hasWorldTransfer ||
+          filters.hasPreySlot ||
+          filters.hasCharmExpansion ||
+          filters.hasWeeklyTaskExp ||
+          filters.hasTwistOfFate ||
+          filters.imbuesFull ||
+          filters.mustHaveItemId !== undefined ||
+          filters.gemsMinLesser !== undefined ||
+          filters.gemsMinRegular !== undefined ||
+          filters.gemsMinGreater !== undefined ||
+          filters.storeMinOutfits !== undefined ||
+          filters.storeMinMounts !== undefined ||
+          filters.storeMinItems !== undefined ? (
+            <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[0.65rem]">
+              {format.number(countAdvancedActive(filters), { useGrouping: true })}
             </Badge>
           ) : null}
         </CollapsibleTrigger>
@@ -897,33 +835,25 @@ export function AuctionFiltersSidebar({
                 id="mh-primalordeal"
                 label={tAdvanced("mustHave.primalOrdeal")}
                 checked={filters.hasPrimalOrdeal === true}
-                onToggle={(v) =>
-                  update({ hasPrimalOrdeal: v ? true : undefined })
-                }
+                onToggle={(v) => update({ hasPrimalOrdeal: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="mh-worldtransfer"
                 label={tAdvanced("mustHave.worldTransfer")}
                 checked={filters.hasWorldTransfer === true}
-                onToggle={(v) =>
-                  update({ hasWorldTransfer: v ? true : undefined })
-                }
+                onToggle={(v) => update({ hasWorldTransfer: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="mh-imbuesfull"
                 label={tAdvanced("mustHave.imbuesFull")}
                 checked={filters.imbuesFull === true}
-                onToggle={(v) =>
-                  update({ imbuesFull: v ? true : undefined })
-                }
+                onToggle={(v) => update({ imbuesFull: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="mh-charmexpansion"
                 label={tAdvanced("mustHave.charmExpansion")}
                 checked={filters.hasCharmExpansion === true}
-                onToggle={(v) =>
-                  update({ hasCharmExpansion: v ? true : undefined })
-                }
+                onToggle={(v) => update({ hasCharmExpansion: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="mh-preyslot"
@@ -935,17 +865,13 @@ export function AuctionFiltersSidebar({
                 id="mh-weeklytask"
                 label={tAdvanced("mustHave.weeklyTaskExp")}
                 checked={filters.hasWeeklyTaskExp === true}
-                onToggle={(v) =>
-                  update({ hasWeeklyTaskExp: v ? true : undefined })
-                }
+                onToggle={(v) => update({ hasWeeklyTaskExp: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="mh-twistoffate"
                 label={tAdvanced("mustHave.twistOfFate")}
                 checked={filters.hasTwistOfFate === true}
-                onToggle={(v) =>
-                  update({ hasTwistOfFate: v ? true : undefined })
-                }
+                onToggle={(v) => update({ hasTwistOfFate: v ? true : undefined })}
               />
             </div>
           </section>
@@ -1209,9 +1135,7 @@ function MustHaveToggle({ id, label, checked, onToggle }: MustHaveToggleProps) {
       htmlFor={id}
       className={cn(
         "flex h-9 cursor-pointer items-center gap-2 rounded-md border px-2.5 text-sm transition-colors",
-        checked
-          ? "border-primary bg-primary/10"
-          : "border-input bg-background hover:bg-accent",
+        checked ? "border-primary bg-primary/10" : "border-input bg-background hover:bg-accent",
       )}
     >
       <Checkbox
@@ -1238,17 +1162,8 @@ interface NumberFieldProps {
   onChange: (next: number | undefined) => void;
 }
 
-function NumberField({
-  id,
-  label,
-  value,
-  min = 0,
-  max = 9999,
-  onChange,
-}: NumberFieldProps) {
-  const [input, setInput] = React.useState(
-    value !== undefined ? String(value) : "",
-  );
+function NumberField({ id, label, value, min = 0, max = 9999, onChange }: NumberFieldProps) {
+  const [input, setInput] = React.useState(value !== undefined ? String(value) : "");
   React.useEffect(() => {
     setInput(value !== undefined ? String(value) : "");
   }, [value]);
@@ -1304,15 +1219,9 @@ interface SkillMinControlProps {
   t: ReturnType<typeof useTranslations>;
 }
 
-function SkillMinControl({
-  filters,
-  update,
-  skillOptions,
-  t,
-}: SkillMinControlProps) {
+function SkillMinControl({ filters, update, skillOptions, t }: SkillMinControlProps) {
   const firstSkill = skillOptions[0];
-  const selectedSkill: SkillFilterKey =
-    filters.skillType ?? firstSkill ?? "magic";
+  const selectedSkill: SkillFilterKey = filters.skillType ?? firstSkill ?? "magic";
   const selectedMin = filters.skillMin ?? 0;
 
   const handleSkillChange = (next: string) => {
@@ -1330,10 +1239,7 @@ function SkillMinControl({
   return (
     <div className="space-y-2">
       {/* Skill selector (Select — natychmiastowy feedback, bez debounce) */}
-      <Select
-        value={selectedSkill}
-        onValueChange={handleSkillChange}
-      >
+      <Select value={selectedSkill} onValueChange={handleSkillChange}>
         <SelectTrigger className="h-9">
           <SelectValue />
         </SelectTrigger>
@@ -1348,9 +1254,7 @@ function SkillMinControl({
 
       {/* Slider 0..250 (skill minimum) */}
       <div className="flex items-center gap-2">
-        <span className="font-mono text-xs tabular-nums text-muted-foreground">
-          ≥
-        </span>
+        <span className="font-mono text-xs tabular-nums text-muted-foreground">≥</span>
         <Slider
           value={[selectedMin]}
           min={0}
@@ -1379,10 +1283,7 @@ interface SidebarChipProps {
 
 function SidebarChip({ label, onRemove }: SidebarChipProps) {
   return (
-    <Badge
-      variant="secondary"
-      className="inline-flex h-7 items-center gap-1 pr-1 text-xs"
-    >
+    <Badge variant="secondary" className="inline-flex h-7 items-center gap-1 pr-1 text-xs">
       <span className="truncate max-w-[12rem]">{label}</span>
       <button
         type="button"

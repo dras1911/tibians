@@ -124,7 +124,7 @@ function fullAuctionEliteKnight(): Auction {
     estimatedValue: 85000,
     valueConfidence: 0.95,
     pricePerLevel: 45000 / 850, // 52.94...
-    rawJson: { /* pełny payload — future-proof */ },
+    rawJson: {/* pełny payload — future-proof */},
     firstSeenAt: "2026-09-09T08:00:00Z",
     lastSeenAt: "2026-09-09T08:01:00Z",
     scrapedAt: "2026-09-09T08:01:00Z",
@@ -630,9 +630,7 @@ describe("relacje 1:N (arch. §7.2)", () => {
   });
 
   it("AuctionMountSchema wymaga mountId > 0", () => {
-    expect(() =>
-      AuctionMountSchema.parse({ auctionId: 1n, mountId: 0 }),
-    ).toThrow();
+    expect(() => AuctionMountSchema.parse({ auctionId: 1n, mountId: 0 })).toThrow();
     const m: AuctionMount = AuctionMountSchema.parse({
       auctionId: 1n,
       mountId: 232,
@@ -793,13 +791,14 @@ describe("round-trip i struktura", () => {
     expect(AUCTION_SKILL_KEYS).toHaveLength(8);
   });
 
-  it("VOCATION_BASE_TO_PROMOTED ma 5 par (spójność z arch §13.1)", () => {
+  it("VOCATION_BASE_TO_PROMOTED ma 6 par: 5 klas + None (postacie bez profesji)", () => {
     expect(VOCATION_BASE_TO_PROMOTED).toEqual({
       Knight: "Elite Knight",
       Paladin: "Royal Paladin",
       Druid: "Elder Druid",
       Sorcerer: "Master Sorcerer",
       Monk: "Exalted Monk",
+      None: "None",
     });
   });
 
@@ -869,9 +868,7 @@ describe("safeParse — wygodna walidacja bez rzucania wyjątków", () => {
     if (!result.success) {
       expect(result.error.issues.length).toBeGreaterThan(0);
       // Powinny być conajmniej 2 błędy (level + auctionEnd)
-      const paths = result.error.issues.map((i: { path: (string | number)[] }) =>
-        i.path.join("."),
-      );
+      const paths = result.error.issues.map((i: { path: (string | number)[] }) => i.path.join("."));
       expect(paths.some((p: string) => p.includes("level"))).toBe(true);
       expect(paths.some((p: string) => p.includes("auctionEnd"))).toBe(true);
     }

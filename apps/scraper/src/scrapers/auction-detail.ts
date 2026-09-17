@@ -1158,9 +1158,9 @@ export function parseAuctionDetail(
   // ── 2. Złóż obiekt Auction (wymaga pól obowiązkowych) ────────────────
   const scrapedAtIso = scrapedAt.toISOString();
   const safeVocation = (identity.vocation ?? "Knight") as
-    "Knight" | "Paladin" | "Druid" | "Sorcerer" | "Monk";
+    "Knight" | "Paladin" | "Druid" | "Sorcerer" | "Monk" | "None";
   const safeVocationPromoted = (identity.vocationPromoted ?? "Elite Knight") as
-    "Elite Knight" | "Royal Paladin" | "Elder Druid" | "Master Sorcerer" | "Exalted Monk";
+    "Elite Knight" | "Royal Paladin" | "Elder Druid" | "Master Sorcerer" | "Exalted Monk" | "None";
   const safeSex: "M" | "F" = identity.sex ?? "M";
   const safeWorldId = identity.worldId ?? 1;
 

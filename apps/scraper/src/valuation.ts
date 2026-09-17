@@ -41,14 +41,7 @@ import {
 export interface ValuationRule {
   readonly id: number;
   readonly ruleKey: string;
-  readonly category:
-    | "base"
-    | "feature"
-    | "skill"
-    | "item"
-    | "cosmetic"
-    | "progression"
-    | "asset";
+  readonly category: "base" | "feature" | "skill" | "item" | "cosmetic" | "progression" | "asset";
   /** numeric(10,4) — string dla precyzji. */
   readonly weight: string;
   readonly formula: string | null;
@@ -136,31 +129,29 @@ export interface ValuationResult {
  *   - Paladin: distance + shielding
  *   - Druid/Sorcerer: magic
  *   - Monk: fist + magic
+ *   - None: fist (postacie bez profesji — challenge/Rookgaard; realny
+ *     przypadek z tibia.com, np. „Digi mortal" lvl 207)
  *   - fishing: NIGDY (brak wartości handlowej)
  *
  * Skille **irrelewantne** zwracają 0n w `perSkill` (NIE są pomijane w mapie —
  * UI wymaga pełnych 8 kluczy).
  */
-const VOCATION_RELEVANT_SKILLS: Readonly<
-  Record<Vocation, ReadonlyArray<AuctionSkillKey>>
-> = {
+const VOCATION_RELEVANT_SKILLS: Readonly<Record<Vocation, ReadonlyArray<AuctionSkillKey>>> = {
   Knight: ["sword", "axe", "club", "shielding"],
   Paladin: ["distance", "shielding"],
   Druid: ["magic"],
   Sorcerer: ["magic"],
   Monk: ["fist", "magic"],
+  None: ["fist"],
 };
 
 /**
  * Czy skill jest relewantny dla danego vocation.
  *
- * @param vocation - bazowa klasa (5 wartości: Knight/Paladin/Druid/Sorcerer/Monk)
+ * @param vocation - bazowa klasa (6 wartości: Knight/Paladin/Druid/Sorcerer/Monk/None)
  * @param skill    - klucz skilla (8 wartości: magic/club/fist/sword/axe/distance/shielding/fishing)
  */
-function isRelevantSkill(
-  vocation: Vocation,
-  skill: AuctionSkillKey,
-): boolean {
+function isRelevantSkill(vocation: Vocation, skill: AuctionSkillKey): boolean {
   if (skill === "fishing") return false; // nigdy nie ma wartości handlowej
   return VOCATION_RELEVANT_SKILLS[vocation].includes(skill);
 }
@@ -265,10 +256,7 @@ export function getSkillWeight(w: RuleWeights): number {
  * Auction ma 8 osobnych kolumn `skillMagic`..`skillFishing` (arch §7.1
  * pkt 1 — wydajność filtrów). Ta funkcja mapuje klucz → odpowiednia kolumna.
  */
-function getAuctionSkill(
-  snapshot: Auction,
-  skill: AuctionSkillKey,
-): number {
+function getAuctionSkill(snapshot: Auction, skill: AuctionSkillKey): number {
   switch (skill) {
     case "magic":
       return snapshot.skillMagic;
@@ -321,11 +309,7 @@ export function nonlinearSkillBoost(skill: number): bigint {
  *
  * @returns TC za skill (bigint), 0n jeśli skill ≤ 100 lub irrelewantny.
  */
-function skillValue(
-  snapshot: Auction,
-  skill: AuctionSkillKey,
-  weight: number,
-): bigint {
+function skillValue(snapshot: Auction, skill: AuctionSkillKey, weight: number): bigint {
   if (!isRelevantSkill(snapshot.vocation, skill)) return 0n;
   const base = getAuctionSkill(snapshot, skill);
   const boost = nonlinearSkillBoost(base);
@@ -354,16 +338,12 @@ function skillValue(
  * console.log(result.breakdown.base.value); // 30_950n (619 × 50)
  * ```
  */
-export function estimateValue(
-  snapshot: Auction,
-  rules: readonly ValuationRule[],
-): ValuationResult {
+export function estimateValue(snapshot: Auction, rules: readonly ValuationRule[]): ValuationResult {
   const w = buildWeights(rules);
 
   // ── 1. BASE — `level × base_weight` ─────────────────────────────────
   const baseValue =
-    BigInt(Math.max(8, snapshot.level)) *
-    BigInt(Math.round(w["base_level_weight"]!));
+    BigInt(Math.max(8, snapshot.level)) * BigInt(Math.round(w["base_level_weight"]!));
 
   // ── 2. SKILLS — nonlinear powyżej 100, per vocation relevance ───────
   const perSkill = {} as Record<AuctionSkillKey, bigint>;
@@ -376,36 +356,18 @@ export function estimateValue(
   }
 
   // ── 3. FEATURES — stałe kwoty za posiadanie flagi ──────────────────
-  const featureMap: ReadonlyArray<
-    readonly [string, boolean, number]
-  > = [
+  const featureMap: ReadonlyArray<readonly [string, boolean, number]> = [
     ["feature_soul_war", snapshot.hasSoulWar, w["feature_soul_war"]!],
-    [
-      "feature_primal_ordeal",
-      snapshot.hasPrimalOrdeal,
-      w["feature_primal_ordeal"]!,
-    ],
-    [
-      "feature_world_transfer",
-      snapshot.hasWorldTransfer,
-      w["feature_world_transfer"]!,
-    ],
+    ["feature_primal_ordeal", snapshot.hasPrimalOrdeal, w["feature_primal_ordeal"]!],
+    ["feature_world_transfer", snapshot.hasWorldTransfer, w["feature_world_transfer"]!],
     ["feature_prey_slot", snapshot.hasPreySlot, w["feature_prey_slot"]!],
-    [
-      "feature_charm_expansion",
-      snapshot.hasCharmExpansion,
-      w["feature_charm_expansion"]!,
-    ],
+    ["feature_charm_expansion", snapshot.hasCharmExpansion, w["feature_charm_expansion"]!],
     [
       "feature_weekly_task_expansion",
       snapshot.hasWeeklyTaskExpansion,
       w["feature_weekly_task_expansion"]!,
     ],
-    [
-      "feature_twist_of_fate",
-      snapshot.hasTwistOfFate,
-      w["feature_twist_of_fate"]!,
-    ],
+    ["feature_twist_of_fate", snapshot.hasTwistOfFate, w["feature_twist_of_fate"]!],
   ];
   const featureItems: Array<{ key: string; value: bigint }> = [];
   let featuresTotal = 0n;
@@ -506,13 +468,8 @@ export function estimateValue(
   const assetsItems: Array<{ key: string; value: bigint }> = [];
   let assetsTotal = 0n;
   {
-    const goldDivisor = Math.max(
-      1,
-      Math.round(w["asset_gold_to_tc"]!),
-    );
-    const v = snapshot.goldTotal > 0n
-      ? snapshot.goldTotal / BigInt(goldDivisor)
-      : 0n;
+    const goldDivisor = Math.max(1, Math.round(w["asset_gold_to_tc"]!));
+    const v = snapshot.goldTotal > 0n ? snapshot.goldTotal / BigInt(goldDivisor) : 0n;
     assetsItems.push({ key: "asset_gold_to_tc", value: v });
     assetsTotal += v;
   }
@@ -525,12 +482,7 @@ export function estimateValue(
 
   // ── 7. AGGREGATE — suma komponentów ─────────────────────────────────
   const estimatedValue =
-    baseValue +
-    skillsTotal +
-    featuresTotal +
-    progressionTotal +
-    cosmeticsTotal +
-    assetsTotal;
+    baseValue + skillsTotal + featuresTotal + progressionTotal + cosmeticsTotal + assetsTotal;
 
   return {
     estimatedValue,
