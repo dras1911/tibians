@@ -481,11 +481,12 @@ Pełna lista: `git log --oneline`
 - **Paginacja itemów** — czytana tylko strona 1 sekcji Item Summary.
 - **Reference loop (T32)** — pełny skan `static.tibia.com` nie idzie przez
   browser transport; harvest z detali pokrywa na razie słowniki.
-- **Regiony/PvP światów = 0 w filtrach** — harvest wstawia światy z samym
-  `(id, name)`; `region`/`pvp_type`/`battleye` są NULL, więc facet „Świat"
-  i „Typ PvP" pokazują zera (fallback TibiaData na VPS zwraca 502).
-  Do uzupełnienia: jednorazowy fetch `api.tibiadata.com/v4/worlds` przez
-  WARP (socks5h://127.0.0.1:40000) + UPDATE `worlds`.
+- **Regiony/PvP światów** — ✅ uzupełnione jednorazowym upsertem: 96 światów
+  z TibiaData (`api.tibiadata.com/v4/worlds` przez WARP) — region EU/NA/BR,
+  pvp_type, battleye (`release` → „initially protected", data → „protected").
+  Oceania (3 światy: Oceanis/Stralis/Victoris) zostaje NULL — enum `region`
+  ma tylko EU/NA/BR; do rozważenia rozszerzenie enuma w przyszłości.
+  Filtr „Świat" na bazarze pokazuje teraz pełną listę z licznikami per świat.
 - **„Zakończona" w tabeli bazaar** — część wierszy na liście „kończące się
   najwcześniej" ma status zakończonej; zbadać czy strona nie powinna
   filtrować `ended` przy sortowaniu po czasie zakończenia.
