@@ -543,7 +543,8 @@ Kontenery:  5/5 działają
 MCP:        tibians_db podłączony (read-only, tunel 15432) — patrz §14
 Strona:     https://tibian.click (200)
 Wokacje:    dane naprawiają się po fixie (bazowe formy wracają: Knight/Paladin/…)
-Flagi:      🇪🇺🇺🇸🇧🇷🇦🇺 przy regionach (karty, tabela, hero, lista światów; `lib/regions.ts`)
+Flagi:      regiony jako SVG (public/flags, flag-icons MIT) — emoji flag NIE renderują się na Windows
+            ani w headless Chromium (pokazują litery); komponent `RegionFlag` (f17013d)
 ```
 
 ---
