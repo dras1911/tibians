@@ -588,8 +588,8 @@ ZASADY:
 ## 13. Stan zapisany
 
 ```
-Commit:     1ece2b3 (local == remote)
-Testy:      scraper 296 · web 150 · shared 106 — zielone
+Commit:     18eddc1 (local == remote)
+Testy:      scraper 308 · web 150 · shared 106 — zielone
 Typecheck:  ruszane pakiety (shared/db/web/scraper) — 0 błędów
 Kontenery:  5/5 działają
 MCP:        tibians_db podłączony (read-only, tunel 15432) — patrz §14
@@ -621,15 +621,18 @@ Archiwum:   W18: `pastcharactertrades` (22 961 aukcji, 919 stron) — parser
             `auction-history.ts` (Winning Bid + finished/cancelled + skille),
             `upsertArchivedAuctions` (final_price COALESCE), CLI `scrap:history`
             (--from/--to/--pages) — f2ddb2e
-Wycena:     W18: `valuation-run.ts` + CLI `scrap:valuation` (+`--finished`) — silnik T35 po raz
-            pierwszy URUCHAMIANY (estimated_value 0/2948 → wypełniane, ~1575 aktywnych/17 s);
-            cyklicznie po Full loop (SchedulerDb.computeValuations, throttle 30 min) — b47ff23/d624e07/a7c1b3b
-            ⚠️ WAGI Z SUFITU (§6.2): wyceny ~18× za wysokie vs realne ceny — kalibracja na
-            archiwum (final_price) w toku (tmp-verify/calibrate.py, regresja per reguła)
-Karta:      W18: kolumna „Wycena (TC)" w tabeli (sortowalna, kolor vs oferta; NULLS LAST —
-            Postgres sortował DESC z NULLS FIRST i pokazywał najpierw bez wyceny) — 3da81ed/29bb17c
-Filtr ceny: W18: „Cena" (💚 Dobra oferta / ⚖️ Uczciwa / 💸 Zbyt drogi) — bid vs estimated_value
-            ±10% (wzór: Exiva.pro) — 9a0dd6f
+Wycena:     W18: `valuation-run.ts` + CLI `scrap:valuation` (+`--finished`) — silnik po raz
+            pierwszy URUCHAMIANY; cyklicznie po Full loop (throttle 30 min) — b47ff23/a7c1b3b
+            METODA (po analizie 11k zakończonych): mediana rynkowa final_price dla tego
+            samego vocation w oknie level ±15% → ±30% → k-NN (40 najbliższych) — 100% pokrycia
+            (1648/1648); formuła T35 tylko jako fallback (<10 próbek). Wagi z sufitu (§6.2)
+            dawały ~9× przeszacowanie (566k vs realne ~120k dla lvl 1725) — 7c57381/18eddc1
+            Rynek: Knight 100-200 lvl ≈ 200 TC · 300-400 ≈ 1000 · 600-700 ≈ 5000 · 1100+ ≈ 60k
+Filtr ceny: W18: „Cena" (💚 Dobra oferta 960 / ⚖️ Uczciwa 201 / 💸 Zbyt drogi 484) — bid vs
+            estimated_value ±10% (wzór: Exiva.pro) — 9a0dd6f
+Tabela:     W18: kolumna „Wycena (TC)" (sortowalna; kolor: zielona gdy oferta < wyceny;
+            NULLS LAST — Postgres sortował DESC z NULLS FIRST i pokazywał najpierw bez
+            wyceny) — 3da81ed/29bb17c
 ```
 
 ---
