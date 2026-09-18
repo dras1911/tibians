@@ -546,8 +546,10 @@ Strona:     https://tibian.click (200)
 Wokacje:    dane naprawiają się po fixie (bazowe formy wracają: Knight/Paladin/…)
 Flagi:      regiony jako SVG (public/flags, flag-icons MIT) — emoji flag NIE renderują się na Windows
             ani w headless Chromium (pokazują litery); komponent `RegionFlag` (f17013d)
-Home:       hero + sekcja „kończące się" (usunięte: „Ostatnio dodane", kalkulatory); karty mają
-            ikony skilli i stonowane tagi atutów (2d008fa)
+Home:       hero (mniejszy) + sekcja „kończące się" z 9 aukcjami (grid 3 kol.); usunięte
+            „Ostatnio dodane" i kalkulatory; karty: ikony skilli, stonowane tagi atutów
+Porównanie: wspólny stan localStorage (`useCompareSelection`) + pasek `CompareBar`
+            (fixed bottom) → `/bazaar/compare?a=&b=`; działa na home i bazaarze (3e4b5d8)
 ```
 
 ---
