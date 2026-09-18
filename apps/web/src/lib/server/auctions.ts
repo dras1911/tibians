@@ -375,6 +375,8 @@ function orderColumn(col: z.infer<typeof auctionFiltersSchema>["sortBy"]) {
       return auctions.firstSeenAt;
     case "scrapedAt":
       return auctions.scrapedAt;
+    case "auctionStart":
+      return auctions.auctionStart;
   }
 }
 

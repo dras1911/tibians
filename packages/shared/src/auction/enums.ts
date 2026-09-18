@@ -206,6 +206,8 @@ export const AuctionOrderColumnSchema = z.enum([
   // meta
   "firstSeenAt",
   "scrapedAt",
+  // data wystawienia aukcji (sortowanie „Najnowsze")
+  "auctionStart",
 ]);
 export type AuctionOrderColumn = z.infer<typeof AuctionOrderColumnSchema>;
 

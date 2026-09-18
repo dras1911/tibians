@@ -91,7 +91,10 @@ export function sortKeyToUrlParams(key: BazaarSortKey): {
     case "nameDesc":
       return { sortBy: "firstSeenAt", sortDir: "desc" };
     case "newest":
-      return { sortBy: "scrapedAt", sortDir: "desc" };
+      // „Najnowsze" = świeżo WYSTAWIONE aukcje (data startu), nie ostatnio
+      // zaktualizowane — zgłoszenie użytkownika: „mam aukcję, która
+      // startowała 14.09" (scrapedAt pokazywał ostatnio odświeżane).
+      return { sortBy: "auctionStart", sortDir: "desc" };
   }
 }
 
@@ -107,6 +110,7 @@ function readSortKeyFromSearchParams(searchParams: URLSearchParams): BazaarSortK
   if (sortBy === "level" && sortDir === "desc") return "levelDesc";
   if (sortBy === "firstSeenAt" && sortDir === "asc") return "nameAsc";
   if (sortBy === "firstSeenAt" && sortDir === "desc") return "nameDesc";
+  if (sortBy === "auctionStart" && sortDir === "desc") return "newest";
   if (sortBy === "scrapedAt" && sortDir === "desc") return "newest";
   return "ending";
 }
