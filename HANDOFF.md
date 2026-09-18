@@ -588,8 +588,8 @@ ZASADY:
 ## 13. Stan zapisany
 
 ```
-Commit:     c1a4a55 (local == remote)
-Testy:      scraper 296 · web 149 · shared 106 — zielone
+Commit:     1ece2b3 (local == remote)
+Testy:      scraper 296 · web 150 · shared 106 — zielone
 Typecheck:  ruszane pakiety (shared/db/web/scraper) — 0 błędów
 Kontenery:  5/5 działają
 MCP:        tibians_db podłączony (read-only, tunel 15432) — patrz §14
