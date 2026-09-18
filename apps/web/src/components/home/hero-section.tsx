@@ -114,26 +114,25 @@ export async function HeroSection({ totalActive, freshness }: HeroSectionProps) 
         </h1>
         <p className="mt-3 max-w-2xl text-base text-muted-foreground">{t("subtitle")}</p>
 
-        {/* ── Stat box: licznik + freshness ─────────────────────────── */}
-        <div className="mt-5 inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-card/80 px-4 py-2.5 text-sm shadow-sm backdrop-blur">
-          <div className="flex items-center gap-2">
-            <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
-            <span className="numeric font-mono text-lg font-semibold tabular-nums text-foreground">
-              {formatNumber(totalActive, "pl-PL")}
-            </span>
-            <span className="text-muted-foreground">{t("statsLabel")}</span>
+        {/* ── Stat box + CTA w jednym rzędzie (licznik | przycisk) ─── */}
+        <div className="mt-5 flex flex-wrap items-center gap-3">
+          <div className="inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-card/80 px-4 py-2.5 text-sm shadow-sm backdrop-blur">
+            <div className="flex items-center gap-2">
+              <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
+              <span className="numeric font-mono text-lg font-semibold tabular-nums text-foreground">
+                {formatNumber(totalActive, "pl-PL")}
+              </span>
+              <span className="text-muted-foreground">{t("statsLabel")}</span>
+            </div>
+            {freshnessLabel ? (
+              <>
+                <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
+                <span className="text-muted-foreground">{freshnessLabel}</span>
+              </>
+            ) : null}
           </div>
-          {freshnessLabel ? (
-            <>
-              <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
-              <span className="text-muted-foreground">{freshnessLabel}</span>
-            </>
-          ) : null}
-        </div>
 
-        {/* ── CTA ──────────────────────────────────────────────────── */}
-        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
-          <Button asChild size="lg" className="h-13 px-6 text-base">
+          <Button asChild size="lg" className="h-11 px-5 text-base">
             <Link href="/bazaar">
               {t("heroCta")}
               <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
