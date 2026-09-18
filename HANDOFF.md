@@ -621,8 +621,15 @@ Archiwum:   W18: `pastcharactertrades` (22 961 aukcji, 919 stron) — parser
             `auction-history.ts` (Winning Bid + finished/cancelled + skille),
             `upsertArchivedAuctions` (final_price COALESCE), CLI `scrap:history`
             (--from/--to/--pages) — f2ddb2e
-Wycena:     W18: `valuation-run.ts` + CLI `scrap:valuation` — silnik T35 po raz
-            pierwszy URUCHAMIANY (estimated_value 0/2948 → wypełniane) — b47ff23
+Wycena:     W18: `valuation-run.ts` + CLI `scrap:valuation` (+`--finished`) — silnik T35 po raz
+            pierwszy URUCHAMIANY (estimated_value 0/2948 → wypełniane, ~1575 aktywnych/17 s);
+            cyklicznie po Full loop (SchedulerDb.computeValuations, throttle 30 min) — b47ff23/d624e07/a7c1b3b
+            ⚠️ WAGI Z SUFITU (§6.2): wyceny ~18× za wysokie vs realne ceny — kalibracja na
+            archiwum (final_price) w toku (tmp-verify/calibrate.py, regresja per reguła)
+Karta:      W18: kolumna „Wycena (TC)" w tabeli (sortowalna, kolor vs oferta; NULLS LAST —
+            Postgres sortował DESC z NULLS FIRST i pokazywał najpierw bez wyceny) — 3da81ed/29bb17c
+Filtr ceny: W18: „Cena" (💚 Dobra oferta / ⚖️ Uczciwa / 💸 Zbyt drogi) — bid vs estimated_value
+            ±10% (wzór: Exiva.pro) — 9a0dd6f
 ```
 
 ---

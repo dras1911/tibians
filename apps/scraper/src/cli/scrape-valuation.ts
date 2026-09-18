@@ -26,6 +26,7 @@ async function main(): Promise<void> {
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
   console.log(
     `[valuation] KONIEC: total=${String(stats.total)}, computed=${String(stats.computed)}, ` +
+      `market=${String(stats.marketCount)}, formula=${String(stats.formulaCount)}, ` +
       `skipped=${String(stats.skipped)}, failed=${String(stats.failed)}, ${seconds}s`,
   );
   if (stats.sampleEstimated !== null) {

@@ -34,10 +34,14 @@ export interface ValuationRunStats {
   readonly total: number;
   /** Udane wyceny (UPDATE + INSERT history). */
   readonly computed: number;
-  /** Pominięte — walidacja `AuctionSchema` nie przeszła. */
+  /** Pominięte — walidacja `AuctionSchema` nie przeszła (tylko fallback). */
   readonly skipped: number;
   /** Błędy (logowane, nie przerywają pętli). */
   readonly failed: number;
+  /** Wyceny z mediany rynkowej (metoda główna). */
+  readonly marketCount: number;
+  /** Wyceny z formuły T35 (fallback — rynek ma <10 próbek). */
+  readonly formulaCount: number;
   /** Pierwsza wycena (do sanity-checku w logach). */
   readonly sampleEstimated: number | null;
   /** Próbka breakdownu pierwszej wyceny. */
@@ -137,15 +141,90 @@ export function flattenBreakdown(b: ValuationBreakdown): Record<string, number> 
   return out;
 }
 
+// ──────────────────────────────────────────────────────────────────────
+// Mediana rynkowa — helpery (W18)
+// ──────────────────────────────────────────────────────────────────────
+
+/** Dolny bound (pierwszy index z `arr[i] >= value`). */
+function lowerBound(arr: readonly number[], value: number): number {
+  let lo = 0;
+  let hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((arr[mid] ?? 0) < value) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** Górny bound (pierwszy index z `arr[i] > value`). */
+function upperBound(arr: readonly number[], value: number): number {
+  let lo = 0;
+  let hi = arr.length;
+  while (lo < hi) {
+    const mid = (lo + hi) >> 1;
+    if ((arr[mid] ?? 0) <= value) lo = mid + 1;
+    else hi = mid;
+  }
+  return lo;
+}
+
+/** Mediana posortowanej listy (parzysta długość → średnia środkowych). */
+function medianOf(sorted: readonly number[]): number {
+  const n = sorted.length;
+  if (n === 0) return 0;
+  const mid = n >> 1;
+  if (n % 2 === 1) return sorted[mid] ?? 0;
+  return Math.round(((sorted[mid - 1] ?? 0) + (sorted[mid] ?? 0)) / 2);
+}
+
+/**
+ * Mediana rynkowa dla aukcji: próbki tego samego `vocation_base` w oknie
+ * poziomu. Najpierw ±15%, gdy <10 próbek — ±30%. `null` = za mało danych
+ * (→ fallback na formułę `estimateValue`).
+ */
+function marketMedianFor(
+  bucket: { levels: number[]; prices: number[] } | undefined,
+  level: number,
+): { median: number; samples: number } | null {
+  if (bucket === undefined || bucket.levels.length === 0) return null;
+
+  for (const window of [0.15, 0.3]) {
+    const lo = level * (1 - window);
+    const hi = level * (1 + window);
+    const left = lowerBound(bucket.levels, lo);
+    const right = upperBound(bucket.levels, hi);
+    const samples = right - left;
+    if (samples >= 10) {
+      const prices = bucket.prices.slice(left, right).sort((a, b) => a - b);
+      return { median: medianOf(prices), samples };
+    }
+  }
+  return null;
+}
+
 /**
  * Liczy i zapisuje wyceny dla aktywnych aukcji.
+ *
+ * METODA (W18, 2026-09-18 — po analizie 11k zakończonych aukcji):
+ *   **Mediana rynkowa** — dla każdej aktywnej aukcji szukamy zakończonych
+ *   z `final_price > 0` o tym samym `vocation_base` i poziomie w oknie
+ *   ±15% (±30% gdy <10 próbek). Mediana = „spodziewana cena" (rynek, nie
+ *   formuła). Formuła `estimateValue` (T35) zostaje jako FALLBACK gdy
+ *   rynek ma <10 próbek.
+ *
+ *   Dlaczego nie sama formuła? Wagi z seedu (§6.2 „z sufitu") dawały
+ *   ~9× przeszacowanie (mediana est/final = 9.3); kalibracja liniowa na
+ *   surowych kwotach zawodzi przy skośnym rozkładzie (mediana rynku
+ *   1300 TC vs średnia ~10k). Mediana rynkowa jest odporna na skos
+ *   i pokazuje realia: Knight 100-200 lvl ≈ 200 TC, 600-700 ≈ 5000 TC,
+ *   1100+ ≈ 60000 TC.
  *
  * Idempotentne: kolejny run nadpisuje `estimated_value` i dopisuje nowy
  * wiersz `valuation_history` (PK: auctionId + computedAt).
  *
- * @param options.includeFinished — W18: dołącz zakończone z `final_price > 0`
- *   (dane kalibracyjne: porównanie naszej wyceny z realną ceną sprzedaży —
- *   podstawa strojenia wag `valuation_rules`).
+ * @param options.includeFinished — dołącz zakończone z `final_price > 0`
+ *   (dane kalibracyjne: porównanie naszej wyceny z realną ceną sprzedaży).
  */
 export async function runValuation(
   options: { includeFinished?: boolean } = {},
@@ -166,6 +245,39 @@ export async function runValuation(
     throw new Error("[valuation] brak aktywnych reguł w valuation_rules — nie ma na czym liczyć");
   }
 
+  // ── Rynek: próbki (level, final_price) per vocation_base ────────────
+  // Wszystkie zakończone z realną ceną — z tego liczymy mediany okienne.
+  const marketRows = await db
+    .select({
+      vocationBase: auctions.vocationBase,
+      level: auctions.level,
+      finalPrice: auctions.finalPrice,
+    })
+    .from(auctions)
+    .where(and(eq(auctions.status, "finished"), gt(auctions.finalPrice, 0)));
+
+  const marketByVocation = new Map<string, { levels: number[]; prices: number[] }>();
+  for (const r of marketRows) {
+    if (r.finalPrice === null) continue;
+    let bucket = marketByVocation.get(r.vocationBase);
+    if (bucket === undefined) {
+      bucket = { levels: [], prices: [] };
+      marketByVocation.set(r.vocationBase, bucket);
+    }
+    bucket.levels.push(r.level);
+    bucket.prices.push(r.finalPrice);
+  }
+  // Sortuj per level (dla binary search okna).
+  for (const bucket of marketByVocation.values()) {
+    const order = bucket.levels
+      .map((_, i) => i)
+      .sort((a, b) => (bucket.levels[a] ?? 0) - (bucket.levels[b] ?? 0));
+    const sortedLevels = order.map((i) => bucket.levels[i] ?? 0);
+    const sortedPrices = order.map((i) => bucket.prices[i] ?? 0);
+    bucket.levels = sortedLevels;
+    bucket.prices = sortedPrices;
+  }
+
   const rows = options.includeFinished
     ? await db
         .select()
@@ -181,25 +293,43 @@ export async function runValuation(
   let computed = 0;
   let skipped = 0;
   let failed = 0;
+  let marketCount = 0;
+  let formulaCount = 0;
   let sampleEstimated: number | null = null;
   let sampleBreakdown: Record<string, number> | null = null;
 
   for (const row of rows) {
     try {
-      const parsed = AuctionSchema.safeParse(rowToAuctionCandidate(row));
-      if (!parsed.success) {
-        skipped += 1;
-        continue;
-      }
+      // 1. Mediana rynkowa (vocation + okno level) — metoda główna.
+      const market = marketMedianFor(marketByVocation.get(row.vocationBase), row.level);
 
-      const snapshot: Auction = parsed.data;
-      const result = estimateValue(snapshot, ruleList);
-      const estimated = Number(result.estimatedValue);
-      const breakdown = flattenBreakdown(result.breakdown);
+      let estimated: number;
+      let breakdown: Record<string, number>;
+      let confidence: string | null;
+
+      if (market !== null) {
+        estimated = market.median;
+        breakdown = { market_median: market.median, market_samples: market.samples };
+        // Pewność rośnie z liczbą próbek (50+ = 1.00).
+        confidence = Math.min(1, market.samples / 50).toFixed(2);
+        marketCount += 1;
+      } else {
+        // 2. Fallback: formuła T35 (rynek ma <10 próbek w oknie).
+        const parsed = AuctionSchema.safeParse(rowToAuctionCandidate(row));
+        if (!parsed.success) {
+          skipped += 1;
+          continue;
+        }
+        const result = estimateValue(parsed.data as Auction, ruleList);
+        estimated = Number(result.estimatedValue);
+        breakdown = flattenBreakdown(result.breakdown);
+        confidence = null;
+        formulaCount += 1;
+      }
 
       await db
         .update(auctions)
-        .set({ estimatedValue: estimated })
+        .set({ estimatedValue: estimated, valueConfidence: confidence })
         .where(eq(auctions.auctionId, row.auctionId));
 
       await db.insert(valuationHistory).values({
@@ -226,6 +356,8 @@ export async function runValuation(
     computed,
     skipped,
     failed,
+    marketCount,
+    formulaCount,
     sampleEstimated,
     sampleBreakdown,
   };
