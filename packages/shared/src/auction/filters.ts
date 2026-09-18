@@ -86,6 +86,19 @@ export const STORE_ITEM_KEYS = [
 
 export type StoreItemKey = (typeof STORE_ITEM_KEYS)[number];
 
+// ───────────────────────────────────────────────────────────────────────
+// Wyróżnienia (highlights — wzór: Exiva.pro „Wyróżnienia")
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Klucze wyróżnień oferowanych w filtrze (`?highlights=goldenOutfit`).
+ * Mapowanie klucz → wzorzec nazwy itemu/outfitu/mounta:
+ * `apps/web/src/lib/server/auctions.ts` (`HIGHLIGHT_FILTERS`).
+ */
+export const HIGHLIGHT_KEYS = ["goldenOutfit", "ferumbrasHat", "vortexion", "riftRunner"] as const;
+
+export type HighlightKey = (typeof HIGHLIGHT_KEYS)[number];
+
 /**
  * Schemat filtrów listy aukcji. Wszystkie pola opcjonalne.
  *
@@ -228,6 +241,30 @@ export const auctionFiltersObject = z
 
     /** Minimum ukończonych questów (`quests_completed`). */
     questsMin: z.coerce.number().int().min(0).optional(),
+
+    /** Boss points — zakres (wzór: Exiva.pro). */
+    bossPointsMin: z.coerce.number().int().min(0).optional(),
+    bossPointsMax: z.coerce.number().int().min(0).optional(),
+
+    /** Achievement points — zakres (wzór: Exiva.pro). */
+    achievementPointsMin: z.coerce.number().int().min(0).optional(),
+    achievementPointsMax: z.coerce.number().int().min(0).optional(),
+
+    /** Tylko aukcje wystawione w ostatnich 24 h (`first_seen_at`). */
+    new24h: z
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+
+    /**
+     * Wyróżnienia (wzór: Exiva.pro) — CSV kluczy, np. `?highlights=goldenOutfit`.
+     * Mapowanie klucz → item/outfit/mount: `HIGHLIGHT_FILTERS` w web.
+     */
+    highlights: z
+      .string()
+      .transform((s) => s.split(",").filter(Boolean))
+      .pipe(z.array(z.enum(HIGHLIGHT_KEYS)).max(HIGHLIGHT_KEYS.length))
+      .optional(),
 
     /**
      * Rzadkie nazwy postaci — znaki specjalne (äëïöüÿ…), ≤3 znaki albo same

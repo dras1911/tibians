@@ -24,11 +24,23 @@ import { and, asc, desc, eq, gt, gte, lte, ne, sql, SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@tibians/db";
-import { auctionItems, auctions, items, scrapeRuns, worlds } from "@tibians/db/schema";
+import {
+  auctionItems,
+  auctionMounts,
+  auctionOutfits,
+  auctions,
+  items,
+  mounts,
+  outfits,
+  scrapeRuns,
+  worlds,
+} from "@tibians/db/schema";
 import {
   auctionFiltersSchema,
+  HIGHLIGHT_KEYS,
   STORE_ITEM_KEYS,
   type AuctionFilters,
+  type HighlightKey,
   type Pagination,
   type StoreItemKey,
   type Vocation,
@@ -139,6 +151,47 @@ function storeItemExists(pattern: string): SQL {
     WHERE ai.auction_id = ${auctions.auctionId}
       AND i.is_store_item = true
       AND i.name ILIKE ${pattern}
+  )`;
+}
+
+// ───────────────────────────────────────────────────────────────────────
+// Wyróżnienia (highlights — wzór: Exiva.pro „Wyróżnienia")
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Klucz wyróżnienia → tabela słownika + wzorzec nazwy (ILIKE).
+ * Aukcje bez danego przedmiotu odpadają (istnienie w słowniku + relacja).
+ */
+const HIGHLIGHT_FILTERS: Record<
+  HighlightKey,
+  { table: "items" | "outfits" | "mounts"; pattern: string }
+> = {
+  goldenOutfit: { table: "outfits", pattern: "%golden outfit%" },
+  ferumbrasHat: { table: "items", pattern: "%ferumbras%hat%" },
+  vortexion: { table: "mounts", pattern: "%vortexion%" },
+  riftRunner: { table: "mounts", pattern: "%rift runner%" },
+};
+
+/** `EXISTS` — aukcja ma przedmiot/outfit/mount pasujący do wyróżnienia. */
+function highlightExists(filter: { table: "items" | "outfits" | "mounts"; pattern: string }): SQL {
+  if (filter.table === "items") {
+    return sql`EXISTS (
+      SELECT 1 FROM ${auctionItems} ai
+      JOIN ${items} i ON i.id = ai.item_id
+      WHERE ai.auction_id = ${auctions.auctionId} AND i.name ILIKE ${filter.pattern}
+    )`;
+  }
+  if (filter.table === "outfits") {
+    return sql`EXISTS (
+      SELECT 1 FROM ${auctionOutfits} ao
+      JOIN ${outfits} o ON o.id = ao.outfit_id
+      WHERE ao.auction_id = ${auctions.auctionId} AND o.name ILIKE ${filter.pattern}
+    )`;
+  }
+  return sql`EXISTS (
+    SELECT 1 FROM ${auctionMounts} am
+    JOIN ${mounts} m ON m.id = am.mount_id
+    WHERE am.auction_id = ${auctions.auctionId} AND m.name ILIKE ${filter.pattern}
   )`;
 }
 
@@ -283,6 +336,34 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
     conditions.push(
       sql`(${auctions.characterName} ~ '[äëïöüÿÄËÏÖÜŸ]' OR length(${auctions.characterName}) <= 3 OR ${auctions.characterName} = upper(${auctions.characterName}))`,
     );
+  }
+
+  // Boss points — zakres (wzór: Exiva.pro).
+  if (filters.bossPointsMin !== undefined) {
+    conditions.push(gte(auctions.bossPoints, filters.bossPointsMin));
+  }
+  if (filters.bossPointsMax !== undefined) {
+    conditions.push(lte(auctions.bossPoints, filters.bossPointsMax));
+  }
+
+  // Achievement points — zakres (wzór: Exiva.pro).
+  if (filters.achievementPointsMin !== undefined) {
+    conditions.push(gte(auctions.achievementPoints, filters.achievementPointsMin));
+  }
+  if (filters.achievementPointsMax !== undefined) {
+    conditions.push(lte(auctions.achievementPoints, filters.achievementPointsMax));
+  }
+
+  // Nowe aukcje (24 h) — wzór: Exiva.pro „Nowe aukcje (24h)".
+  if (filters.new24h === true) {
+    conditions.push(sql`${auctions.firstSeenAt} > now() - interval '24 hours'`);
+  }
+
+  // Wyróżnienia (highlights) — AND po kluczach (wzór: Exiva.pro).
+  if (filters.highlights && filters.highlights.length > 0) {
+    for (const key of filters.highlights) {
+      conditions.push(highlightExists(HIGHLIGHT_FILTERS[key]));
+    }
   }
 
   // BattlEye jest na `worlds`, nie `auctions` — dołączamy do WHERE przez JOIN.
@@ -1153,6 +1234,12 @@ export async function getStoreItemFacetCounts(): Promise<{ value: string; count:
 
   const activeWhere = and(eq(auctions.status, "active"), gt(auctions.auctionEnd, sql`now()`));
 
+  // Wyróżnienia (Exiva.pro „Wyróżnienia") — liczniki per klucz.
+  const highlightFacets = HIGHLIGHT_KEYS.map((key) => ({
+    value: key,
+    condition: highlightExists(HIGHLIGHT_FILTERS[key]),
+  }));
+
   const results = await Promise.all([
     ...STORE_ITEM_KEYS.map((key) =>
       db
@@ -1166,6 +1253,12 @@ export async function getStoreItemFacetCounts(): Promise<{ value: string; count:
         .from(auctions)
         .where(and(activeWhere, eq(column, true))),
     ),
+    ...highlightFacets.map(({ condition }) =>
+      db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(auctions)
+        .where(and(activeWhere, condition)),
+    ),
   ]);
 
   return [
@@ -1176,6 +1269,10 @@ export async function getStoreItemFacetCounts(): Promise<{ value: string; count:
     ...flagFacets.map(({ value }, index) => ({
       value,
       count: Number(results[STORE_ITEM_KEYS.length + index]?.[0]?.count ?? 0),
+    })),
+    ...highlightFacets.map(({ value }, index) => ({
+      value,
+      count: Number(results[STORE_ITEM_KEYS.length + flagFacets.length + index]?.[0]?.count ?? 0),
     })),
   ];
 }

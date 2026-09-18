@@ -46,7 +46,10 @@ import { auctionFiltersSchema, type AuctionFilters } from "@tibians/shared/aucti
  *
  * Pola opcjonalne — każdy preset / URL state może zawierać podzbiór.
  */
-export interface BazaarFiltersUi extends Omit<Partial<AuctionFilters>, "storeItems"> {
+export interface BazaarFiltersUi extends Omit<
+  Partial<AuctionFilters>,
+  "storeItems" | "highlights"
+> {
   // Skill minimum (T42 — już w AuctionFilters jako skillType/skillMin,
   // powtarzamy tu dla jasności typu przy destrukturyzacji).
   skillType?: AuctionFilters["skillType"];
@@ -84,6 +87,9 @@ export interface BazaarFiltersUi extends Omit<Partial<AuctionFilters>, "storeIte
   /** Store items (kuratorowane klucze, CSV — `?storeItems=goldPouch,mailbox`). */
   storeItems?: string | undefined;
 
+  /** Wyróżnienia (CSV kluczy — `?highlights=goldenOutfit`; wzór: Exiva.pro). */
+  highlights?: string | undefined;
+
   /** Computed flag (server-side, przyszłe W9+). */
   overpriced?: boolean | undefined;
 }
@@ -114,6 +120,7 @@ const EXTRA_FILTER_KEYS = [
   "storeMinMounts",
   "storeMinItems",
   "storeItems",
+  "highlights",
   "overpriced",
 ] as const;
 
@@ -155,7 +162,7 @@ export function readFiltersFromSearchParams(searchParams: URLSearchParams): Baza
   const schemaResult = auctionFiltersSchema.safeParse(known);
 
   const filters: BazaarFiltersUi = schemaResult.success
-    ? { ...schemaResult.data, storeItems: undefined }
+    ? { ...schemaResult.data, storeItems: undefined, highlights: undefined }
     : {};
 
   // ── 2. Rozszerzone pola (T42+) ─────────────────────────────────────
@@ -183,6 +190,9 @@ export function readFiltersFromSearchParams(searchParams: URLSearchParams): Baza
 
   const storeItemsParam = searchParams.get("storeItems");
   if (storeItemsParam) filters.storeItems = storeItemsParam;
+
+  const highlightsParam = searchParams.get("highlights");
+  if (highlightsParam) filters.highlights = highlightsParam;
 
   filters.overpriced = parseBoolParam(searchParams.get("overpriced"));
 

@@ -420,6 +420,15 @@
             "mailbox": "📬 Mailbox"
           }
         },
+        "highlights": {
+          "label": "Wyróżnienia",
+          "items": {
+            "goldenOutfit": "👑 Golden Outfit",
+            "ferumbrasHat": "🎩 Ferumbras' Hat",
+            "vortexion": "🌀 Vortexion",
+            "riftRunner": "🏃 Rift Runner"
+          }
+        },
         "misc": {
           "label": "Różne",
           "biddedOnly": "Tylko z ofertami",
@@ -427,13 +436,18 @@
           "charmMax": "Charm points max",
           "tcMin": "Zainwestowane TC min",
           "tcMax": "Zainwestowane TC max",
+          "bossMin": "Boss points min",
+          "bossMax": "Boss points max",
+          "achMin": "Achievement points min",
+          "achMax": "Achievement points max",
           "tags": {
             "soulWar": "💀 Soul War",
             "primalOrdeal": "🦖 Primal Ordeal",
             "lotsOfCharms": "✨ Dużo charmów",
             "lotsOfQuests": "📜 Dużo questów",
             "lotsOfStoreItems": "🛍️ Dużo przedmiotów z Tibia Store",
-            "rareNicknames": "🔤 Rzadkie nazwy postaci"
+            "rareNicknames": "🔤 Rzadkie nazwy postaci",
+            "new24h": "🆕 Nowe aukcje (24h)"
           }
         }
       },

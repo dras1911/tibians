@@ -85,4 +85,17 @@ describe("parseBazaarSearchParams", () => {
     expect(filters.gemsMinGreater).toBe(10);
     expect(filters.storeMinItems).toBe(5);
   });
+
+  it("highlights/boss/achieve/new24h — filtry z Exiva.pro przechodzą przez parse", () => {
+    const { filters } = parseBazaarSearchParams({
+      highlights: "goldenOutfit",
+      bossPointsMin: "100",
+      achievementPointsMax: "500",
+      new24h: "1",
+    });
+    expect(filters.highlights).toEqual(["goldenOutfit"]);
+    expect(filters.bossPointsMin).toBe(100);
+    expect(filters.achievementPointsMax).toBe(500);
+    expect(filters.new24h).toBe(true);
+  });
 });

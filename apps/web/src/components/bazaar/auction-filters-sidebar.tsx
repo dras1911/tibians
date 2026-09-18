@@ -52,10 +52,11 @@ import {
   ShoppingBag,
   SlidersHorizontal,
   Sparkles,
+  Star,
   X,
 } from "lucide-react";
 
-import { STORE_ITEM_KEYS } from "@tibians/shared/auction";
+import { HIGHLIGHT_KEYS, STORE_ITEM_KEYS } from "@tibians/shared/auction";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -278,6 +279,10 @@ function countActiveFilters(f: BazaarFiltersUi): number {
   if (f.tcInvestedMin !== undefined || f.tcInvestedMax !== undefined) count++;
   if (f.questsMin !== undefined) count++;
   if (f.rareNicknames) count++;
+  if (f.new24h) count++;
+  if (f.bossPointsMin !== undefined || f.bossPointsMax !== undefined) count++;
+  if (f.achievementPointsMin !== undefined || f.achievementPointsMax !== undefined) count++;
+  if (f.highlights) count++;
   if (
     f.gemsMinLesser !== undefined ||
     f.gemsMinRegular !== undefined ||
@@ -343,6 +348,22 @@ export function AuctionFiltersSidebar({
     [storeItemsSelected, update],
   );
 
+  // ── Wyróżnienia (CSV w `filters.highlights`; wzór: Exiva.pro) ──────
+  const highlightsSelected = React.useMemo(
+    () => new Set((filters.highlights ?? "").split(",").filter(Boolean)),
+    [filters.highlights],
+  );
+  const toggleHighlight = React.useCallback(
+    (key: string, on: boolean) => {
+      const next = new Set(highlightsSelected);
+      if (on) next.add(key);
+      else next.delete(key);
+      const list = HIGHLIGHT_KEYS.filter((k) => next.has(k));
+      update({ highlights: list.length > 0 ? list.join(",") : undefined });
+    },
+    [highlightsSelected, update],
+  );
+
   // ── Tagi „Różne" (wzór: ExevoPan) — skróty do filtrów z progami ────
   const miscTags: { key: string; checked: boolean; onToggle: (on: boolean) => void }[] = [
     {
@@ -375,6 +396,11 @@ export function AuctionFiltersSidebar({
       checked: filters.rareNicknames === true,
       onToggle: (v) => update({ rareNicknames: v ? true : undefined }),
     },
+    {
+      key: "new24h",
+      checked: filters.new24h === true,
+      onToggle: (v) => update({ new24h: v ? true : undefined }),
+    },
   ];
 
   const clearOne = React.useCallback(
@@ -403,6 +429,12 @@ export function AuctionFiltersSidebar({
       } else if (key === "tcInvestedMin" || key === "tcInvestedMax") {
         delete next.tcInvestedMin;
         delete next.tcInvestedMax;
+      } else if (key === "bossPointsMin" || key === "bossPointsMax") {
+        delete next.bossPointsMin;
+        delete next.bossPointsMax;
+      } else if (key === "achievementPointsMin" || key === "achievementPointsMax") {
+        delete next.achievementPointsMin;
+        delete next.achievementPointsMax;
       } else if (key === "mustHaveItemId" || key === "mustHaveItemName") {
         delete next.mustHaveItemId;
         delete next.mustHaveItemName;
@@ -975,6 +1007,31 @@ export function AuctionFiltersSidebar({
 
           <Separator />
 
+          {/* ── Wyróżnienia (wzór: Exiva.pro „Wyróżnienia") ─────────── */}
+          <section aria-labelledby="filter-highlights">
+            <h4
+              id="filter-highlights"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              <Star className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+              {tAdvanced("highlights.label")}
+            </h4>
+            <div className="grid grid-cols-1 gap-1">
+              {HIGHLIGHT_KEYS.map((key) => (
+                <MustHaveToggle
+                  key={key}
+                  id={`hl-${key}`}
+                  label={tAdvanced(`highlights.items.${key}`)}
+                  checked={highlightsSelected.has(key)}
+                  count={findCount(facetCounts.storeItems, key)}
+                  onToggle={(v) => toggleHighlight(key, v)}
+                />
+              ))}
+            </div>
+          </section>
+
+          <Separator />
+
           {/* ── Rare item autocomplete (debounced Combobox) ───────── */}
           <section aria-labelledby="filter-rare-item">
             <h4
@@ -1147,6 +1204,38 @@ export function AuctionFiltersSidebar({
                   onChange={(v) => update({ tcInvestedMax: v })}
                 />
               </div>
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField
+                  id="misc-bossmin"
+                  label={tAdvanced("misc.bossMin")}
+                  value={filters.bossPointsMin}
+                  min={0}
+                  onChange={(v) => update({ bossPointsMin: v })}
+                />
+                <NumberField
+                  id="misc-bossmax"
+                  label={tAdvanced("misc.bossMax")}
+                  value={filters.bossPointsMax}
+                  min={0}
+                  onChange={(v) => update({ bossPointsMax: v })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField
+                  id="misc-achmin"
+                  label={tAdvanced("misc.achMin")}
+                  value={filters.achievementPointsMin}
+                  min={0}
+                  onChange={(v) => update({ achievementPointsMin: v })}
+                />
+                <NumberField
+                  id="misc-achmax"
+                  label={tAdvanced("misc.achMax")}
+                  value={filters.achievementPointsMax}
+                  min={0}
+                  onChange={(v) => update({ achievementPointsMax: v })}
+                />
+              </div>
             </div>
           </section>
         </CollapsibleContent>
@@ -1280,6 +1369,10 @@ function countAdvancedActive(f: BazaarFiltersUi): number {
   if (f.tcInvestedMin !== undefined || f.tcInvestedMax !== undefined) count++;
   if (f.questsMin !== undefined) count++;
   if (f.rareNicknames) count++;
+  if (f.new24h) count++;
+  if (f.bossPointsMin !== undefined || f.bossPointsMax !== undefined) count++;
+  if (f.achievementPointsMin !== undefined || f.achievementPointsMax !== undefined) count++;
+  if (f.highlights) count++;
   if (
     f.gemsMinLesser !== undefined ||
     f.gemsMinRegular !== undefined ||

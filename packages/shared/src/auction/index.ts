@@ -45,6 +45,8 @@ export {
   endingSoonQuerySchema,
   totalPagesOf,
   STORE_ITEM_KEYS,
+  HIGHLIGHT_KEYS,
+  type HighlightKey,
   type StoreItemKey,
   type AuctionFilters,
   type Pagination,

@@ -464,8 +464,8 @@ export function AuctionCard({
           })}
         </div>
 
-        {/* ── Progression mini-line ────────────────────────────────── */}
-        <dl className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+        {/* ── Progression mini-line (5 kolumn — wzór: Exiva.pro) ───── */}
+        <dl className="grid grid-cols-5 gap-2 text-xs text-muted-foreground">
           <div className="numeric tabular-nums">
             <dt className="sr-only">Imbuements</dt>
             <dd>
@@ -482,6 +482,24 @@ export function AuctionCard({
                 {format.number(auction.charmPoints, { useGrouping: true })}
               </span>{" "}
               charms
+            </dd>
+          </div>
+          <div className="numeric tabular-nums">
+            <dt className="sr-only">Boss points</dt>
+            <dd>
+              <span className="font-semibold text-foreground">
+                {format.number(auction.bossPoints, { useGrouping: true })}
+              </span>{" "}
+              boss
+            </dd>
+          </div>
+          <div className="numeric tabular-nums">
+            <dt className="sr-only">Achievement points</dt>
+            <dd>
+              <span className="font-semibold text-foreground">
+                {format.number(auction.achievementPoints, { useGrouping: true })}
+              </span>{" "}
+              achieve
             </dd>
           </div>
           <div className="numeric tabular-nums">

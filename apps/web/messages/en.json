@@ -420,6 +420,15 @@
             "mailbox": "📬 Mailbox"
           }
         },
+        "highlights": {
+          "label": "Highlights",
+          "items": {
+            "goldenOutfit": "👑 Golden Outfit",
+            "ferumbrasHat": "🎩 Ferumbras' Hat",
+            "vortexion": "🌀 Vortexion",
+            "riftRunner": "🏃 Rift Runner"
+          }
+        },
         "misc": {
           "label": "Misc",
           "biddedOnly": "Bidded only",
@@ -427,13 +436,18 @@
           "charmMax": "Charm points max",
           "tcMin": "TC invested min",
           "tcMax": "TC invested max",
+          "bossMin": "Boss points min",
+          "bossMax": "Boss points max",
+          "achMin": "Achievement points min",
+          "achMax": "Achievement points max",
           "tags": {
             "soulWar": "💀 Soul War",
             "primalOrdeal": "🦖 Primal Ordeal",
             "lotsOfCharms": "✨ Lots of charms",
             "lotsOfQuests": "📜 Lots of quests",
             "lotsOfStoreItems": "🛍️ Lots of Store items",
-            "rareNicknames": "🔤 Rare nicknames"
+            "rareNicknames": "🔤 Rare nicknames",
+            "new24h": "🆕 New auctions (24h)"
           }
         }
       },
