@@ -597,8 +597,11 @@ Strona:     https://tibian.click (200)
 Wokacje:    dane naprawiają się po fixie (bazowe formy wracają: Knight/Paladin/…)
 Flagi:      regiony jako SVG (public/flags, flag-icons MIT) — emoji flag NIE renderują się na Windows
             ani w headless Chromium (pokazują litery); komponent `RegionFlag` (f17013d)
-Home:       hero (mniejszy) + sekcja „kończące się" z 9 aukcjami (grid 3 kol.); usunięte
-            „Ostatnio dodane" i kalkulatory; karty: ikony skilli, stonowane tagi atutów
+Home:       W18 (2026-09-18): strona główna = Char Bazaar — 25 aukcji + pełne filtry
+            (współdzielony `BazaarPageContent`, variant home/bazaar); kompaktowy
+            nagłówek „Bazaar · N aktywnych aukcji"; hero/ending-soon w repo (nieużywane).
+            Menu: SHOW_TOOLS=false — Kalkulatory/Referencje/Bosses/Blog ukryte
+            (desktop header + mobile sheet; strony działają pod URL-ami) — 934f86c
 Porównanie: wspólny stan localStorage (`useCompareSelection`) + pasek `CompareBar`
             (fixed bottom) → `/bazaar/compare?a=&b=`; działa na home i bazaarze (3e4b5d8)
 Bazar:      filtry DZIAŁAJĄ (bug #13 — `splitBazaarParams`); sekcje: „Store items"
@@ -608,9 +611,18 @@ Bazar:      filtry DZIAŁAJĄ (bug #13 — `splitBazaarParams`); sekcje: „Stor
             bez presetów; BattlEye tylko zielone/żółte; „Zawiera" zamiast
             „Must-have"; sidebar sticky z własnym scrollem; „Najnowsze" =
             auctionStart desc (c1a4a55)
+Filtry Exiva: W18: „Wyróżnienia" (Golden Outfit; 3 klucze ukryte do czasu danych),
+            Boss/Achievement points min-max, „Nowe aukcje (24h)"; karty 5-kolumnowe
+            (imbues/charms/boss/achieve/quests) — 80eef26/1ece2b3
 Scraper:    Penumbra FK naprawione (#14), zombie-locki czyszczone przy starcie
             (#15, PG_APP_NAME), ending-soon żyje; „aktywne" wymaga
             auction_end > now() (defensywa #18) — 1c4ff4c/ee39d96
+Archiwum:   W18: `pastcharactertrades` (22 961 aukcji, 919 stron) — parser
+            `auction-history.ts` (Winning Bid + finished/cancelled + skille),
+            `upsertArchivedAuctions` (final_price COALESCE), CLI `scrap:history`
+            (--from/--to/--pages) — f2ddb2e
+Wycena:     W18: `valuation-run.ts` + CLI `scrap:valuation` — silnik T35 po raz
+            pierwszy URUCHAMIANY (estimated_value 0/2948 → wypełniane) — b47ff23
 ```
 
 ---

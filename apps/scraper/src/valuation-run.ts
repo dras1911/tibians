@@ -25,7 +25,7 @@
 import { db } from "@tibians/db";
 import { auctions, valuationHistory, valuationRules } from "@tibians/db/schema";
 import { AuctionSchema, type Auction } from "@tibians/shared/auction";
-import { eq } from "drizzle-orm";
+import { and, eq, gt, or } from "drizzle-orm";
 
 import { estimateValue, type ValuationBreakdown, type ValuationRule } from "./valuation.js";
 
@@ -138,12 +138,18 @@ export function flattenBreakdown(b: ValuationBreakdown): Record<string, number> 
 }
 
 /**
- * Liczy i zapisuje wyceny dla wszystkich aktywnych aukcji.
+ * Liczy i zapisuje wyceny dla aktywnych aukcji.
  *
  * Idempotentne: kolejny run nadpisuje `estimated_value` i dopisuje nowy
  * wiersz `valuation_history` (PK: auctionId + computedAt).
+ *
+ * @param options.includeFinished — W18: dołącz zakończone z `final_price > 0`
+ *   (dane kalibracyjne: porównanie naszej wyceny z realną ceną sprzedaży —
+ *   podstawa strojenia wag `valuation_rules`).
  */
-export async function runValuation(): Promise<ValuationRunStats> {
+export async function runValuation(
+  options: { includeFinished?: boolean } = {},
+): Promise<ValuationRunStats> {
   const ruleRows = await db.select().from(valuationRules).where(eq(valuationRules.isActive, true));
 
   const ruleList: ValuationRule[] = ruleRows.map((r) => ({
@@ -160,7 +166,17 @@ export async function runValuation(): Promise<ValuationRunStats> {
     throw new Error("[valuation] brak aktywnych reguł w valuation_rules — nie ma na czym liczyć");
   }
 
-  const rows = await db.select().from(auctions).where(eq(auctions.status, "active"));
+  const rows = options.includeFinished
+    ? await db
+        .select()
+        .from(auctions)
+        .where(
+          or(
+            eq(auctions.status, "active"),
+            and(eq(auctions.status, "finished"), gt(auctions.finalPrice, 0)),
+          ),
+        )
+    : await db.select().from(auctions).where(eq(auctions.status, "active"));
 
   let computed = 0;
   let skipped = 0;

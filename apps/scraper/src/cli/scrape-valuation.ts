@@ -17,10 +17,11 @@ import { pool } from "@tibians/db";
 import { runValuation } from "../valuation-run.js";
 
 async function main(): Promise<void> {
+  const includeFinished = process.argv.includes("--finished");
   const startedAt = Date.now();
-  console.log("[valuation] start");
+  console.log(`[valuation] start (includeFinished=${String(includeFinished)})`);
 
-  const stats = await runValuation();
+  const stats = await runValuation({ includeFinished });
 
   const seconds = ((Date.now() - startedAt) / 1000).toFixed(1);
   console.log(
