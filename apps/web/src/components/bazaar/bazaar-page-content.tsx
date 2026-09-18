@@ -29,6 +29,7 @@ import { BazaarClient, toAuctionSummaries } from "@/components/bazaar";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   listAuctions,
+  getActiveTotal,
   getFacetCounts,
   getWorldsByRegion,
   getSuggestionCounts,
@@ -72,6 +73,7 @@ export async function BazaarPageContent({
     getFacetCounts(filters),
     getWorldsByRegion(),
     getStoreItemFacetCounts(),
+    getActiveTotal(),
   ]).catch((error: unknown) => {
     console.error("[bazaar] zapytania DB nie powiodły się — degradacja do stanu pustego:", error);
     return null;
@@ -96,6 +98,7 @@ export async function BazaarPageContent({
     OCE: [],
   };
   const storeItemFacetCounts = dbResult?.[3] ?? [];
+  const activeTotal = dbResult?.[4] ?? 0;
 
   const { rows, total } = listResult;
 
@@ -124,15 +127,16 @@ export async function BazaarPageContent({
   return (
     <div className="container py-6 md:py-8">
       {isHome ? (
-        /* Strona główna: kompaktowy nagłówek + licznik (wzór: Exiva.pro,
-           tylko zwięźlej — bez wielkiego hero, lista jest bohaterem). */
+        /* Strona główna: kompaktowy nagłówek + licznik WSZYSTKICH aktywnych
+           (bez filtrów — licznik wyników po filtrach jest w toolbarze,
+           żeby się nie dublowały). */
         <header className="flex flex-wrap items-baseline gap-x-3 gap-y-1">
           <h1 className="text-xl font-semibold tracking-tight text-foreground sm:text-2xl">
             {tBazaar("title")}
           </h1>
-          {facetCounts.totalActive > 0 ? (
+          {activeTotal > 0 ? (
             <p className="text-sm text-muted-foreground">
-              {tBazaar("activeCount", { count: facetCounts.totalActive })}
+              {tBazaar("activeCount", { count: activeTotal })}
             </p>
           ) : null}
         </header>

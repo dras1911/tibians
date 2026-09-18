@@ -753,6 +753,21 @@ export interface MarketStats {
 }
 
 /**
+ * Łączna liczba aktywnych aukcji BEZ filtrów (W18) — dla nagłówka strony
+ * głównej („Bazaar · N aktywnych aukcji"). Odrębna od facet counts, które
+ * są liczone PO filtrach (nagłówek nie może dublować licznika wyników).
+ *
+ * Defensywa jak w `listAuctions`: status='active' ORAZ auction_end > now().
+ */
+export async function getActiveTotal(): Promise<number> {
+  const rows = await db
+    .select({ count: sql<number>`COUNT(*)::int` })
+    .from(auctions)
+    .where(and(eq(auctions.status, "active"), gt(auctions.auctionEnd, sql`now()`)));
+  return rows[0]?.count ?? 0;
+}
+
+/**
  * Statystyki rynkowe — agregaty z `auctions` + `mv_facet_counts`
  * (plan task 58, arch §5 + §7.2).
  *
@@ -763,9 +778,12 @@ export interface MarketStats {
  * ostatnich 30 dni (`auction_end > NOW() - INTERVAL '30 days'`).
  * Po 30 dniach aukcje są nadal archiwizowane (patrz task T7), ale nie
  * wpływają na "bieżące" statystyki rynku.
+ *
+ * Uwaga (W18): liczby vocations pochodzą z `mv_facet_counts` (materialized
+ * view, odświeżana po Full loop) — mogą być do ~15 min nieświeże; agregaty
+ * statusów liczone są na żywo.
  */
 export async function getMarketStats(): Promise<MarketStats> {
-  // ── Zapytanie 1: agregaty statusów (active/finished) ────────────
   const statusAggQuery = db.execute<{
     total_active: number;
     total_finished: number;
