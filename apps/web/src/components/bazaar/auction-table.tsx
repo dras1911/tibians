@@ -264,6 +264,35 @@ export function AuctionTable({ rows, caption, className }: AuctionTableProps) {
           </div>
         ),
       },
+      // ── Wycena (sortable, numeric) — W18: algorytm §8.4 ────────
+      // Kolor: success gdy oferta PONIŻEJ wyceny (potencjalna okazja),
+      // danger gdy powyżej. Brak wyceny → „—".
+      {
+        id: "estimatedValue",
+        accessorKey: "estimatedValue",
+        enableSorting: true,
+        header: () => (
+          <div className="text-right">
+            <SortableHeader label={t("estimatedValue")} align="right" />
+          </div>
+        ),
+        cell: ({ row }) => {
+          const estimated = row.original.estimatedValue;
+          if (estimated === null || estimated === undefined) {
+            return <div className="text-right text-muted-foreground">—</div>;
+          }
+          return (
+            <div
+              className={cn(
+                "numeric text-right font-mono font-semibold tabular-nums",
+                estimated > row.original.bid ? "text-success" : "text-danger",
+              )}
+            >
+              {format.number(estimated, { useGrouping: true })}
+            </div>
+          );
+        },
+      },
       // ── Ends (countdown, sortable po auctionEnd ISO) ───────────
       {
         id: "ends",
