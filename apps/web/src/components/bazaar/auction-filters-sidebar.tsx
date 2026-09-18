@@ -919,10 +919,10 @@ export function AuctionFiltersSidebar({
                 onToggle={(v) => update({ imbuesFull: v ? true : undefined })}
               />
               <MustHaveToggle
-                id="mh-twistoffate"
-                label={tAdvanced("mustHave.twistOfFate")}
-                checked={filters.hasTwistOfFate === true}
-                onToggle={(v) => update({ hasTwistOfFate: v ? true : undefined })}
+                id="mh-worldtransfer"
+                label={tAdvanced("mustHave.worldTransfer")}
+                checked={filters.hasWorldTransfer === true}
+                onToggle={(v) => update({ hasWorldTransfer: v ? true : undefined })}
               />
             </div>
           </section>
@@ -953,25 +953,22 @@ export function AuctionFiltersSidebar({
                 id="si-charmexpansion"
                 label={tAdvanced("mustHave.charmExpansion")}
                 checked={filters.hasCharmExpansion === true}
+                count={findCount(facetCounts.storeItems, "hasCharmExpansion")}
                 onToggle={(v) => update({ hasCharmExpansion: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="si-preyslot"
                 label={tAdvanced("mustHave.preySlot")}
                 checked={filters.hasPreySlot === true}
+                count={findCount(facetCounts.storeItems, "hasPreySlot")}
                 onToggle={(v) => update({ hasPreySlot: v ? true : undefined })}
               />
               <MustHaveToggle
                 id="si-weeklytask"
                 label={tAdvanced("mustHave.weeklyTaskExp")}
                 checked={filters.hasWeeklyTaskExp === true}
+                count={findCount(facetCounts.storeItems, "hasWeeklyTaskExp")}
                 onToggle={(v) => update({ hasWeeklyTaskExp: v ? true : undefined })}
-              />
-              <MustHaveToggle
-                id="si-worldtransfer"
-                label={tAdvanced("mustHave.worldTransfer")}
-                checked={filters.hasWorldTransfer === true}
-                onToggle={(v) => update({ hasWorldTransfer: v ? true : undefined })}
               />
             </div>
           </section>
@@ -986,7 +983,12 @@ export function AuctionFiltersSidebar({
             >
               {tAdvanced("rareItem.label")}
             </h4>
+            {/* `rareOnly={false}`: kolumna `items.is_rare` jest w bazie pusta
+                (0/4384), więc filtr `rare=1` zwracał zawsze pustą listę —
+                wyszukiwarka „nie znajdowała nic". Szukamy po WSZYSTKICH
+                itemach (bez kuratorowanej listy rare jak w ExevoPan). */}
             <RareItemCombobox
+              rareOnly={false}
               value={
                 filters.mustHaveItemId !== undefined
                   ? {

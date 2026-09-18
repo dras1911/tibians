@@ -1142,19 +1142,42 @@ export interface FacetCountsServer {
  * zapytania. 7 równoległych COUNT z EXISTS na indeksie `idx_ai_item`.
  */
 export async function getStoreItemFacetCounts(): Promise<{ value: string; count: number }[]> {
-  const results = await Promise.all(
-    STORE_ITEM_KEYS.map((key) =>
+  // Flagowe toggle „Store items" (Charm/Prey/Weekly/Transfer) — liczniki
+  // dla przełączników obok itemów (zgłoszenie: „nie mają licznika jak inne").
+  const flagFacets = [
+    { value: "hasCharmExpansion", column: auctions.hasCharmExpansion },
+    { value: "hasPreySlot", column: auctions.hasPreySlot },
+    { value: "hasWeeklyTaskExp", column: auctions.hasWeeklyTaskExp },
+    { value: "hasWorldTransfer", column: auctions.hasWorldTransfer },
+  ] as const;
+
+  const activeWhere = and(eq(auctions.status, "active"), gt(auctions.auctionEnd, sql`now()`));
+
+  const results = await Promise.all([
+    ...STORE_ITEM_KEYS.map((key) =>
       db
         .select({ count: sql<number>`COUNT(*)::int` })
         .from(auctions)
-        .where(and(eq(auctions.status, "active"), storeItemExists(STORE_ITEM_NAME_PATTERNS[key]))),
+        .where(and(activeWhere, storeItemExists(STORE_ITEM_NAME_PATTERNS[key]))),
     ),
-  );
+    ...flagFacets.map(({ column }) =>
+      db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(auctions)
+        .where(and(activeWhere, eq(column, true))),
+    ),
+  ]);
 
-  return STORE_ITEM_KEYS.map((key, index) => ({
-    value: key,
-    count: Number(results[index]?.[0]?.count ?? 0),
-  }));
+  return [
+    ...STORE_ITEM_KEYS.map((key, index) => ({
+      value: key,
+      count: Number(results[index]?.[0]?.count ?? 0),
+    })),
+    ...flagFacets.map(({ value }, index) => ({
+      value,
+      count: Number(results[STORE_ITEM_KEYS.length + index]?.[0]?.count ?? 0),
+    })),
+  ];
 }
 
 /**
