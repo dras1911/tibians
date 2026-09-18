@@ -166,10 +166,20 @@ const HIGHLIGHT_FILTERS: Record<
   HighlightKey,
   { table: "items" | "outfits" | "mounts"; pattern: string }
 > = {
+  // outfity
   goldenOutfit: { table: "outfits", pattern: "%golden outfit%" },
-  ferumbrasHat: { table: "items", pattern: "%ferumbras%hat%" },
+  bladeDancer: { table: "outfits", pattern: "%blade dancer%" },
+  phoenixEvoker: { table: "outfits", pattern: "%phoenix evoker%" },
+  // mounty
+  riftWatcher: { table: "mounts", pattern: "rift watcher" },
+  voidWatcher: { table: "mounts", pattern: "void watcher" },
+  goldSphinx: { table: "mounts", pattern: "gold sphinx" },
+  shadowSphinx: { table: "mounts", pattern: "shadow sphinx" },
   vortexion: { table: "mounts", pattern: "%vortexion%" },
   riftRunner: { table: "mounts", pattern: "%rift runner%" },
+  // itemy — dokładna nazwa „Ferumbras' Hat" (bez % — inaczej łapie
+  // „Ferumbras' Candy Hat", replikę z eventu, i inne itemy z „hat")
+  ferumbrasHat: { table: "items", pattern: "ferumbras' hat" },
 };
 
 /** `EXISTS` — aukcja ma przedmiot/outfit/mount pasujący do wyróżnienia. */
@@ -351,8 +361,11 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
 
   // Rzadkie nazwy postaci — znaki specjalne, ≤3 znaki albo same duże litery.
   if (filters.rareNicknames === true) {
+    // Definicja (W18, doprecyzowana): znaki specjalne (äëïöüÿ), apostrof
+    // (’ oraz ') — takich nazw NIE da się już utworzyć, więc są rzadkie,
+    // ≤3 znaki albo same wielkie litery.
     conditions.push(
-      sql`(${auctions.characterName} ~ '[äëïöüÿÄËÏÖÜŸ]' OR length(${auctions.characterName}) <= 3 OR ${auctions.characterName} = upper(${auctions.characterName}))`,
+      sql`(${auctions.characterName} ~ '[äëïöüÿÄËÏÖÜŸ]' OR ${auctions.characterName} ~ '[''’]' OR length(${auctions.characterName}) <= 3 OR ${auctions.characterName} = upper(${auctions.characterName}))`,
     );
   }
 

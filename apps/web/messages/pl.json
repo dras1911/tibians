@@ -433,9 +433,15 @@
           "label": "Wyróżnienia",
           "items": {
             "goldenOutfit": "👑 Golden Outfit",
-            "ferumbrasHat": "🎩 Ferumbras' Hat",
+            "bladeDancer": "⚔️ Blade Dancer",
+            "phoenixEvoker": "🔥 Phoenix Evoker",
+            "riftWatcher": "🦎 Rift Watcher",
+            "voidWatcher": "🌑 Void Watcher",
+            "goldSphinx": "🏺 Gold Sphinx",
+            "shadowSphinx": "🐈‍⬛ Shadow Sphinx",
             "vortexion": "🌀 Vortexion",
-            "riftRunner": "🏃 Rift Runner"
+            "riftRunner": "🏃 Rift Runner",
+            "ferumbrasHat": "🎩 Ferumbras' Hat"
           }
         },
         "misc": {
@@ -451,12 +457,19 @@
           "achMax": "Achievement points max",
           "tags": {
             "soulWar": "💀 Soul War",
+            "soulWarHint": "Dostęp do Soul War — postać ma ukończony quest Feaster of Souls (wymagany dostęp; zalecany poziom 250+).",
             "primalOrdeal": "🦖 Primal Ordeal",
+            "primalOrdealHint": "Dostęp do Primal Ordeal (Gnomprona) — ukończony quest Within the Tides (wymagany) i poziom 250+ (zalecany 400+).",
             "lotsOfCharms": "✨ Dużo charmów",
+            "lotsOfCharmsHint": "Powyżej 5000 punktów charmów.",
             "lotsOfQuests": "📜 Dużo questów",
+            "lotsOfQuestsHint": "30+ ukończonych questów.",
             "lotsOfStoreItems": "🛍️ Dużo przedmiotów z Tibia Store",
+            "lotsOfStoreItemsHint": "10+ przedmiotów z Tibia Store (liczone z podsumowania aukcji).",
             "rareNicknames": "🔤 Rzadkie nazwy postaci",
-            "new24h": "🆕 Nowe aukcje (24h)"
+            "rareNicknamesHint": "Znaki specjalne (äëïöüÿ), apostrof (nowych takich nazw już nie utworzysz), ≤3 znaki albo same wielkie litery.",
+            "new24h": "🆕 Nowe aukcje (24h)",
+            "new24hHint": "Aukcje dodane do naszego bazaru w ciągu ostatnich 24 godzin."
           }
         }
       },

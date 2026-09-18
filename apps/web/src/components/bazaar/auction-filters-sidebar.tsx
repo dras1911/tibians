@@ -241,8 +241,8 @@ const BATTLEYE_TYPES: BattlEyeFilter[] = ["protected", "initially protected"];
  * Dobrane z rozkładów produkcji (percentyle p75–p90 aktywnych aukcji),
  * żeby tagi nie łapały ani całej listy, ani pojedynczych sztuk.
  */
-const LOTS_OF_CHARMS_MIN = 3000;
-const LOTS_OF_QUESTS_MIN = 25;
+const LOTS_OF_CHARMS_MIN = 5000;
+const LOTS_OF_QUESTS_MIN = 30;
 const LOTS_OF_STORE_ITEMS_MIN = 10;
 
 const REGIONS: RegionFilter[] = ["EU", "NA", "BR", "OCE"];
@@ -1207,6 +1207,7 @@ export function AuctionFiltersSidebar({
                   key={tag.key}
                   type="button"
                   aria-pressed={tag.checked}
+                  title={tAdvanced(`misc.tags.${tag.key}Hint`)}
                   onClick={() => tag.onToggle(!tag.checked)}
                   className={cn(
                     "rounded-full border px-2.5 py-1 text-xs transition-colors",

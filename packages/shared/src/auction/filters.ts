@@ -95,7 +95,32 @@ export type StoreItemKey = (typeof STORE_ITEM_KEYS)[number];
  * Mapowanie klucz → wzorzec nazwy itemu/outfitu/mounta:
  * `apps/web/src/lib/server/auctions.ts` (`HIGHLIGHT_FILTERS`).
  */
-export const HIGHLIGHT_KEYS = ["goldenOutfit", "ferumbrasHat", "vortexion", "riftRunner"] as const;
+/**
+ * Wyróżnienia (highlights — wzór: Exiva.pro „Wyróżnienia", rozszerzone W18).
+ *
+ * Kuratorowana lista rzadkich/wartościowych itemów, outfitów i mountów.
+ * Liczniki liczy `getStoreItemFacetCounts`; pozycje z zerem (brak danych
+ * w słownikach) są UKRYWANE w UI — lista może być szersza niż to, co
+ * aktualnie widać.
+ *
+ * Mapowanie klucz → tabela/wzorzec: `apps/web/src/lib/server/auctions.ts`
+ * (`HIGHLIGHT_FILTERS`).
+ */
+export const HIGHLIGHT_KEYS = [
+  // outfity
+  "goldenOutfit",
+  "bladeDancer",
+  "phoenixEvoker",
+  // mounty
+  "riftWatcher",
+  "voidWatcher",
+  "goldSphinx",
+  "shadowSphinx",
+  "vortexion",
+  "riftRunner",
+  // itemy
+  "ferumbrasHat",
+] as const;
 
 export type HighlightKey = (typeof HIGHLIGHT_KEYS)[number];
 

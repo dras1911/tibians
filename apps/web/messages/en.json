@@ -433,9 +433,15 @@
           "label": "Highlights",
           "items": {
             "goldenOutfit": "👑 Golden Outfit",
-            "ferumbrasHat": "🎩 Ferumbras' Hat",
+            "bladeDancer": "⚔️ Blade Dancer",
+            "phoenixEvoker": "🔥 Phoenix Evoker",
+            "riftWatcher": "🦎 Rift Watcher",
+            "voidWatcher": "🌑 Void Watcher",
+            "goldSphinx": "🏺 Gold Sphinx",
+            "shadowSphinx": "🐈‍⬛ Shadow Sphinx",
             "vortexion": "🌀 Vortexion",
-            "riftRunner": "🏃 Rift Runner"
+            "riftRunner": "🏃 Rift Runner",
+            "ferumbrasHat": "🎩 Ferumbras' Hat"
           }
         },
         "misc": {
@@ -451,12 +457,19 @@
           "achMax": "Achievement points max",
           "tags": {
             "soulWar": "💀 Soul War",
+            "soulWarHint": "Soul War access — the character has completed the Feaster of Souls quest (required; level 250+ recommended).",
             "primalOrdeal": "🦖 Primal Ordeal",
+            "primalOrdealHint": "Primal Ordeal (Gnomprona) access — completed Within the Tides quest (required) and level 250+ (400+ recommended).",
             "lotsOfCharms": "✨ Lots of charms",
+            "lotsOfCharmsHint": "More than 5000 charm points.",
             "lotsOfQuests": "📜 Lots of quests",
+            "lotsOfQuestsHint": "30+ completed quests.",
             "lotsOfStoreItems": "🛍️ Lots of Store items",
+            "lotsOfStoreItemsHint": "10+ Tibia Store items (from the auction summary).",
             "rareNicknames": "🔤 Rare nicknames",
-            "new24h": "🆕 New auctions (24h)"
+            "rareNicknamesHint": "Special characters (äëïöüÿ), apostrophe (such names can no longer be created), ≤3 characters or all-caps.",
+            "new24h": "🆕 New auctions (24h)",
+            "new24hHint": "Auctions added to our bazaar within the last 24 hours."
           }
         }
       },
