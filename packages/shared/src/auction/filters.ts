@@ -229,6 +229,15 @@ export const auctionFiltersObject = z
     tcInvestedMin: z.coerce.number().int().min(0).optional(),
     tcInvestedMax: z.coerce.number().int().min(0).optional(),
 
+    /**
+     * Ocena ceny vs wycena (wzór: Exiva.pro „Cena") — W18.
+     *   - `good`      → bid < 90% wyceny (potencjalna okazja),
+     *   - `fair`      → bid w ±10% wyceny,
+     *   - `expensive` → bid > 110% wyceny.
+     * Wymaga `estimated_value` (aukcje bez wyceny odpadają).
+     */
+    priceRating: z.enum(["good", "fair", "expensive"]).optional(),
+
     /** Gemy (minimum) — `gems_lesser/regular/greater` z detalu. */
     gemsMinLesser: z.coerce.number().int().min(0).optional(),
     gemsMinRegular: z.coerce.number().int().min(0).optional(),

@@ -304,6 +304,24 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
     conditions.push(sql`${auctions.tcInvested} <= ${filters.tcInvestedMax}`);
   }
 
+  // Ocena ceny vs wycena (W18 — wzór: Exiva.pro „Cena").
+  // Progi: good < 90% wyceny; fair ±10%; expensive > 110%. Bez wyceny → odpada.
+  if (filters.priceRating !== undefined) {
+    if (filters.priceRating === "good") {
+      conditions.push(
+        sql`${auctions.estimatedValue} IS NOT NULL AND ${auctions.bid} < ${auctions.estimatedValue} * 0.9`,
+      );
+    } else if (filters.priceRating === "fair") {
+      conditions.push(
+        sql`${auctions.estimatedValue} IS NOT NULL AND ${auctions.bid} >= ${auctions.estimatedValue} * 0.9 AND ${auctions.bid} <= ${auctions.estimatedValue} * 1.1`,
+      );
+    } else {
+      conditions.push(
+        sql`${auctions.estimatedValue} IS NOT NULL AND ${auctions.bid} > ${auctions.estimatedValue} * 1.1`,
+      );
+    }
+  }
+
   // Gemy — minima (lesser/regular/greater).
   if (filters.gemsMinLesser !== undefined) {
     conditions.push(gte(auctions.gemsLesser, filters.gemsMinLesser));

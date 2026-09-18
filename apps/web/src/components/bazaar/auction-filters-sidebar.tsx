@@ -247,6 +247,16 @@ const LOTS_OF_STORE_ITEMS_MIN = 10;
 
 const REGIONS: RegionFilter[] = ["EU", "NA", "BR", "OCE"];
 
+/**
+ * Ocena ceny vs wycena (W18 — wzór: Exiva.pro „Cena").
+ * Single-select: klik aktywny → odznacza; klik inny → przełącza.
+ */
+const PRICE_RATING_OPTIONS = [
+  { key: "good", emoji: "💚" },
+  { key: "fair", emoji: "⚖️" },
+  { key: "expensive", emoji: "💸" },
+] as const;
+
 // ─────────────────────────────────────────────────────────────────────
 // Helpers
 // ─────────────────────────────────────────────────────────────────────
@@ -280,6 +290,7 @@ function countActiveFilters(f: BazaarFiltersUi): number {
   if (f.questsMin !== undefined) count++;
   if (f.rareNicknames) count++;
   if (f.new24h) count++;
+  if (f.priceRating) count++;
   if (f.bossPointsMin !== undefined || f.bossPointsMax !== undefined) count++;
   if (f.achievementPointsMin !== undefined || f.achievementPointsMax !== undefined) count++;
   if (f.highlights) count++;
@@ -676,6 +687,42 @@ export function AuctionFiltersSidebar({
           </span>
         </div>
         <p className="mt-1 text-xs text-muted-foreground">{t("priceHint", { rate: "0,42" })}</p>
+      </section>
+
+      <Separator />
+
+      {/* ── Ocena ceny vs wycena (W18 — wzór: Exiva.pro „Cena") ─────── */}
+      <section aria-labelledby="filter-price-rating">
+        <h3
+          id="filter-price-rating"
+          className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+        >
+          {t("sections.priceRating")}
+        </h3>
+        <div className="flex flex-wrap gap-1.5">
+          {PRICE_RATING_OPTIONS.map(({ key, emoji }) => {
+            const active = filters.priceRating === key;
+            return (
+              <button
+                key={key}
+                type="button"
+                onClick={() => update({ priceRating: active ? undefined : key })}
+                aria-pressed={active}
+                className={cn(
+                  "inline-flex h-11 items-center gap-1.5 rounded-full border px-3 text-sm font-medium transition-colors",
+                  "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                  active
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "bg-background text-foreground hover:bg-accent",
+                )}
+              >
+                <span aria-hidden="true">{emoji}</span>
+                {t(`priceRating.${key}`)}
+              </button>
+            );
+          })}
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">{t("priceRatingHint")}</p>
       </section>
 
       <Separator />
@@ -1377,6 +1424,7 @@ function countAdvancedActive(f: BazaarFiltersUi): number {
   if (f.questsMin !== undefined) count++;
   if (f.rareNicknames) count++;
   if (f.new24h) count++;
+  if (f.priceRating) count++;
   if (f.bossPointsMin !== undefined || f.bossPointsMax !== undefined) count++;
   if (f.achievementPointsMin !== undefined || f.achievementPointsMax !== undefined) count++;
   if (f.highlights) count++;

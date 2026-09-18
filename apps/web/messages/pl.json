@@ -278,6 +278,7 @@
         "vocation": "Vocation",
         "level": "Level",
         "price": "Maksymalna cena",
+        "priceRating": "Cena",
         "world": "Świat",
         "pvpType": "Typ PvP",
         "battleye": "BattlEye"
@@ -303,6 +304,12 @@
       "pricePlaceholder": "np. 15000",
       "priceSuffix": "TC",
       "priceHint": "≈ {rate} €/TC",
+      "priceRating": {
+        "good": "Dobra oferta",
+        "fair": "Uczciwa cena",
+        "expensive": "Zbyt drogi"
+      },
+      "priceRatingHint": "Porównanie oferty z naszą wyceną postaci (algorytm 6 komponentów).",
       "worldPlaceholder": "Szukaj świata…",
       "worldEmpty": "Brak światów",
       "regions": {

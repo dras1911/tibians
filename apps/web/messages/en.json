@@ -278,6 +278,7 @@
         "vocation": "Vocation",
         "level": "Level",
         "price": "Max price",
+        "priceRating": "Price",
         "world": "World",
         "pvpType": "PvP type",
         "battleye": "BattlEye"
@@ -303,6 +304,12 @@
       "pricePlaceholder": "e.g. 15000",
       "priceSuffix": "TC",
       "priceHint": "≈ {rate} €/TC",
+      "priceRating": {
+        "good": "Good deal",
+        "fair": "Fair price",
+        "expensive": "Overpriced"
+      },
+      "priceRatingHint": "Compares the bid with our character valuation (6-component algorithm).",
       "worldPlaceholder": "Search world…",
       "worldEmpty": "No worlds",
       "regions": {
