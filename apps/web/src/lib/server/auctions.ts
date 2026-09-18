@@ -547,7 +547,22 @@ export async function listAuctions(
   const whereCondition = buildWhereConditions(filters);
 
   const sortCol = orderColumn(filters.sortBy);
-  const orderByExpr = filters.sortDir === "asc" ? asc(sortCol) : desc(sortCol);
+  // Kolumny nullable: Postgres domyślnie sortuje DESC z NULLS FIRST, więc
+  // `sortBy=estimatedValue&sortDir=desc` pokazywał najpierw aukcje BEZ
+  // wyceny („—" w tabeli). Wymuszamy NULLS LAST w obu kierunkach — puste
+  // wartości zawsze na końcu (W18).
+  const NULLABLE_SORT_KEYS: ReadonlySet<string> = new Set([
+    "estimatedValue",
+    "tcInvested",
+    "finalPrice",
+  ]);
+  const orderByExpr: SQL = NULLABLE_SORT_KEYS.has(filters.sortBy)
+    ? filters.sortDir === "asc"
+      ? sql`${sortCol} ASC NULLS LAST`
+      : sql`${sortCol} DESC NULLS LAST`
+    : filters.sortDir === "asc"
+      ? asc(sortCol)
+      : desc(sortCol);
 
   const countQuery = db
     .select({ count: sql<number>`COUNT(*)::int` })
