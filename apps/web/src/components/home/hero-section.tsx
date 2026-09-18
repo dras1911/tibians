@@ -66,17 +66,16 @@ function formatNumber(value: number, locale: string): string {
 // Component (Server Component)
 // ───────────────────────────────────────────────────────────────────────
 
-export async function HeroSection({
-  totalActive,
-  freshness,
-}: HeroSectionProps) {
+export async function HeroSection({ totalActive, freshness }: HeroSectionProps) {
   const t = await getTranslations("Home");
 
   // "X min temu" — minute === 0 traktujemy jako "przed chwilą".
+  // Brak danych (null) → nie pokazujemy nic (stan scrapera to nie sprawa
+  // użytkownika; wcześniej wisiał tu komunikat "brak danych o ostatnim scrape").
   const freshnessLabel =
     freshness.minutesSinceLastScrape !== null
       ? t("freshness.updated", { minutes: freshness.minutesSinceLastScrape })
-      : t("freshness.neverScraped");
+      : null;
 
   return (
     <section
@@ -97,10 +96,7 @@ export async function HeroSection({
       <div className="relative">
         {/* ── Live-dot badge (dowód świeżości) ──────────────────────── */}
         <div className="flex items-center gap-2">
-          <span
-            className="relative inline-flex h-2.5 w-2.5"
-            aria-hidden="true"
-          >
+          <span className="relative inline-flex h-2.5 w-2.5" aria-hidden="true">
             <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-75" />
             <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-primary" />
           </span>
@@ -116,9 +112,7 @@ export async function HeroSection({
         >
           {t("title")}
         </h1>
-        <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">
-          {t("subtitle")}
-        </p>
+        <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">{t("subtitle")}</p>
 
         {/* ── Stat box: licznik + freshness ─────────────────────────── */}
         <div className="mt-6 inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-card/80 px-4 py-3 text-sm shadow-sm backdrop-blur">
@@ -129,11 +123,12 @@ export async function HeroSection({
             </span>
             <span className="text-muted-foreground">{t("statsLabel")}</span>
           </div>
-          <span
-            aria-hidden="true"
-            className="hidden h-4 w-px bg-border sm:block"
-          />
-          <span className="text-muted-foreground">{freshnessLabel}</span>
+          {freshnessLabel ? (
+            <>
+              <span aria-hidden="true" className="hidden h-4 w-px bg-border sm:block" />
+              <span className="text-muted-foreground">{freshnessLabel}</span>
+            </>
+          ) : null}
         </div>
 
         {/* ── CTA ──────────────────────────────────────────────────── */}
@@ -141,15 +136,9 @@ export async function HeroSection({
           <Button asChild size="lg" className="h-13 px-6 text-base">
             <Link href="/bazaar">
               {t("heroCta")}
-              <ArrowRight
-                className="ml-2 h-4 w-4"
-                aria-hidden="true"
-              />
+              <ArrowRight className="ml-2 h-4 w-4" aria-hidden="true" />
             </Link>
           </Button>
-          <span className="text-xs text-muted-foreground">
-            {t("heroCtaHint")}
-          </span>
         </div>
       </div>
     </section>

@@ -47,7 +47,7 @@
       "scrapeDetails": "Ostatni pełny scrape znalazł {found} aukcji (zarchiwizował {archived}).",
       "liveDot": "na żywo"
     },
-    "heroCta": "Przeglądaj aukcje →",
+    "heroCta": "Przeglądaj aukcje",
     "heroCtaHint": "(domyślny filtr: Kończące się najwcześniej)",
     "sections": {
       "endingSoon": {
@@ -205,6 +205,16 @@
       "addedAgoMinutes": "dodano {count, plural, =0 {przed chwilą} one {# minutę temu} few {# minuty temu} many {# minut temu} other {# minut temu}}",
       "addedAgoHours": "dodano {count, plural, one {# godzinę temu} few {# godziny temu} many {# godzin temu} other {# godzin temu}}",
       "addedAgoDays": "dodano {count, plural, one {# dzień temu} few {# dni temu} many {# dni temu} other {# dni temu}}",
+      "skills": {
+        "magic": "Poziom magii (Magic Level)",
+        "club": "Obuch (Club)",
+        "fist": "Pięść (Fist)",
+        "sword": "Miecz (Sword)",
+        "axe": "Topór (Axe)",
+        "distance": "Dystans (Distance)",
+        "shielding": "Obrona (Shielding)",
+        "fishing": "Wędkarstwo (Fishing)"
+      },
       "endsAt": "Koniec: {date}",
       "details": "Szczegóły",
       "compare": "Dodaj do porównania",
@@ -242,8 +252,8 @@
       "select": "Zaznacz"
     },
     "battleye": {
-      "protected": "GBE — zielone BattlEye: świat chroniony",
-      "initially protected": "YBE — żółte BattlEye: świat chroniony od początku istnienia",
+      "protected": "YBE — żółte BattlEye: świat chroniony (ochrona dołączona w trakcie życia świata)",
+      "initially protected": "GBE — zielone BattlEye: świat chroniony od samego startu",
       "not protected": "RBE — czerwone BattlEye: świat bez ochrony"
     },
     "filters": {
@@ -1921,7 +1931,7 @@
       "retroLabel": "Retro",
       "offlineLabel": "Offline",
       "protectedLabel": "Chroniony",
-      "protectedPartialLabel": "Częściowo chroniony",
+      "protectedPartialLabel": "Chroniony od startu",
       "unprotectedLabel": "Niechroniony",
       "regionEmpty": "Brak światów w tym regionie",
       "regions": {

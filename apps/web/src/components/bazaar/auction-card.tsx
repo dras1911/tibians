@@ -33,6 +33,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { RegionFlag } from "@/components/ui/region-flag";
+import { SkillIcon } from "@/components/bazaar/skill-icon";
 import { Link } from "@/i18n/routing";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
@@ -435,18 +436,24 @@ export function AuctionCard({
               ["shielding", auction.skillShielding],
               ["fishing", auction.skillFishing],
             ] as const
-          ).map(([key, value]) => (
-            <div
-              key={key}
-              className="numeric rounded-sm border bg-background/60 px-1 py-1 font-mono tabular-nums"
-              data-skill={key}
-            >
-              <div className="text-[0.6rem] uppercase leading-none text-muted-foreground">
-                {key.slice(0, 3)}
+          ).map(([key, value]) => {
+            const label = t(`skills.${key}`);
+            return (
+              <div
+                key={key}
+                className="numeric rounded-sm border bg-background/60 px-1 py-1 font-mono tabular-nums"
+                data-skill={key}
+                title={`${label}: ${value}`}
+                aria-label={`${label}: ${value}`}
+              >
+                <SkillIcon skill={key} className="mx-auto mb-0.5 h-3 w-3 text-muted-foreground" />
+                <div className="text-[0.6rem] uppercase leading-none text-muted-foreground">
+                  {key.slice(0, 3)}
+                </div>
+                <div className="mt-0.5 font-semibold leading-none">{value}</div>
               </div>
-              <div className="mt-0.5 font-semibold leading-none">{value}</div>
-            </div>
-          ))}
+            );
+          })}
         </div>
 
         {/* ── Progression mini-line ────────────────────────────────── */}
@@ -484,7 +491,7 @@ export function AuctionCard({
         {activeTags.length > 0 ? (
           <div className="flex flex-wrap gap-1.5">
             {activeTags.map((tag) => (
-              <Badge key={tag.key} variant="info" className="text-[0.65rem]">
+              <Badge key={tag.key} variant="secondary" className="text-[0.65rem]">
                 {t(`tags.${tag.key}`)}
               </Badge>
             ))}

@@ -301,9 +301,9 @@ function WorldCard({
           : "—";
 
   const battleyeTone =
-    world.battleye === "protected"
+    world.battleye === "initially protected"
       ? "success"
-      : world.battleye === "initially protected"
+      : world.battleye === "protected"
         ? "warning"
         : world.battleye === "not protected"
           ? "destructive"

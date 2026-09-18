@@ -9,13 +9,11 @@
  *      X min temu") + CTA do `/bazaar`
  *   2. **Kończące się w ciągu godziny** — 4 karty AuctionCard
  *      (live countdown — client side przez AuctionCard)
- *   3. **Ostatnio zaktualizowane** — 6 kart AuctionCard (last_seen_at DESC)
- *   4. **Najpopularniejsze kalkulatory** — 3 karty cross-sell
  *
  * **Fetch (arch §8.2):**
  *   - `Promise.all`: `getMarketStats()` + `getHomeFreshness()` +
- *     `listEndingSoon(1)` + `getRecentlyUpdated(6)`
- *   - Każda z 4 zapytań jest indeksowana (Partial Index `status='active'`).
+ *     `listEndingSoon(1)`
+ *   - Każde z 3 zapytań jest indeksowane (Partial Index `status='active'`).
  *
  * **ISR (arch §8.2):**
  *   - `revalidate = 300` (5 min fallback; webhook T38 invaliduje
@@ -32,20 +30,12 @@
 
 import * as React from "react";
 import type { Metadata } from "next";
-import { Sparkles } from "lucide-react";
 import { getTranslations, setRequestLocale } from "next-intl/server";
 
-import { AuctionSection } from "@/components/home/auction-section";
-import { CrossSellSection } from "@/components/home/cross-sell-section";
 import { EndingSoonSectionLive } from "@/components/home/ending-soon-section-live";
 import { HeroSection } from "@/components/home/hero-section";
 import { toAuctionSummaries } from "@/components/bazaar/auction-summary";
-import {
-  getHomeFreshness,
-  getMarketStats,
-  getRecentlyUpdated,
-  listEndingSoon,
-} from "@/lib/server/auctions";
+import { getHomeFreshness, getMarketStats, listEndingSoon } from "@/lib/server/auctions";
 import { routing } from "@/i18n/routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
@@ -115,16 +105,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   setRequestLocale(locale);
 
   // Równoległy fetch wszystkich danych home (arch §8.2).
-  const [stats, freshness, endingSoonRows, recentlyUpdatedRows] = await Promise.all([
+  const [stats, freshness, endingSoonRows] = await Promise.all([
     getMarketStats(),
     getHomeFreshness(),
     listEndingSoon(1), // < 1h
-    getRecentlyUpdated(6),
   ]);
 
   // Konwersja AuctionRow → AuctionSummary (client-safe).
   const endingSoon = toAuctionSummaries(endingSoonRows);
-  const recentlyUpdated = toAuctionSummaries(recentlyUpdatedRows);
 
   // i18n dla sekcji.
   const tHome = await getTranslations({
@@ -161,33 +149,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
           viewAllLabel={tHome("sections.endingSoon.viewAll")}
           emptyTitle={tHome("empty.endingSoonTitle")}
           emptyDescription={tHome("empty.endingSoonDescription")}
-        />
-      </div>
-
-      {/* ── Sekcja "Ostatnio zaktualizowane" (6 kart) ─────────────────── */}
-      <div className="mt-12">
-        <AuctionSection
-          sectionId="recently-updated"
-          title={tHome("sections.recentlyUpdated.title")}
-          description={tHome("sections.recentlyUpdated.description")}
-          icon={Sparkles}
-          auctions={recentlyUpdated}
-          viewAllHref="/bazaar?sortBy=firstSeenAt&sortDir=desc"
-          viewAllLabel={tHome("sections.recentlyUpdated.viewAll")}
-          emptyTitle={tHome("empty.recentTitle")}
-          emptyDescription={tHome("empty.recentDescription")}
-          maxItems={6}
-          cardTimeDisplay="added"
-        />
-      </div>
-
-      {/* ── Cross-sell: 3 kalkulatory ─────────────────────────────────── */}
-      <div className="mt-12">
-        <CrossSellSection
-          title={tHome("sections.crossSell.title")}
-          description={tHome("sections.crossSell.description")}
-          viewAllLabel={tHome("sections.crossSell.viewAll")}
-          viewAllHref="/calculators"
         />
       </div>
 
