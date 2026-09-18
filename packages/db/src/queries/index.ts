@@ -257,6 +257,144 @@ export async function archiveFinishedAuctions(db: Db, ids: readonly bigint[]): P
   return archived.length;
 }
 
+/* ════════════════════════════════════════════════════════════════
+ *  ARCHIWUM (pastcharactertrades) — W18
+ * ════════════════════════════════════════════════════════════════ */
+
+/**
+ * Wiersz archiwum (`pastcharactertrades`) gotowy do zapisu.
+ *
+ * `vocation` = BAZOWA ("Knight"), `vocationPromoted` = promowana
+ * ("Elite Knight") — odwrotnie niż w scrapie z tibia.com; mapowanie
+ * robi scraper (ma dostęp do `@tibians/shared`), DB tylko zapisuje.
+ */
+export interface ArchivedAuctionRow {
+  readonly auctionId: bigint;
+  readonly characterName: string;
+  readonly level: number;
+  readonly vocation: string;
+  readonly vocationPromoted: string;
+  readonly sex: "M" | "F";
+  readonly worldName: string;
+  readonly bid: number;
+  readonly bidType: "current" | "minimum";
+  readonly auctionStart: Date;
+  readonly auctionEnd: Date;
+  readonly status: "finished" | "cancelled";
+  readonly finalPrice: number | null;
+  /** Skille z archiwum (tylko te podane przez Tibię — reszta 0). */
+  readonly skills: Partial<{
+    magic: number;
+    club: number;
+    fist: number;
+    sword: number;
+    axe: number;
+    distance: number;
+    shielding: number;
+    fishing: number;
+  }>;
+  readonly blessingsActive: number | null;
+  readonly rawJson: Record<string, unknown>;
+}
+
+export interface UpsertArchivedOutcome {
+  readonly inserted: number;
+  readonly updated: number;
+  /** Wiersze pominięte — nieznany świat (brak w `worlds`). */
+  readonly skipped: number;
+}
+
+/**
+ * Bulk-upsert wierszy archiwum (chunk 250 = jeden multi-VALUES INSERT).
+ *
+ * Semantyka `ON CONFLICT`:
+ *   - `status` / `bid` / `bid_type` / `auction_end` — nadpisywane
+ *     (archiwum jest autorytetem: „finished" u nas = „finished" u Tibii),
+ *   - `final_price` — `COALESCE(EXCLUDED.final_price, final_price)`:
+ *     nie kasujemy ceny, którą już mamy (np. z detalu), ale uzupełniamy
+ *     NULL-e (dotychczas 0/818 miało cenę!),
+ *   - skille / blessings — ustawiane TYLKO przy INSERT (nasze z detalu
+ *     są pełniejsze; nie nadpisujemy ich szczątkowym zbiorem z archiwum).
+ */
+export async function upsertArchivedAuctions(
+  db: Db,
+  rows: readonly ArchivedAuctionRow[],
+): Promise<UpsertArchivedOutcome> {
+  if (rows.length === 0) return { inserted: 0, updated: 0, skipped: 0 };
+
+  // Cache nazwa świata → id (archiwum podaje tylko nazwę).
+  const worldRows = await db.select({ id: worlds.id, name: worlds.name }).from(worlds);
+  const worldByName = new Map(worldRows.map((w) => [w.name, w.id] as const));
+
+  let inserted = 0;
+  let updated = 0;
+  let skipped = 0;
+
+  const CHUNK_SIZE = 250;
+  for (let i = 0; i < rows.length; i += CHUNK_SIZE) {
+    const chunk = rows.slice(i, i + CHUNK_SIZE);
+    const values: (typeof auctions.$inferInsert)[] = [];
+
+    for (const r of chunk) {
+      const worldId = worldByName.get(r.worldName);
+      if (worldId === undefined) {
+        skipped += 1;
+        continue;
+      }
+      values.push({
+        auctionId: r.auctionId,
+        characterName: r.characterName,
+        level: r.level,
+        vocation: r.vocationPromoted,
+        vocationBase: r.vocation,
+        sex: r.sex,
+        worldId,
+        bid: r.bid,
+        bidType: r.bidType,
+        auctionStart: r.auctionStart,
+        auctionEnd: r.auctionEnd,
+        status: r.status,
+        finalPrice: r.finalPrice,
+        skillMagic: r.skills.magic ?? 0,
+        skillClub: r.skills.club ?? 0,
+        skillFist: r.skills.fist ?? 0,
+        skillSword: r.skills.sword ?? 0,
+        skillAxe: r.skills.axe ?? 0,
+        skillDistance: r.skills.distance ?? 0,
+        skillShielding: r.skills.shielding ?? 0,
+        skillFishing: r.skills.fishing ?? 0,
+        blessingsActive: r.blessingsActive ?? 0,
+        rawJson: r.rawJson,
+      });
+    }
+
+    if (values.length === 0) continue;
+
+    const returned = await db
+      .insert(auctions)
+      .values(values)
+      .onConflictDoUpdate({
+        target: auctions.auctionId,
+        set: {
+          status: sql`EXCLUDED.status`,
+          bid: sql`EXCLUDED.bid`,
+          bidType: sql`EXCLUDED.bid_type`,
+          auctionEnd: sql`EXCLUDED.auction_end`,
+          finalPrice: sql`COALESCE(EXCLUDED.final_price, ${auctions.finalPrice})`,
+          lastSeenAt: sql`now()`,
+        },
+      })
+      .returning({ inserted: sql<boolean>`(xmax::text::bigint = 0)` });
+
+    for (const row of returned) {
+      if (row.inserted === true) inserted += 1;
+      else updated += 1;
+    }
+  }
+
+  return { inserted, updated, skipped };
+}
+
 /** IDs aktywnych aukcji kończących się w oknie `[NOW, NOW + withinHours]`. */
 export async function getEndingSoonIds(db: Db, withinHours: number): Promise<readonly bigint[]> {
   const rows = await db

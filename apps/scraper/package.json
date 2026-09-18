@@ -21,6 +21,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "scrap:auctions": "node --import tsx/esm src/cli/scrape.ts full",
     "scrap:items": "node --import tsx/esm src/cli/scrape.ts reference",
+    "scrap:history": "node --import tsx/esm src/cli/scrape-history.ts",
     "scrap:scheduler": "node --import tsx/esm src/start.ts",
     "ref:scrape": "node --import tsx/esm src/cli/scrape.ts reference"
   },

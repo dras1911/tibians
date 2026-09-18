@@ -134,6 +134,12 @@ export const DEFAULT_R11_BUDGET_PER_MINUTE = 120;
  */
 export const TIBIA_URLS = {
   auctionList: "https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades",
+  /**
+   * Archiwum zakończonych aukcji (W18) — ~23 000 pozycji, paginacja
+   * `&currentpage=N` (1..~919), sortowanie od najstarszych.
+   * Wiersze mają Winning Bid (cena końcowa) + status finished/cancelled.
+   */
+  auctionHistory: "https://www.tibia.com/charactertrade/?subtopic=pastcharactertrades",
   auctionDetail: (id: string | number): string =>
     `https://www.tibia.com/charactertrade/?subtopic=currentcharactertrades&page=details&auctionid=${encodeURIComponent(String(id))}`,
   ajaxPost: "https://www.tibia.com/websiteservices/handle_charactertrades.php",

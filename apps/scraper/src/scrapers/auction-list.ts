@@ -163,8 +163,11 @@ const AUCTION_ID_REGEX = /[?&]auctionid=(\d+)/;
 /**
  * Regex dla headera: `Level: 619 | Vocation: Elite Knight | Male | World: Jadebra`.
  * Toleruje NBSP (U+00A0) i zwykłe spacje między polami (Tibia czasem wstawia NBSP).
+ *
+ * Eksportowane także dla `auction-history.ts` (archiwum pastcharactertrades
+ * używa identycznego nagłówka `.AuctionHeader`).
  */
-const HEADER_FIELD_REGEX = {
+export const HEADER_FIELD_REGEX = {
   level: /Level:\s*(\d+)/,
   vocation: /Vocation:\s*([^|]+?)\s*\|/,
   sex: /(Male|Female)/,
