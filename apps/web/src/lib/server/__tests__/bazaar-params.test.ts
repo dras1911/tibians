@@ -73,4 +73,16 @@ describe("parseBazaarSearchParams", () => {
     expect(filters.storeItems).toBeUndefined();
     expect(pagination.page).toBe(2);
   });
+
+  it("questsMin/rareNicknames — nowe pola przechodzą przez parse", () => {
+    const { filters } = parseBazaarSearchParams({ questsMin: "25", rareNicknames: "1" });
+    expect(filters.questsMin).toBe(25);
+    expect(filters.rareNicknames).toBe(true);
+  });
+
+  it("gemsMin*/storeMin* — podłączone do schematu (wcześniej tylko w UI)", () => {
+    const { filters } = parseBazaarSearchParams({ gemsMinGreater: "10", storeMinItems: "5" });
+    expect(filters.gemsMinGreater).toBe(10);
+    expect(filters.storeMinItems).toBe(5);
+  });
 });

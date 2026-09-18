@@ -150,6 +150,13 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
   const conditions: SQL[] = [];
   if (filters.status) {
     conditions.push(eq(auctions.status, filters.status));
+    // „Aktywne" = jeszcze nie zakończone. Bez tego aukcja po terminie, której
+    // scraper nie zdążył zamknąć (status wciąż `active`), lądowała na liście
+    // z badge „Zakończona" (zgłoszenie użytkownika — „lista wypełnia się
+    // zakończonymi"). Defensywa niezależna od stanu pętli ending-soon.
+    if (filters.status === "active") {
+      conditions.push(gt(auctions.auctionEnd, sql`now()`));
+    }
   }
 
   if (filters.world) {
@@ -242,6 +249,40 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
   }
   if (filters.tcInvestedMax !== undefined) {
     conditions.push(sql`${auctions.tcInvested} <= ${filters.tcInvestedMax}`);
+  }
+
+  // Gemy — minima (lesser/regular/greater).
+  if (filters.gemsMinLesser !== undefined) {
+    conditions.push(gte(auctions.gemsLesser, filters.gemsMinLesser));
+  }
+  if (filters.gemsMinRegular !== undefined) {
+    conditions.push(gte(auctions.gemsRegular, filters.gemsMinRegular));
+  }
+  if (filters.gemsMinGreater !== undefined) {
+    conditions.push(gte(auctions.gemsGreater, filters.gemsMinGreater));
+  }
+
+  // Store counts — minima (outfity/mounty/itemy z Tibia Store).
+  if (filters.storeMinOutfits !== undefined) {
+    conditions.push(gte(auctions.storeOutfitsCount, filters.storeMinOutfits));
+  }
+  if (filters.storeMinMounts !== undefined) {
+    conditions.push(gte(auctions.storeMountsCount, filters.storeMinMounts));
+  }
+  if (filters.storeMinItems !== undefined) {
+    conditions.push(gte(auctions.storeItemsCount, filters.storeMinItems));
+  }
+
+  // Questy — minimum ukończonych.
+  if (filters.questsMin !== undefined) {
+    conditions.push(gte(auctions.questsCompleted, filters.questsMin));
+  }
+
+  // Rzadkie nazwy postaci — znaki specjalne, ≤3 znaki albo same duże litery.
+  if (filters.rareNicknames === true) {
+    conditions.push(
+      sql`(${auctions.characterName} ~ '[äëïöüÿÄËÏÖÜŸ]' OR length(${auctions.characterName}) <= 3 OR ${auctions.characterName} = upper(${auctions.characterName}))`,
+    );
   }
 
   // BattlEye jest na `worlds`, nie `auctions` — dołączamy do WHERE przez JOIN.

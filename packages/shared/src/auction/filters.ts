@@ -216,6 +216,28 @@ export const auctionFiltersObject = z
     tcInvestedMin: z.coerce.number().int().min(0).optional(),
     tcInvestedMax: z.coerce.number().int().min(0).optional(),
 
+    /** Gemy (minimum) — `gems_lesser/regular/greater` z detalu. */
+    gemsMinLesser: z.coerce.number().int().min(0).optional(),
+    gemsMinRegular: z.coerce.number().int().min(0).optional(),
+    gemsMinGreater: z.coerce.number().int().min(0).optional(),
+
+    /** Store counts (minimum) — `store_outfits/mounts/items_count` z detalu. */
+    storeMinOutfits: z.coerce.number().int().min(0).optional(),
+    storeMinMounts: z.coerce.number().int().min(0).optional(),
+    storeMinItems: z.coerce.number().int().min(0).optional(),
+
+    /** Minimum ukończonych questów (`quests_completed`). */
+    questsMin: z.coerce.number().int().min(0).optional(),
+
+    /**
+     * Rzadkie nazwy postaci — znaki specjalne (äëïöüÿ…), ≤3 znaki albo same
+     * duże litery (definicja jak ExevoPan).
+     */
+    rareNicknames: z
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+
     /** BattlEye (wymuszenie na świecie — wcześniej dostępne tylko w UI). */
     battleye: z.enum(["protected", "initially protected", "not protected"]).optional(),
 

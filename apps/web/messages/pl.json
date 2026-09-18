@@ -322,8 +322,8 @@
         "Retro Hardcore PvP": "Retro Hardcore PvP"
       },
       "battleye": {
-        "protected": "🟢 Zielone (chronione)",
-        "initially protected": "🟡 Żółte (tymczasowo)",
+        "protected": "🟢 Zielone",
+        "initially protected": "🟡 Żółte",
         "not protected": "🔴 Wyłączone"
       },
       "activeChip": {
@@ -426,7 +426,15 @@
           "charmMin": "Charm points min",
           "charmMax": "Charm points max",
           "tcMin": "Zainwestowane TC min",
-          "tcMax": "Zainwestowane TC max"
+          "tcMax": "Zainwestowane TC max",
+          "tags": {
+            "soulWar": "💀 Soul War",
+            "primalOrdeal": "🦖 Primal Ordeal",
+            "lotsOfCharms": "✨ Dużo charmów",
+            "lotsOfQuests": "📜 Dużo questów",
+            "lotsOfStoreItems": "🛍️ Dużo przedmiotów z Tibia Store",
+            "rareNicknames": "🔤 Rzadkie nazwy postaci"
+          }
         }
       },
       "presets": {

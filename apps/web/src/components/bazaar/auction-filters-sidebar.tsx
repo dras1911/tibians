@@ -235,6 +235,15 @@ const PVP_TYPES: PvPTypeFilter[] = [
 // światów bez BattlEye, więc „not protected” nie jest oferowane w filtrach.
 const BATTLEYE_TYPES: BattlEyeFilter[] = ["protected", "initially protected"];
 
+/**
+ * Progi tagów „Różne" (wzór: ExevoPan — „Dużo charmów" itd.).
+ * Dobrane z rozkładów produkcji (percentyle p75–p90 aktywnych aukcji),
+ * żeby tagi nie łapały ani całej listy, ani pojedynczych sztuk.
+ */
+const LOTS_OF_CHARMS_MIN = 3000;
+const LOTS_OF_QUESTS_MIN = 25;
+const LOTS_OF_STORE_ITEMS_MIN = 10;
+
 const REGIONS: RegionFilter[] = ["EU", "NA", "BR", "OCE"];
 
 // ─────────────────────────────────────────────────────────────────────
@@ -267,6 +276,8 @@ function countActiveFilters(f: BazaarFiltersUi): number {
   if (f.biddedOnly) count++;
   if (f.charmPointsMin !== undefined || f.charmPointsMax !== undefined) count++;
   if (f.tcInvestedMin !== undefined || f.tcInvestedMax !== undefined) count++;
+  if (f.questsMin !== undefined) count++;
+  if (f.rareNicknames) count++;
   if (
     f.gemsMinLesser !== undefined ||
     f.gemsMinRegular !== undefined ||
@@ -331,6 +342,40 @@ export function AuctionFiltersSidebar({
     },
     [storeItemsSelected, update],
   );
+
+  // ── Tagi „Różne" (wzór: ExevoPan) — skróty do filtrów z progami ────
+  const miscTags: { key: string; checked: boolean; onToggle: (on: boolean) => void }[] = [
+    {
+      key: "soulWar",
+      checked: filters.hasSoulWar === true,
+      onToggle: (v) => update({ hasSoulWar: v ? true : undefined }),
+    },
+    {
+      key: "primalOrdeal",
+      checked: filters.hasPrimalOrdeal === true,
+      onToggle: (v) => update({ hasPrimalOrdeal: v ? true : undefined }),
+    },
+    {
+      key: "lotsOfCharms",
+      checked: filters.charmPointsMin === LOTS_OF_CHARMS_MIN,
+      onToggle: (v) => update({ charmPointsMin: v ? LOTS_OF_CHARMS_MIN : undefined }),
+    },
+    {
+      key: "lotsOfQuests",
+      checked: filters.questsMin === LOTS_OF_QUESTS_MIN,
+      onToggle: (v) => update({ questsMin: v ? LOTS_OF_QUESTS_MIN : undefined }),
+    },
+    {
+      key: "lotsOfStoreItems",
+      checked: filters.storeMinItems === LOTS_OF_STORE_ITEMS_MIN,
+      onToggle: (v) => update({ storeMinItems: v ? LOTS_OF_STORE_ITEMS_MIN : undefined }),
+    },
+    {
+      key: "rareNicknames",
+      checked: filters.rareNicknames === true,
+      onToggle: (v) => update({ rareNicknames: v ? true : undefined }),
+    },
+  ];
 
   const clearOne = React.useCallback(
     (key: keyof BazaarFiltersUi) => {
@@ -868,18 +913,6 @@ export function AuctionFiltersSidebar({
             </h4>
             <div className="grid grid-cols-1 gap-1">
               <MustHaveToggle
-                id="mh-soulwar"
-                label={tAdvanced("mustHave.soulWar")}
-                checked={filters.hasSoulWar === true}
-                onToggle={(v) => update({ hasSoulWar: v ? true : undefined })}
-              />
-              <MustHaveToggle
-                id="mh-primalordeal"
-                label={tAdvanced("mustHave.primalOrdeal")}
-                checked={filters.hasPrimalOrdeal === true}
-                onToggle={(v) => update({ hasPrimalOrdeal: v ? true : undefined })}
-              />
-              <MustHaveToggle
                 id="mh-imbuesfull"
                 label={tAdvanced("mustHave.imbuesFull")}
                 checked={filters.imbuesFull === true}
@@ -1054,6 +1087,25 @@ export function AuctionFiltersSidebar({
             >
               {tAdvanced("misc.label")}
             </h4>
+            {/* Tagi (wzór: ExevoPan) — skróty do filtrów z ustalonymi progami. */}
+            <div className="mb-2 flex flex-wrap gap-1.5">
+              {miscTags.map((tag) => (
+                <button
+                  key={tag.key}
+                  type="button"
+                  aria-pressed={tag.checked}
+                  onClick={() => tag.onToggle(!tag.checked)}
+                  className={cn(
+                    "rounded-full border px-2.5 py-1 text-xs transition-colors",
+                    tag.checked
+                      ? "border-primary bg-primary/15 font-medium text-foreground"
+                      : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-foreground",
+                  )}
+                >
+                  {tAdvanced(`misc.tags.${tag.key}`)}
+                </button>
+              ))}
+            </div>
             <div className="space-y-2">
               <MustHaveToggle
                 id="misc-biddedonly"
@@ -1224,6 +1276,8 @@ function countAdvancedActive(f: BazaarFiltersUi): number {
   if (f.biddedOnly) count++;
   if (f.charmPointsMin !== undefined || f.charmPointsMax !== undefined) count++;
   if (f.tcInvestedMin !== undefined || f.tcInvestedMax !== undefined) count++;
+  if (f.questsMin !== undefined) count++;
+  if (f.rareNicknames) count++;
   if (
     f.gemsMinLesser !== undefined ||
     f.gemsMinRegular !== undefined ||

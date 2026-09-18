@@ -226,6 +226,8 @@ export function buildQueryString(
     params.set("tcInvestedMin", String(filters.tcInvestedMin));
   if (filters.tcInvestedMax !== undefined)
     params.set("tcInvestedMax", String(filters.tcInvestedMax));
+  if (filters.questsMin !== undefined) params.set("questsMin", String(filters.questsMin));
+  if (filters.rareNicknames === true) params.set("rareNicknames", "1");
 
   // ── Extended (T42+) ────────────────────────────────────────────────
   for (const key of EXTRA_FILTER_KEYS) {
@@ -307,6 +309,15 @@ export function useBazaarFilters(options: { debounceMs?: number } = {}): UseBaza
   // Debounced write do URL.
   const pendingTimer = React.useRef<ReturnType<typeof setTimeout> | null>(null);
   const lastSerialized = React.useRef<string>("");
+
+  // Na starcie zsynchronizuj ref z BIEŻĄCYM URL-em. Bez tego pierwszy zapis
+  // „wszystko puste" (np. „Wyczyść wszystko" po wejściu z `?levelMin=800`)
+  // był no-opem: `buildQueryString({}) === "" === lastSerialized` → brak
+  // nawigacji i filtry z URL zostawały (bug: przycisk nic nie robił).
+  React.useEffect(() => {
+    lastSerialized.current = searchParams.toString();
+    // Inicjalizacja raz na mount — świadomie bez zależności.
+  }, []);
 
   const writeToUrl = React.useCallback(
     (next: BazaarFiltersUi) => {

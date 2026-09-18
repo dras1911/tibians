@@ -331,9 +331,13 @@ function BazaarClientInner({
 
       {/* ── Layout: sidebar + content ─────────────────────────────── */}
       <div className="grid gap-6 md:grid-cols-[16rem_1fr]">
-        {/* Desktop sidebar */}
+        {/* Desktop sidebar — sticky z własnym scrollem: sidebar bywa wyższy
+            niż viewport, więc bez `max-h` + `overflow-y-auto` dolne sekcje
+            filtrów były nieosiągalne do czasu dojechania listy do końca. */}
         <aside className="hidden md:block">
-          <div className="sticky top-20">{sidebarContent}</div>
+          <div className="sticky top-20 max-h-[calc(100vh-6rem)] overflow-y-auto overscroll-contain pr-1">
+            {sidebarContent}
+          </div>
         </aside>
 
         {/* Mobile sheet */}

@@ -322,8 +322,8 @@
         "Retro Hardcore PvP": "Retro Hardcore PvP"
       },
       "battleye": {
-        "protected": "🟢 Green (protected)",
-        "initially protected": "🟡 Yellow (temporary)",
+        "protected": "🟢 Green",
+        "initially protected": "🟡 Yellow",
         "not protected": "🔴 Disabled"
       },
       "activeChip": {
@@ -426,7 +426,15 @@
           "charmMin": "Charm points min",
           "charmMax": "Charm points max",
           "tcMin": "TC invested min",
-          "tcMax": "TC invested max"
+          "tcMax": "TC invested max",
+          "tags": {
+            "soulWar": "💀 Soul War",
+            "primalOrdeal": "🦖 Primal Ordeal",
+            "lotsOfCharms": "✨ Lots of charms",
+            "lotsOfQuests": "📜 Lots of quests",
+            "lotsOfStoreItems": "🛍️ Lots of Store items",
+            "rareNicknames": "🔤 Rare nicknames"
+          }
         }
       },
       "presets": {
