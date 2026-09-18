@@ -251,6 +251,13 @@
       "actions": "Actions",
       "select": "Select"
     },
+    "compareBar": {
+      "label": "Auction comparison",
+      "selected": "Comparing: {count}/{max}",
+      "compare": "Compare",
+      "hint": "Select one more auction",
+      "clear": "Clear selection"
+    },
     "battleye": {
       "protected": "YBE — yellow BattlEye: world protected (BattlEye added after release)",
       "initially protected": "GBE — green BattlEye: world protected since its release",

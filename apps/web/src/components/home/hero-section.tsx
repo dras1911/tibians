@@ -80,7 +80,7 @@ export async function HeroSection({ totalActive, freshness }: HeroSectionProps) 
   return (
     <section
       aria-labelledby="home-hero-title"
-      className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-accent/10 px-6 py-10 shadow-sm sm:px-10 sm:py-14"
+      className="relative overflow-hidden rounded-2xl border bg-gradient-to-br from-primary/5 via-card to-accent/10 px-6 py-8 shadow-sm sm:px-10 sm:py-10"
     >
       {/* Decorative grid pattern overlay */}
       <div
@@ -108,14 +108,14 @@ export async function HeroSection({ totalActive, freshness }: HeroSectionProps) 
         {/* ── Title ─────────────────────────────────────────────────── */}
         <h1
           id="home-hero-title"
-          className="mt-4 max-w-3xl text-3xl font-semibold leading-tight tracking-tight text-foreground sm:text-4xl lg:text-5xl"
+          className="mt-3 max-w-3xl text-2xl font-semibold leading-tight tracking-tight text-foreground sm:text-3xl lg:text-4xl"
         >
           {t("title")}
         </h1>
-        <p className="mt-4 max-w-2xl text-base text-muted-foreground sm:text-lg">{t("subtitle")}</p>
+        <p className="mt-3 max-w-2xl text-base text-muted-foreground">{t("subtitle")}</p>
 
         {/* ── Stat box: licznik + freshness ─────────────────────────── */}
-        <div className="mt-6 inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-card/80 px-4 py-3 text-sm shadow-sm backdrop-blur">
+        <div className="mt-5 inline-flex flex-wrap items-center gap-x-4 gap-y-2 rounded-lg border bg-card/80 px-4 py-2.5 text-sm shadow-sm backdrop-blur">
           <div className="flex items-center gap-2">
             <Activity className="h-4 w-4 text-primary" aria-hidden="true" />
             <span className="numeric font-mono text-lg font-semibold tabular-nums text-foreground">
@@ -132,7 +132,7 @@ export async function HeroSection({ totalActive, freshness }: HeroSectionProps) 
         </div>
 
         {/* ── CTA ──────────────────────────────────────────────────── */}
-        <div className="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Button asChild size="lg" className="h-13 px-6 text-base">
             <Link href="/bazaar">
               {t("heroCta")}

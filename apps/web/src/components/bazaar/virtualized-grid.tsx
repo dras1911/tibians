@@ -66,9 +66,7 @@ const BREAKPOINTS = [
  * Hook zwracający liczbę kolumn na podstawie szerokości kontenera.
  * `ResizeObserver` zapewnia reakcję na zmianę szerokości (np. obrót mobile).
  */
-function useColumnCount(
-  containerRef: React.RefObject<HTMLElement | null>,
-): number {
+function useColumnCount(containerRef: React.RefObject<HTMLElement | null>): number {
   const [cols, setCols] = React.useState(1);
 
   React.useEffect(() => {
@@ -103,10 +101,6 @@ function useColumnCount(
 export interface VirtualizedAuctionGridProps {
   /** Lista aukcji (client-safe). */
   auctions: AuctionSummary[];
-  /** Callback porównania (parent state — BazaarClient trzyma Set). */
-  onCompareToggle?: ((id: string, selected: boolean) => void) | undefined;
-  /** Set ID zaznaczonych do porównania. */
-  comparedIds: ReadonlySet<string>;
   /**
    * Wymuś wirtualizację (niezależnie od progu). Przydatne w testach.
    * @default false
@@ -131,63 +125,31 @@ type VirtualizedInnerProps = VirtualizedAuctionGridProps;
  */
 export function VirtualizedAuctionGrid({
   auctions,
-  onCompareToggle,
-  comparedIds,
   forceVirtualize = false,
   className,
 }: VirtualizedAuctionGridProps) {
-  const shouldVirtualize =
-    forceVirtualize || auctions.length > VIRTUALIZE_THRESHOLD;
+  const shouldVirtualize = forceVirtualize || auctions.length > VIRTUALIZE_THRESHOLD;
 
   if (!shouldVirtualize) {
-    return (
-      <StaticAuctionGrid
-        auctions={auctions}
-        onCompareToggle={onCompareToggle}
-        comparedIds={comparedIds}
-        className={className}
-      />
-    );
+    return <StaticAuctionGrid auctions={auctions} className={className} />;
   }
 
-  return (
-    <VirtualizedInner
-      auctions={auctions}
-      onCompareToggle={onCompareToggle}
-      comparedIds={comparedIds}
-      className={className}
-    />
-  );
+  return <VirtualizedInner auctions={auctions} className={className} />;
 }
 
 // ───────────────────────────────────────────────────────────────────────
 // StaticAuctionGrid — zwykły CSS grid (≤100 aukcji)
 // ───────────────────────────────────────────────────────────────────────
 
-function StaticAuctionGrid({
-  auctions,
-  onCompareToggle,
-  comparedIds,
-  className,
-}: VirtualizedInnerProps) {
+function StaticAuctionGrid({ auctions, className }: VirtualizedInnerProps) {
   return (
     <div
-      className={cn(
-        "grid gap-4 sm:grid-cols-2 xl:grid-cols-3",
-        className,
-      )}
+      className={cn("grid gap-4 sm:grid-cols-2 xl:grid-cols-3", className)}
       data-testid="static-grid"
       data-row-count={auctions.length}
     >
       {auctions.map((a: AuctionSummary) => (
-        <AuctionCard
-          key={a.id}
-          auction={a}
-          {...(onCompareToggle
-            ? { onCompareToggle }
-            : {})}
-          isCompared={comparedIds.has(a.id)}
-        />
+        <AuctionCard key={a.id} auction={a} />
       ))}
     </div>
   );
@@ -197,12 +159,7 @@ function StaticAuctionGrid({
 // VirtualizedInner — właściwy virtualizer (>100 aukcji)
 // ───────────────────────────────────────────────────────────────────────
 
-function VirtualizedInner({
-  auctions,
-  onCompareToggle,
-  comparedIds,
-  className,
-}: VirtualizedInnerProps) {
+function VirtualizedInner({ auctions, className }: VirtualizedInnerProps) {
   // Ref do scrollowalnego kontenera (rodzic dla `position: relative`).
   const scrollRef = React.useRef<HTMLDivElement | null>(null);
   const innerRef = React.useRef<HTMLDivElement | null>(null);
@@ -214,8 +171,7 @@ function VirtualizedInner({
   // po transform nie zawsze zwraca poprawne wartości dla virtualizera.
   // Tam wyłączamy dynamiczny pomiar (używamy estymacji).
   const supportsMeasure =
-    typeof window !== "undefined" &&
-    navigator.userAgent.indexOf("AppleWebKit") === -1;
+    typeof window !== "undefined" && navigator.userAgent.indexOf("AppleWebKit") === -1;
 
   // `useVirtualizer` z window-scrolling (scrollRef). Domyślne
   // `getScrollElement` zwraca scrollRef — działa out-of-the-box.
@@ -226,8 +182,7 @@ function VirtualizedInner({
     overscan: OVERSCAN,
     ...(supportsMeasure
       ? {
-          measureElement: (el) =>
-            el?.getBoundingClientRect().height ?? DEFAULT_ROW_HEIGHT,
+          measureElement: (el) => el?.getBoundingClientRect().height ?? DEFAULT_ROW_HEIGHT,
         }
       : {}),
   });
@@ -239,10 +194,7 @@ function VirtualizedInner({
       data-row-count={auctions.length}
       data-virtualized-rows={rowCount}
       data-cols={cols}
-      className={cn(
-        "relative max-h-[70vh] overflow-y-auto rounded-lg border",
-        className,
-      )}
+      className={cn("relative max-h-[70vh] overflow-y-auto rounded-lg border", className)}
       // 70vh = ~5-6 wierszy widocznych (zależy od kolumn). Pozwala na
       // scroll wewnętrzny — header listy zostaje widoczny (sticky).
     >
@@ -275,14 +227,7 @@ function VirtualizedInner({
                 style={{ gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))` }}
               >
                 {rowAuctions.map((a: AuctionSummary) => (
-                  <AuctionCard
-                    key={a.id}
-                    auction={a}
-                    {...(onCompareToggle
-                      ? { onCompareToggle }
-                      : {})}
-                    isCompared={comparedIds.has(a.id)}
-                  />
+                  <AuctionCard key={a.id} auction={a} />
                 ))}
               </div>
             </div>

@@ -67,10 +67,7 @@ import { useFormatter, useTranslations } from "next-intl";
 import { Badge } from "@/components/ui/badge";
 import { AuctionSection } from "@/components/home/auction-section";
 import type { AuctionSummary } from "@/components/bazaar/auction-summary";
-import {
-  useAuctionLive,
-  type AuctionLiveStatus,
-} from "@/lib/hooks/use-auction-live";
+import { useAuctionLive, type AuctionLiveStatus } from "@/lib/hooks/use-auction-live";
 
 // ───────────────────────────────────────────────────────────────────────
 // Types
@@ -162,10 +159,7 @@ export function EndingSoonSectionLive({
   const statusLabel = tLive(status);
 
   return (
-    <section
-      aria-labelledby="ending-soon-live-title"
-      className="space-y-4"
-    >
+    <section aria-labelledby="ending-soon-live-title" className="space-y-4">
       <header className="flex flex-wrap items-end justify-between gap-3">
         <div className="min-w-0 flex-1">
           <div className="flex flex-wrap items-center gap-2">
@@ -173,10 +167,7 @@ export function EndingSoonSectionLive({
               id="ending-soon-live-title"
               className="flex items-center gap-2 text-lg font-semibold tracking-tight sm:text-xl"
             >
-              <Clock
-                className="h-5 w-5 text-primary"
-                aria-hidden="true"
-              />
+              <Clock className="h-5 w-5 text-primary" aria-hidden="true" />
               {title}
             </h2>
             <Badge
@@ -234,7 +225,7 @@ export function EndingSoonSectionLive({
         viewAllLabel={viewAllLabel}
         emptyTitle={emptyTitle}
         emptyDescription={emptyDescription}
-        maxItems={4}
+        maxItems={9}
         hideHeader
       />
     </section>

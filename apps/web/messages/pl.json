@@ -251,6 +251,13 @@
       "actions": "Akcje",
       "select": "Zaznacz"
     },
+    "compareBar": {
+      "label": "Porównanie aukcji",
+      "selected": "Porównanie: {count}/{max}",
+      "compare": "Porównaj",
+      "hint": "Wybierz jeszcze jedną aukcję",
+      "clear": "Wyczyść wybór"
+    },
     "battleye": {
       "protected": "YBE — żółte BattlEye: świat chroniony (ochrona dołączona w trakcie życia świata)",
       "initially protected": "GBE — zielone BattlEye: świat chroniony od samego startu",

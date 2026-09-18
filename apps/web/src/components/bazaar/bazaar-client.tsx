@@ -15,8 +15,9 @@
  *      zmieniając `?page=`, `?sortBy=`, `?sortDir=`, `?pageSize=`.
  *   5. **Empty state** z CTA "Wyczyść wszystkie filtry" (T45 — pełne
  *      sugestie po server-side computation w W9+).
- *   6. **Porównanie** (T62): stan `comparedIds` w URL `?compare=id1,id2`.
- *      Tutaj trzymamy prosty state (lifted up do tego klienta).
+ *   6. **Porównanie** (T62): wspólny stan w `localStorage` (`useCompareSelection`)
+ *      — karty i tabela zaznaczają bezpośrednio; pasek `<CompareBar>` prowadzi
+ *      do `/bazaar/compare?a=&b=`.
  *   7. **Mobile FAB → Sheet** (T14): filtr dostępny przez `Sheet`.
  *   8. **Sticky rząd aktywnych chipów + Kopiuj link** (T43): renderowany
  *      przez `<ActiveFiltersBar>` tuż pod toolbar.
@@ -199,9 +200,6 @@ function BazaarClientInner({
   // Sheet (mobile) — otwarty gdy user kliknie FAB "Filtry".
   const [filtersOpen, setFiltersOpen] = React.useState(false);
 
-  // Porównanie — prosty lifted state (T62 docelowo server-side).
-  const [comparedIds, setComparedIds] = React.useState<ReadonlySet<string>>(() => new Set());
-
   // ── Patch URL (sort / page / pageSize) — `replace()` żeby nie zaśmiecać
   // historii (arch §5). Filtry idą przez `setFilters` z debounce.
   const replaceUrl = React.useCallback(
@@ -236,15 +234,6 @@ function BazaarClientInner({
     },
     [replaceUrl],
   );
-
-  const handleCompareToggle = React.useCallback((id: string, selected: boolean) => {
-    setComparedIds((prev) => {
-      const next = new Set(prev);
-      if (selected) next.add(id);
-      else next.delete(id);
-      return next;
-    });
-  }, []);
 
   // ── Bridge: useBazaarFilters.setFilters resetuje `?page` do 1 przy
   // zmianie filtrów (analogicznie do starego handlera w BazaarClient).
@@ -372,18 +361,9 @@ function BazaarClientInner({
               onReset={handleReset}
             />
           ) : view === "cards" ? (
-            <VirtualizedAuctionGrid
-              auctions={auctions}
-              onCompareToggle={handleCompareToggle}
-              comparedIds={comparedIds}
-            />
+            <VirtualizedAuctionGrid auctions={auctions} />
           ) : (
-            <AuctionTable
-              rows={auctions}
-              onCompareToggle={handleCompareToggle}
-              comparedIds={comparedIds}
-              caption={tList("pageTitle")}
-            />
+            <AuctionTable rows={auctions} caption={tList("pageTitle")} />
           )}
 
           {/* ── Pagination ──────────────────────────────────────── */}

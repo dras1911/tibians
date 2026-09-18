@@ -51,6 +51,7 @@ import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/comp
 import { useDensity, densityRowClass } from "@/components/density-provider";
 import { RegionFlag } from "@/components/ui/region-flag";
 import { Link } from "@/i18n/routing";
+import { useCompareSelection } from "@/lib/hooks/use-compare-selection";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
 
@@ -83,23 +84,15 @@ const REGION_TONE: Record<AuctionSummary["worldRegion"], string> = {
 
 export interface AuctionTableProps {
   rows: AuctionSummary[];
-  /** Wywoływane przez parent przy zaznaczeniu do porównania. */
-  onCompareToggle?: (id: string, selected: boolean) => void;
-  /** Mapa zaznaczonych ID aukcji (kontrolowany checkbox). */
-  comparedIds?: ReadonlySet<string>;
   /** Caption dostępny dla SR (arch §6.5). */
   caption?: string;
   className?: string;
 }
 
-export function AuctionTable({
-  rows,
-  onCompareToggle,
-  comparedIds,
-  caption,
-  className,
-}: AuctionTableProps) {
+export function AuctionTable({ rows, caption, className }: AuctionTableProps) {
   const t = useTranslations("Bazaar.table");
+  // Porównanie aukcji — wspólny stan (localStorage), ten sam co karty i pasek.
+  const { isSelected, toggle: toggleCompare } = useCompareSelection();
   const tCard = useTranslations("Bazaar.card");
   const format = useFormatter();
   const { density } = useDensity();
@@ -117,11 +110,10 @@ export function AuctionTable({
         header: () => <span className="sr-only">{t("select")}</span>,
         cell: ({ row }) => {
           const id = row.original.id;
-          const checked = comparedIds?.has(id) ?? false;
           return (
             <Checkbox
-              checked={checked}
-              onCheckedChange={(value) => onCompareToggle?.(id, value === true)}
+              checked={isSelected(id)}
+              onCheckedChange={() => toggleCompare(id)}
               aria-label={t("select")}
               className="h-4 w-4"
             />
@@ -316,7 +308,7 @@ export function AuctionTable({
         },
       },
     ];
-  }, [t, tCard, format, onCompareToggle, comparedIds]);
+  }, [t, tCard, format, isSelected, toggleCompare]);
 
   const table = useReactTable({
     data: rows,

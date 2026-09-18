@@ -26,15 +26,15 @@
 
 import * as React from "react";
 import { useFormatter, useTranslations } from "next-intl";
-import { Check, CheckCircle2, ExternalLink, Gavel, Scale, Sparkles, Timer } from "lucide-react";
+import { CheckCircle2, ExternalLink, Gavel, Scale, Sparkles, Timer } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Checkbox } from "@/components/ui/checkbox";
 import { RegionFlag } from "@/components/ui/region-flag";
 import { SkillIcon } from "@/components/bazaar/skill-icon";
 import { Link } from "@/i18n/routing";
+import { useCompareSelection } from "@/lib/hooks/use-compare-selection";
 import { outfitImageUrl, tibiaAuctionUrl } from "@/lib/tibia";
 import { cn } from "@/lib/utils";
 
@@ -283,10 +283,6 @@ export interface AuctionCardProps {
    *     `auction.firstSeenAt` — bez niego spada z powrotem na countdown).
    */
   timeDisplay?: "countdown" | "added";
-  /** Wywoływane przez parent przy zaznaczeniu do porównania (T40). */
-  onCompareToggle?: (id: string, selected: boolean) => void;
-  /** Czy aktualnie zaznaczona (kontrolowany checkbox). */
-  isCompared?: boolean;
   /**
    * T56 — czy animować flash przy zmianie `bid` (plan task 56 "LivePriceFlash").
    * Domyślnie `true` (czyli karta reaguje na live update z SSE / polling).
@@ -301,14 +297,16 @@ export function AuctionCard({
   auction,
   mode = "active",
   timeDisplay = "countdown",
-  onCompareToggle,
-  isCompared = false,
   showLiveFlash = true,
   className,
 }: AuctionCardProps) {
   const t = useTranslations("Bazaar.card");
   const tFilters = useTranslations("Bazaar.filters");
   const format = useFormatter();
+
+  // Porównanie aukcji — wspólny stan (localStorage), ten sam co pasek na dole.
+  const { isSelected, toggle: toggleCompare } = useCompareSelection();
+  const compared = isSelected(auction.id);
 
   // Heurystyczne tagi (cache'owane per-render, czysta funkcja).
   const tags = React.useMemo(() => deriveHeuristicTags(auction), [auction]);
@@ -331,14 +329,6 @@ export function AuctionCard({
       ? t("currentBid")
       : t("minimumBid");
   const formattedBid = format.number(displayPrice, { useGrouping: true });
-
-  // Heuristic toggle handler (przekazywany z parenta).
-  const handleCompareChange = React.useCallback(
-    (next: boolean) => {
-      onCompareToggle?.(auction.id, next);
-    },
-    [auction.id, onCompareToggle],
-  );
 
   return (
     <Card
@@ -395,6 +385,24 @@ export function AuctionCard({
         </div>
 
         <div className="flex shrink-0 flex-col items-end gap-1">
+          {isHistory ? null : (
+            <button
+              type="button"
+              onClick={() => toggleCompare(auction.id)}
+              aria-pressed={compared}
+              aria-label={compared ? t("unselectCompare") : t("compare")}
+              title={compared ? t("unselectCompare") : t("compare")}
+              className={cn(
+                "inline-flex h-8 w-8 items-center justify-center rounded-md border transition-colors",
+                "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+                compared
+                  ? "border-primary bg-primary/10 text-primary"
+                  : "border-input bg-background text-muted-foreground hover:bg-accent hover:text-accent-foreground",
+              )}
+            >
+              <Scale className="h-4 w-4" aria-hidden="true" />
+            </button>
+          )}
           {isHistory ? (
             <EndedBadge endedAt={auction.auctionEnd} />
           ) : timeDisplay === "added" && auction.firstSeenAt ? (
@@ -537,47 +545,22 @@ export function AuctionCard({
 
         {/* ── Akcje (44×44 touch targets) ─────────────────────────── */}
         <div className="flex flex-wrap items-center gap-2 pt-1">
-          <Button asChild size="sm" className="flex-1 sm:flex-none">
+          <Button asChild size="sm" className="flex-1">
             <Link href={`/bazaar/${auction.id}`}>
               <Gavel className="h-4 w-4" aria-hidden="true" />
               {t("details")}
             </Link>
           </Button>
 
-          {/* History: pomijamy Compare + OpenExternal (archiwum nie
-              jest aktywne na Bazaar — arch §5 + T58 "readonly"). */}
+          {/* History: pomijamy OpenExternal (archiwum nie jest aktywne
+              na Bazaar — arch §5 + T58 "readonly"). */}
           {isHistory ? null : (
-            <>
-              <Button asChild variant="outline" size="sm" className="flex-1 sm:flex-none">
-                <a href={tibiaAuctionUrl(auction.id)} target="_blank" rel="noopener noreferrer">
-                  <ExternalLink className="h-4 w-4" aria-hidden="true" />
-                  {t("openExternal")}
-                </a>
-              </Button>
-
-              <label
-                className={cn(
-                  "ml-auto inline-flex h-11 cursor-pointer items-center gap-2 rounded-md border px-3 text-sm font-medium",
-                  "transition-colors hover:bg-accent hover:text-accent-foreground",
-                  "focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2",
-                  isCompared
-                    ? "border-primary bg-primary/10 text-primary"
-                    : "border-input bg-background text-foreground",
-                )}
-              >
-                <Checkbox
-                  checked={isCompared}
-                  onCheckedChange={(value) => handleCompareChange(value === true)}
-                  aria-label={isCompared ? t("unselectCompare") : t("compare")}
-                  className="h-4 w-4"
-                />
-                <Scale className="h-4 w-4" aria-hidden="true" />
-                <span className="hidden sm:inline">
-                  {isCompared ? t("unselectCompare") : t("compare")}
-                </span>
-                {isCompared ? <Check className="h-4 w-4 text-success" aria-hidden="true" /> : null}
-              </label>
-            </>
+            <Button asChild variant="outline" size="sm" className="flex-1">
+              <a href={tibiaAuctionUrl(auction.id)} target="_blank" rel="noopener noreferrer">
+                <ExternalLink className="h-4 w-4" aria-hidden="true" />
+                {t("openExternal")}
+              </a>
+            </Button>
           )}
         </div>
       </CardContent>

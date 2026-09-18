@@ -16,6 +16,7 @@ import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
 import { DensityProvider } from "@/components/density-provider";
+import { CompareBar } from "@/components/bazaar/compare-bar";
 import { Footer } from "@/components/layout/footer";
 import { Header } from "@/components/layout/header";
 import { SkipLink } from "@/components/layout/skip-link";
@@ -50,8 +51,7 @@ export const metadata: Metadata = {
     default: "Tibians — kalkulatory, waloryzacja postaci i Bazaar",
     template: "%s · Tibians",
   },
-  description:
-    "Community hub dla graczy Tibii: kalkulatory, wycena postaci i analiza Char Bazaar.",
+  description: "Community hub dla graczy Tibii: kalkulatory, wycena postaci i analiza Char Bazaar.",
   /**
    * Favicon. Bez tego przeglądarka żąda `/favicon.ico` i dostaje 404
    * (widoczne jako błąd w konsoli na KAŻDEJ stronie).
@@ -113,10 +113,7 @@ export default async function LocaleLayout({
          * Anti-FOUC inline script (architecture §6.5). Must be the FIRST
          * element of <head> so the .dark class is set before paint.
          */}
-        <script
-          id="tt-no-fouc"
-          dangerouslySetInnerHTML={{ __html: noFoucScript() }}
-        />
+        <script id="tt-no-fouc" dangerouslySetInnerHTML={{ __html: noFoucScript() }} />
       </head>
       <body className="bg-background text-foreground antialiased">
         <NextIntlClientProvider locale={locale} messages={messages}>
@@ -133,11 +130,7 @@ export default async function LocaleLayout({
                *  makes it programmatically focusable so the skip-link's
                *  hash target works in browsers that don't auto-focus the
                *  main element. */}
-              <main
-                id="main"
-                tabIndex={-1}
-                className="flex-1 outline-none"
-              >
+              <main id="main" tabIndex={-1} className="flex-1 outline-none">
                 {children}
               </main>
 
@@ -148,6 +141,9 @@ export default async function LocaleLayout({
              *  baner instalacji po 2. wizycie. Oba renderują null gdy nieaktywne. */}
             <ServiceWorkerRegistrar />
             <InstallPrompt />
+            {/* Pasek porównania (localStorage) — widoczny na każdej stronie,
+                gdy cokolwiek jest zaznaczone do porównania. */}
+            <CompareBar />
           </DensityProvider>
         </NextIntlClientProvider>
       </body>
