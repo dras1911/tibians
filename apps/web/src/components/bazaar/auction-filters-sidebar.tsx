@@ -880,12 +880,6 @@ export function AuctionFiltersSidebar({
                 onToggle={(v) => update({ hasPrimalOrdeal: v ? true : undefined })}
               />
               <MustHaveToggle
-                id="mh-worldtransfer"
-                label={tAdvanced("mustHave.worldTransfer")}
-                checked={filters.hasWorldTransfer === true}
-                onToggle={(v) => update({ hasWorldTransfer: v ? true : undefined })}
-              />
-              <MustHaveToggle
                 id="mh-imbuesfull"
                 label={tAdvanced("mustHave.imbuesFull")}
                 checked={filters.imbuesFull === true}
