@@ -1,42 +1,25 @@
 /**
- * `/[locale]` — strona główna Tibians (plan T53, arch §5 krok 1).
+ * `/[locale]` — strona główna Tibians (W18, 2026-09-18).
  *
- * Zastępuje poprzedni placeholder (W9 batch 2 — wcześniej tylko `<h1>`
- * i link do `/dev/ui`).
+ * Główna = lista aukcji Char Bazaar z pełnymi filtrami (wzór: Exiva.pro),
+ * 25 aukcji na stronę — „nasza główna strona to będzie 25 aukcji i tutaj
+ * już możemy używać filtrów". Ta sama treść co `/[locale]/bazaar` —
+ * współdzielony `BazaarPageContent` (variant="home" → kompaktowy nagłówek
+ * z licznikiem; bez breadcrumbs i wielkiego hero).
  *
- * **Sekcje (arch §5 krok 1):**
- *   1. **Hero** — licznik aktywnych aukcji + freshness ("aktualizowane
- *      X min temu") + CTA do `/bazaar`
- *   2. **Kończące się w ciągu godziny** — 4 karty AuctionCard
- *      (live countdown — client side przez AuctionCard)
+ * Historia: wcześniej (T53) hero + sekcja „Kończące się w ciągu godziny".
+ * Komponenty `hero-section.tsx` / `ending-soon-section-live.tsx` zostają
+ * w repo (nieużywane) — łatwo przywrócić, gdy wrócą na główną.
  *
- * **Fetch (arch §8.2):**
- *   - `Promise.all`: `getMarketStats()` + `getHomeFreshness()` +
- *     `listEndingSoon(1)`
- *   - Każde z 3 zapytań jest indeksowane (Partial Index `status='active'`).
- *
- * **ISR (arch §8.2):**
- *   - `revalidate = 300` (5 min fallback; webhook T38 invaliduje
- *     cache przez tag `home` gdy scrape zakończy się)
- *
- * **SEO (arch §4.3):**
- *   - `generateMetadata` — locale-aware title/description
- *   - JSON-LD `WebSite` + `Organization` schema
- *
- * **i18n:** namespace `Home.*` (PL + EN).
- *
- * **Brak breadcrumbs** (jesteśmy na root `/`, nie podstroną — arch §4.2).
+ * ISR (arch §8.2): `revalidate = 300` + tag `auctions` (webhook T38).
  */
 
 import * as React from "react";
 import type { Metadata } from "next";
-import { getTranslations, setRequestLocale } from "next-intl/server";
+import { getTranslations } from "next-intl/server";
 
-import { EndingSoonSectionLive } from "@/components/home/ending-soon-section-live";
-import { HeroSection } from "@/components/home/hero-section";
-import { toAuctionSummaries } from "@/components/bazaar/auction-summary";
-import { getHomeFreshness, getMarketStats, listEndingSoon } from "@/lib/server/auctions";
-import { routing } from "@/i18n/routing";
+import { BazaarPageContent } from "@/components/bazaar/bazaar-page-content";
+import { routing, type Locale } from "@/i18n/routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
 
@@ -45,6 +28,7 @@ const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https:
 // ───────────────────────────────────────────────────────────────────────
 
 export const revalidate = 300;
+export const dynamic = "force-dynamic"; // dopóki DB jest tylko w runtime
 
 // ───────────────────────────────────────────────────────────────────────
 // generateMetadata — locale-aware SEO
@@ -57,41 +41,48 @@ export async function generateMetadata({
 }): Promise<Metadata> {
   const { locale } = await params;
   const t = await getTranslations({
-    locale,
-    namespace: "Home",
+    locale: locale as Locale,
+    namespace: "Bazaar.list",
   });
 
-  const title = t("title");
-  const description = t("subtitle");
-  const path = "/";
+  const title = t("pageTitle");
+  const localizedTitle = `${title} · Tibians`;
+  const finalTitle = localizedTitle.length <= 60 ? localizedTitle : title;
 
+  const description = t("pageDescription");
+  const finalDescription =
+    description.length <= 155 ? description : `${description.slice(0, 152)}…`;
+
+  const canonical = `${SITE_URL}/${locale}`;
   const languages: Record<string, string> = {};
   for (const l of routing.locales) {
-    languages[l] = `${SITE_URL}/${l}${path}`;
+    languages[l] = `${SITE_URL}/${l}`;
   }
 
   return {
-    title,
-    description,
-    alternates: {
-      canonical: `${SITE_URL}/${locale}${path}`,
-      languages,
-    },
+    title: finalTitle,
+    description: finalDescription,
+    alternates: { canonical, languages },
     openGraph: {
-      title,
-      description,
-      url: `${SITE_URL}/${locale}${path}`,
+      title: finalTitle,
+      description: finalDescription,
+      url: canonical,
       siteName: "Tibians",
       locale: locale === "pl" ? "pl_PL" : "en_US",
       type: "website",
+      images: [
+        {
+          url: `${SITE_URL}/og/bazaar.png`,
+          width: 1200,
+          height: 630,
+          alt: title,
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
-      title,
-      description,
-    },
-    other: {
-      "x-home-cache-tag": "home",
+      title: finalTitle,
+      description: finalDescription,
     },
   };
 }
@@ -100,25 +91,15 @@ export async function generateMetadata({
 // Page
 // ───────────────────────────────────────────────────────────────────────
 
-export default async function HomePage({ params }: { params: Promise<{ locale: string }> }) {
+export default async function HomePage({
+  params,
+  searchParams,
+}: {
+  params: Promise<{ locale: string }>;
+  searchParams: Promise<Record<string, string | string[] | undefined>>;
+}) {
   const { locale } = await params;
-  setRequestLocale(locale);
-
-  // Równoległy fetch wszystkich danych home (arch §8.2).
-  const [stats, freshness, endingSoonRows] = await Promise.all([
-    getMarketStats(),
-    getHomeFreshness(),
-    listEndingSoon(1), // < 1h
-  ]);
-
-  // Konwersja AuctionRow → AuctionSummary (client-safe).
-  const endingSoon = toAuctionSummaries(endingSoonRows);
-
-  // i18n dla sekcji.
-  const tHome = await getTranslations({
-    locale,
-    namespace: "Home",
-  });
+  const rawSearch = await searchParams;
 
   // ── JSON-LD: WebSite + SearchAction (SEO §4.3) ─────────────────────
   const jsonLd = {
@@ -126,7 +107,6 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
     "@type": "WebSite",
     name: "Tibians",
     url: `${SITE_URL}/${locale}`,
-    description: tHome("subtitle"),
     inLanguage: locale === "pl" ? "pl-PL" : "en-US",
     potentialAction: {
       "@type": "SearchAction",
@@ -136,27 +116,14 @@ export default async function HomePage({ params }: { params: Promise<{ locale: s
   };
 
   return (
-    <div className="container py-8 md:py-12">
-      {/* ── Hero ─────────────────────────────────────────────────────── */}
-      <HeroSection totalActive={stats.totalActive} freshness={freshness} />
-
-      {/* ── Sekcja "Kończące się w ciągu godziny" — LIVE SSE (T59) ────── */}
-      <div className="mt-12">
-        <EndingSoonSectionLive
-          initialAuctions={endingSoon}
-          title={tHome("sections.endingSoon.title")}
-          description={tHome("sections.endingSoon.description")}
-          viewAllLabel={tHome("sections.endingSoon.viewAll")}
-          emptyTitle={tHome("empty.endingSoonTitle")}
-          emptyDescription={tHome("empty.endingSoonDescription")}
-        />
-      </div>
+    <>
+      <BazaarPageContent locale={locale as Locale} rawSearchParams={rawSearch} variant="home" />
 
       {/* ── JSON-LD WebSite schema (SEO §4.3) ────────────────────────── */}
       <script
         type="application/ld+json"
         dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
       />
-    </div>
+    </>
   );
 }

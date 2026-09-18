@@ -88,6 +88,14 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
   const tBazaar = useTranslations("Bazaar");
   const tCalc = useTranslations("Calculators");
   const tRef = useTranslations("Reference");
+
+  /**
+   * W18 (2026-09-18): skupiamy się na Bazaarze — sekcje narzędziowe
+   * (Kalkulatory, Referencje, Bosses, Blog) są tymczasowo UKRYTE w menu.
+   * Strony nadal istnieją pod swoimi URL-ami; przestaw na `true`, żeby
+   * przywrócić je do nawigacji mobilnej.
+   */
+  const SHOW_TOOLS = false;
   const tCommon = useTranslations("Common");
 
   return (
@@ -100,9 +108,7 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
       >
         <SheetHeader className="border-b px-5 pb-4 pt-5">
           <SheetTitle className="text-base">{tCommon("appName")}</SheetTitle>
-          <SheetDescription className="text-xs">
-            {t("openMenuAria")}
-          </SheetDescription>
+          <SheetDescription className="text-xs">{t("openMenuAria")}</SheetDescription>
         </SheetHeader>
 
         {/* ★ Theme + locale — ALWAYS visible at the top, never collapsed. */}
@@ -122,16 +128,11 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
         </div>
 
         {/* Accordion sections — primary nav (touch targets ≥ 44 px). */}
-        <nav
-          aria-label={t("brand")}
-          className="flex-1 overflow-y-auto px-2 py-2"
-        >
+        <nav aria-label={t("brand")} className="flex-1 overflow-y-auto px-2 py-2">
           <Accordion type="multiple" className="w-full">
             {/* Bazaar */}
             <AccordionItem value="bazaar">
-              <AccordionTrigger className="min-h-11">
-                {t("bazaar")}
-              </AccordionTrigger>
+              <AccordionTrigger className="min-h-11">{t("bazaar")}</AccordionTrigger>
               <AccordionContent>
                 <ul className="flex flex-col gap-0.5 pl-2">
                   <MobileLink href="/bazaar" onSelect={() => onOpenChange(false)}>
@@ -153,91 +154,112 @@ function MobileSheet({ open, onOpenChange }: MobileSheetContentProps) {
               </AccordionContent>
             </AccordionItem>
 
-            {/* Kalkulatory */}
-            <AccordionItem value="calculators">
-              <AccordionTrigger className="min-h-11">
-                {t("calculators")}
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="flex flex-col gap-0.5 pl-2">
-                  <MobileLink href="/calculators/exercise-weapons" onSelect={() => onOpenChange(false)}>
-                    {tCalc("skillsTraining.exerciseWeapons")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/true-skill" onSelect={() => onOpenChange(false)}>
-                    {tCalc("skillsTraining.trueSkill")}
-                  </MobileLink>
-                  {/* Stamina pojawiała się TU DWA RAZY (ten sam href) —
+            {SHOW_TOOLS ? (
+              <>
+                {/* Kalkulatory */}
+                <AccordionItem value="calculators">
+                  <AccordionTrigger className="min-h-11">{t("calculators")}</AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="flex flex-col gap-0.5 pl-2">
+                      <MobileLink
+                        href="/calculators/exercise-weapons"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("skillsTraining.exerciseWeapons")}
+                      </MobileLink>
+                      <MobileLink
+                        href="/calculators/true-skill"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("skillsTraining.trueSkill")}
+                      </MobileLink>
+                      {/* Stamina pojawiała się TU DWA RAZY (ten sam href) —
                       usunięto duplikat; zostaje jedna pozycja. */}
-                  <MobileLink href="/calculators/stamina" onSelect={() => onOpenChange(false)}>
-                    {tCalc("stamina.title")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/character-value" onSelect={() => onOpenChange(false)}>
-                    {tCalc("valuation.characterValue")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/imbuement" onSelect={() => onOpenChange(false)}>
-                    {tCalc("imbuementCharms.imbuement")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/weekly-tasks" onSelect={() => onOpenChange(false)}>
-                    {tCalc("imbuementCharms.weeklyTasks")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/charms" onSelect={() => onOpenChange(false)}>
-                    {tCalc("imbuementCharms.charmsDamage")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/experience" onSelect={() => onOpenChange(false)}>
-                    {tCalc("experience.title")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/leech" onSelect={() => onOpenChange(false)}>
-                    {tCalc("leech.title")}
-                  </MobileLink>
-                  <MobileLink href="/calculators/exp-share" onSelect={() => onOpenChange(false)}>
-                    {tCalc("expShare.title")}
-                  </MobileLink>
-                  <MobileLink href="/planners/wheel" onSelect={() => onOpenChange(false)}>
-                    {tCalc("wheelOfDestiny")}
-                  </MobileLink>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
+                      <MobileLink href="/calculators/stamina" onSelect={() => onOpenChange(false)}>
+                        {tCalc("stamina.title")}
+                      </MobileLink>
+                      <MobileLink
+                        href="/calculators/character-value"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("valuation.characterValue")}
+                      </MobileLink>
+                      <MobileLink
+                        href="/calculators/imbuement"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("imbuementCharms.imbuement")}
+                      </MobileLink>
+                      <MobileLink
+                        href="/calculators/weekly-tasks"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("imbuementCharms.weeklyTasks")}
+                      </MobileLink>
+                      <MobileLink href="/calculators/charms" onSelect={() => onOpenChange(false)}>
+                        {tCalc("imbuementCharms.charmsDamage")}
+                      </MobileLink>
+                      <MobileLink
+                        href="/calculators/experience"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("experience.title")}
+                      </MobileLink>
+                      <MobileLink href="/calculators/leech" onSelect={() => onOpenChange(false)}>
+                        {tCalc("leech.title")}
+                      </MobileLink>
+                      <MobileLink
+                        href="/calculators/exp-share"
+                        onSelect={() => onOpenChange(false)}
+                      >
+                        {tCalc("expShare.title")}
+                      </MobileLink>
+                      <MobileLink href="/planners/wheel" onSelect={() => onOpenChange(false)}>
+                        {tCalc("wheelOfDestiny")}
+                      </MobileLink>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
 
-            {/* Referencje */}
-            <AccordionItem value="reference">
-              <AccordionTrigger className="min-h-11">
-                {t("reference")}
-              </AccordionTrigger>
-              <AccordionContent>
-                <ul className="flex flex-col gap-0.5 pl-2">
-                  <MobileLink href="/reference/items" onSelect={() => onOpenChange(false)}>
-                    {tRef("items.pageTitle")}
-                  </MobileLink>
-                  <MobileLink href="/reference/imbuements" onSelect={() => onOpenChange(false)}>
-                    {tRef("imbuements")}
-                  </MobileLink>
-                  <MobileLink href="/reference/worlds" onSelect={() => onOpenChange(false)}>
-                    {tRef("worlds.pageTitle")}
-                  </MobileLink>
-                  <MobileLink href="/reference/outfits" onSelect={() => onOpenChange(false)}>
-                    {tRef("outfits.pageTitle")}
-                  </MobileLink>
-                  <MobileLink href="/reference/mounts" onSelect={() => onOpenChange(false)}>
-                    {tRef("mounts.pageTitle")}
-                  </MobileLink>
-                </ul>
-              </AccordionContent>
-            </AccordionItem>
+                {/* Referencje */}
+                <AccordionItem value="reference">
+                  <AccordionTrigger className="min-h-11">{t("reference")}</AccordionTrigger>
+                  <AccordionContent>
+                    <ul className="flex flex-col gap-0.5 pl-2">
+                      <MobileLink href="/reference/items" onSelect={() => onOpenChange(false)}>
+                        {tRef("items.pageTitle")}
+                      </MobileLink>
+                      <MobileLink href="/reference/imbuements" onSelect={() => onOpenChange(false)}>
+                        {tRef("imbuements")}
+                      </MobileLink>
+                      <MobileLink href="/reference/worlds" onSelect={() => onOpenChange(false)}>
+                        {tRef("worlds.pageTitle")}
+                      </MobileLink>
+                      <MobileLink href="/reference/outfits" onSelect={() => onOpenChange(false)}>
+                        {tRef("outfits.pageTitle")}
+                      </MobileLink>
+                      <MobileLink href="/reference/mounts" onSelect={() => onOpenChange(false)}>
+                        {tRef("mounts.pageTitle")}
+                      </MobileLink>
+                    </ul>
+                  </AccordionContent>
+                </AccordionItem>
 
-            {/* Bosses (flat link) */}
-            <AccordionItem value="bosses" className="border-b-0">
-              <MobileFlatLink href="/bosses" onSelect={() => onOpenChange(false)}>
-                {t("bosses")}
-              </MobileFlatLink>
-            </AccordionItem>
+                {/* Bosses (flat link) */}
+                <AccordionItem value="bosses" className="border-b-0">
+                  <MobileFlatLink href="/bosses" onSelect={() => onOpenChange(false)}>
+                    {t("bosses")}
+                  </MobileFlatLink>
+                </AccordionItem>
 
-            {/* Blog (flat link) */}
-            <AccordionItem value="blog" className="border-b-0">
-              <MobileFlatLink href="/blog" onSelect={() => onOpenChange(false)}>
-                {t("blog")}
-              </MobileFlatLink>
-            </AccordionItem>
+                {/* Blog (flat link) */}
+                <AccordionItem value="blog" className="border-b-0">
+                  <MobileFlatLink href="/blog" onSelect={() => onOpenChange(false)}>
+                    {t("blog")}
+                  </MobileFlatLink>
+                </AccordionItem>
+              </>
+            ) : null}
           </Accordion>
         </nav>
       </SheetContent>

@@ -49,6 +49,14 @@ export function Header() {
   const tRef = useTranslations("Reference");
   const locale = useLocale() as Locale;
 
+  /**
+   * W18 (2026-09-18): skupiamy się na Bazaarze — sekcje narzędziowe
+   * (Kalkulatory, Referencje, Bosses, Blog) są tymczasowo UKRYTE w menu.
+   * Strony nadal istnieją pod swoimi URL-ami; przestaw na `true`, żeby
+   * przywrócić je do nawigacji.
+   */
+  const SHOW_TOOLS = false;
+
   // Mega-menu groups, by INTENT (NEVER alphabetical).
   // Architecture §4.2 makes the rationale explicit: "Grouping by intent
   // instead of alphabetically shortens the time to find a tool."
@@ -190,32 +198,27 @@ export function Header() {
         </Link>
 
         {/* Desktop navigation */}
-        <nav
-          aria-label={t("brand")}
-          className="ml-2 hidden flex-1 items-center md:flex"
-        >
+        <nav aria-label={t("brand")} className="ml-2 hidden flex-1 items-center md:flex">
           <ul className="flex items-center gap-0.5">
             <li>
               <MegaMenu label={t("bazaar")} groups={bazaarGroups} />
             </li>
-            <li>
-              <MegaMenu
-                label={t("calculators")}
-                groups={calculatorGroups}
-              />
-            </li>
-            <li>
-              <MegaMenu
-                label={t("reference")}
-                groups={referenceGroups}
-              />
-            </li>
-            <li>
-              <NavLink href="/bosses">{t("bosses")}</NavLink>
-            </li>
-            <li>
-              <NavLink href="/blog">{t("blog")}</NavLink>
-            </li>
+            {SHOW_TOOLS ? (
+              <>
+                <li>
+                  <MegaMenu label={t("calculators")} groups={calculatorGroups} />
+                </li>
+                <li>
+                  <MegaMenu label={t("reference")} groups={referenceGroups} />
+                </li>
+                <li>
+                  <NavLink href="/bosses">{t("bosses")}</NavLink>
+                </li>
+                <li>
+                  <NavLink href="/blog">{t("blog")}</NavLink>
+                </li>
+              </>
+            ) : null}
           </ul>
         </nav>
 
@@ -249,13 +252,7 @@ export function Header() {
  *
  * Touch target ≥ 44 px (architecture §6.3).
  */
-function NavLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
+function NavLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <Link
       href={href}

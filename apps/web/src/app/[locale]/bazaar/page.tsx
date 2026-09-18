@@ -1,43 +1,20 @@
 /**
  * `/[locale]/bazaar` — lista aukcji Char Bazaar (plan task 39, arch §5).
  *
- * Server Component (RSC) renderujący listę aukcji z:
- *   - Server-side filters + sort + pagination (arch §7.3 — Index Scan ~3-8 ms)
- *   - ISR cache tag `auctions` (arch §8.2) → revalidowany przez /api/revalidate
- *   - Default sort: `auctionEnd ASC` (arch §5 krok 2 — pilność)
- *   - Faceted counts (arch §6.4 pkt 1) — z `mv_facet_counts` view
- *   - Breadcrumbs + JSON-LD (`ItemList` schema)
+ * Od W18 (2026-09-18) treść listy (fetch + filtry + render) mieszka we
+ * współdzielonym `BazaarPageContent` — ta trasa renderuje go z
+ * `variant="bazaar"` (breadcrumbs + pełny nagłówek SEO). Ta sama treść
+ * jest na stronie głównej `/[locale]` (`variant="home"`).
  *
- * Przepływ (arch §5):
- *   1. Wejście z `/` (KROK 1) → hero z licznikiem aktywnych aukcji
- *   2. Tutaj: lista + sidebar filtrów + toolbar (KROK 2-3)
- *   3. Karta aukcji (KROK 5) — renderowana przez `AuctionCard` (T40)
- *
- * Źródła danych:
- *   - `getActiveAuctions(db, filters, sort, {page, pageSize})` — T34 + T38
- *   - `getFacetCounts(filters)` — nowy helper z T41
- *   - `getWorldsByRegion()` — dla searchable multi-select
- *
- * Bilingual PL + EN: wszystkie labels w `useTranslations("Bazaar")`.
+ * URL state (filtry/sort/paginacja) — bez zmian: `?levelMin=…&page=2`.
+ * ISR cache tag `auctions` (arch §8.2) → revalidowany przez /api/revalidate.
  */
 
 import * as React from "react";
 import type { Metadata } from "next";
-import { headers } from "next/headers";
 import { getTranslations } from "next-intl/server";
 
-import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/breadcrumbs";
-import { BazaarClient, toAuctionSummaries } from "@/components/bazaar";
-import { Skeleton } from "@/components/ui/skeleton";
-import {
-  listAuctions,
-  getFacetCounts,
-  getWorldsByRegion,
-  getSuggestionCounts,
-  getStoreItemFacetCounts,
-} from "@/lib/server/auctions";
-import { parseBazaarSearchParams } from "@/lib/server/bazaar-params";
-import { totalPagesOf } from "@tibians/shared/auction";
+import { BazaarPageContent } from "@/components/bazaar/bazaar-page-content";
 import { routing, type Locale } from "@/i18n/routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
@@ -129,185 +106,10 @@ export default async function BazaarPage({
   params: Promise<{ locale: string }>;
   searchParams: Promise<Record<string, string | string[] | undefined>>;
 }) {
-  const resolvedParams = await params;
-  const locale = resolvedParams.locale as Locale;
-  const [rawSearch, t, tBazaar] = await Promise.all([
-    searchParams,
-    getTranslations({ locale, namespace: "Bazaar.list" }),
-    getTranslations({ locale, namespace: "Bazaar" }),
-  ]);
+  const { locale } = await params;
+  const rawSearch = await searchParams;
 
-  // ── Parsowanie + walidacja query params (Zod) ──────────────────────
-  // T39: search params = URL state — źródło prawdy (T43).
-  const flat = flattenSearchParams(rawSearch);
-
-  const { filters, pagination } = parseBazaarSearchParams(flat);
-
-  // ── Równoległe zapytania do DB (T34 + T41) ────────────────────────
-  // Arch §8.2: `next: { tags: ['auctions'] }` — revalidowane przez
-  // /api/revalidate (T38 webhook) po każdym pełnym scrape.
-  // T45: dodatkowe `getSuggestionCounts()` wywoływane **warunkowo** —
-  //      tylko gdy `total === 0` (arch §5: "nie pokazuj sugestii gdy
-  //      count > 0"). Oszczędzamy ~5 query przy każdym normalnym renderze.
-  // ── Zapytania do DB — OSŁONIĘTE (degradacja zamiast 500) ──────────
-  // Wcześniej ten `Promise.all` nie miał `try/catch`, więc chwilowa
-  // niedostępność bazy wywalała CAŁĄ stronę błędem 500. Sąsiedni
-  // `getSuggestionCounts` niżej miał `.catch(() => [])`, ale te trzy
-  // zapytania — nie.
-  //
-  // Arch §6.4: URL zawsze ma działać. Przy niedostępnych danych poprawnym
-  // zachowaniem jest pusta lista + stany „brak wyników”, a nie biały ekran.
-  // `headers()` celowo POZA `Promise.all` — to nie jest operacja DB i nie
-  // powinna być degradowana razem z zapytaniami.
-  const dbResult = await Promise.all([
-    listAuctions(filters, pagination),
-    getFacetCounts(filters),
-    getWorldsByRegion(),
-    getStoreItemFacetCounts(),
-  ]).catch((error: unknown) => {
-    console.error("[bazaar] zapytania DB nie powiodły się — degradacja do stanu pustego:", error);
-    return null;
-  });
-
-  const requestHeaders = await headers();
-
-  const listResult = dbResult?.[0] ?? { rows: [], total: 0 };
-  const facetCounts = dbResult?.[1] ?? {
-    vocation: [],
-    region: [],
-    world: [],
-    pvpType: [],
-    battleye: [],
-    storeItems: [],
-    totalActive: 0,
-  };
-  const worldsByRegion = dbResult?.[2] ?? {
-    EU: [],
-    NA: [],
-    BR: [],
-    OCE: [],
-  };
-  const storeItemFacetCounts = dbResult?.[3] ?? [];
-
-  const { rows, total } = listResult;
-
-  // T45 — wylicz sugestie rozluźniające filtry **tylko** gdy 0 wyników.
-  // 3-5 szybkich query COUNT(*) z `buildWhereExcept` (parallel) = ~10ms.
-  const suggestions = total === 0 ? await getSuggestionCounts(filters).catch(() => []) : [];
-
-  const totalPages = totalPagesOf(total, pagination.pageSize);
-
-  // ── JSON-LD ItemList schema ───────────────────────────────────────
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "ItemList",
-    itemListElement: rows.slice(0, 25).map((row, idx) => ({
-      "@type": "ListItem",
-      position: idx + 1,
-      url: `${SITE_URL}/${locale}/bazaar/${row.auctionId.toString()}`,
-      name: row.characterName,
-    })),
-    numberOfItems: total,
-  };
-
-  // ── Breadcrumbs ───────────────────────────────────────────────────
-  const breadcrumbItems: BreadcrumbItem[] = [{ label: tBazaar("title"), href: "/bazaar" }];
-
-  // ── Default view (server-side hint z UA) ──────────────────────────
-  const defaultView = inferDefaultViewFromHeaders(requestHeaders.get("user-agent"));
-
-  // ── Render ────────────────────────────────────────────────────────
   return (
-    <div className="container py-6 md:py-8">
-      {/* Breadcrumbs (z JSON-LD BreadcrumbList) */}
-      <Breadcrumbs items={breadcrumbItems} />
-
-      {/* Page heading */}
-      <header className="mt-6 max-w-3xl">
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground sm:text-3xl">
-          {tBazaar("title")}
-        </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">{t("pageDescription")}</p>
-      </header>
-
-      {/* Lista + sidebar (client island) */}
-      <div className="mt-6">
-        <React.Suspense fallback={<BazaarClientSkeleton />}>
-          <BazaarClient
-            auctions={toAuctionSummaries(rows)}
-            total={total}
-            totalPages={totalPages}
-            page={pagination.page}
-            pageSize={pagination.pageSize}
-            facetCounts={{ ...facetCounts, storeItems: storeItemFacetCounts }}
-            worldsByRegion={worldsByRegion}
-            defaultView={defaultView}
-            suggestions={suggestions}
-          />
-        </React.Suspense>
-      </div>
-
-      {/* JSON-LD ItemList schema (SEO §4.3 + arch §5 — ItemList). */}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-      />
-    </div>
-  );
-}
-
-// ───────────────────────────────────────────────────────────────────────
-// Helpers
-// ───────────────────────────────────────────────────────────────────────
-
-/**
- * Flatten `searchParams` Promise do zwykłego obiektu (URLSearchParams
- * -kompatybilny). Next.js 15 zwraca wartości jako `string | string[]`;
- * my preferujemy `string` (ostatnia wartość gdy multi).
- */
-function flattenSearchParams(
-  raw: Record<string, string | string[] | undefined>,
-): Record<string, string> {
-  const out: Record<string, string> = {};
-  for (const [key, value] of Object.entries(raw)) {
-    if (value === undefined) continue;
-    if (Array.isArray(value)) {
-      const last = value[value.length - 1];
-      if (last !== undefined) out[key] = last;
-    } else {
-      out[key] = value;
-    }
-  }
-  return out;
-}
-
-/**
- * Heurystyka: na mobile preferuj karty, na desktop tabelę.
- * Czyta `User-Agent` z nagłówków (server-side hint).
- *
- * Wywoływane z `await headers()` w page.tsx — przekazujemy gotowy UA.
- */
-function inferDefaultViewFromHeaders(ua: string | null): "cards" | "table" {
-  if (!ua) return "cards";
-  return /Mobile|Android|iPhone/i.test(ua) ? "cards" : "table";
-}
-
-/**
- * Skeleton renderowany w `<Suspense fallback>` (Next.js 15 +
- * `useSearchParams()`). Zapobiega fallbackowi SSR dla client islandu
- * Bazaar — T43 URL state.
- */
-function BazaarClientSkeleton() {
-  return (
-    <div role="status" aria-label="Loading Bazaar…" className="grid gap-6 md:grid-cols-[16rem_1fr]">
-      <aside className="hidden md:block">
-        <Skeleton className="h-96 w-full rounded-lg" />
-      </aside>
-      <div className="space-y-3">
-        <Skeleton className="h-12 w-full rounded-md" />
-        <Skeleton className="h-12 w-full rounded-md" />
-        <Skeleton className="h-64 w-full rounded-lg" />
-      </div>
-    </div>
+    <BazaarPageContent locale={locale as Locale} rawSearchParams={rawSearch} variant="bazaar" />
   );
 }

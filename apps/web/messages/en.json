@@ -91,6 +91,7 @@
     "title": "Bazaar",
     "description": "Browse current Tibia character auctions.",
     "all": "All auctions",
+    "activeCount": "{count, plural, =0 {No active auctions} one {# active auction} other {# active auctions}}",
     "endingSoon": {
       "pageTitle": "Ending soon",
       "pageDescription": "Char Bazaar auctions ending within the next hour. Updated live via SSE — grab the deal before someone outbids you.",

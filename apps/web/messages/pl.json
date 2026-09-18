@@ -91,6 +91,7 @@
     "title": "Bazaar",
     "description": "Przeglądaj aktualne aukcje postaci Tibia.",
     "all": "Wszystkie aukcje",
+    "activeCount": "{count, plural, =0 {Brak aktywnych aukcji} one {# aktywna aukcja} few {# aktywne aukcje} many {# aktywnych aukcji} other {# aktywnych aukcji}}",
     "endingSoon": {
       "pageTitle": "Kończące się aukcje",
       "pageDescription": "Lista aukcji Char Bazaar, które kończą się w ciągu godziny. Aktualizowana na żywo przez SSE — łap okazje zanim ktoś je przebije.",
