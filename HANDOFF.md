@@ -630,6 +630,15 @@ Wycena:     W18: `valuation-run.ts` + CLI `scrap:valuation` (+`--finished`) — 
             Rynek: Knight 100-200 lvl ≈ 200 TC · 300-400 ≈ 1000 · 600-700 ≈ 5000 · 1100+ ≈ 60k
 Filtr ceny: W18: „Cena" (💚 Dobra oferta 960 / ⚖️ Uczciwa 201 / 💸 Zbyt drogi 484) — bid vs
             estimated_value ±10% (wzór: Exiva.pro) — 9a0dd6f
+Wyróżnienia: W18+: rozszerzone do 10 pozycji (W19): outfity (Golden 7, Blade Dancer 1,
+            Phoenix Evoker 2), mounty (Rift Watcher 4, Void Watcher 2, Gold Sphinx 1,
+            Shadow Sphinx 1) + ukryte bez danych (Vortexion, Rift Runner, Ferumbras' Hat
+            — dokładna nazwa, nie łapie Candy Hat). Liczniki z facetów; puste ukryte — ebb5bc8
+Tagi:       W18+: tooltipy z opisami (Soul War → Feaster of Souls + lvl 250 z TibiaWiki;
+            Primal → Within the Tides + 250; charms >5000; quests 30+; store 10+;
+            rzadkie nazwy → apostrof dodany do SQL — takich się już nie utworzy); 24h bez zmian
+Archiwum:   W18: backfill ZAKOŃCZONY — 10 969 wierszy (new=8730, upd=2239, 0 błędów, ~28 min),
+            21 346+ final_price; wyceny przeliczone na pełnych danych (próbki ~142/aukcję)
 Tabela:     W18: kolumna „Wycena (TC)" (sortowalna; kolor: zielona gdy oferta < wyceny;
             NULLS LAST — Postgres sortował DESC z NULLS FIRST i pokazywał najpierw bez
             wyceny) — 3da81ed/29bb17c
