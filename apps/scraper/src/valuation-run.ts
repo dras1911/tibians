@@ -25,7 +25,7 @@
 import { db } from "@tibians/db";
 import { auctions, valuationHistory, valuationRules } from "@tibians/db/schema";
 import { AuctionSchema, type Auction } from "@tibians/shared/auction";
-import { and, eq, gt, or } from "drizzle-orm";
+import { and, eq, gt, or, sql } from "drizzle-orm";
 
 import { estimateValue, type ValuationBreakdown, type ValuationRule } from "./valuation.js";
 
@@ -336,7 +336,10 @@ export async function runValuation(
             and(eq(auctions.status, "finished"), gt(auctions.finalPrice, 0)),
           ),
         )
-    : await db.select().from(auctions).where(eq(auctions.status, "active"));
+    : await db
+        .select()
+        .from(auctions)
+        .where(and(eq(auctions.status, "active"), gt(auctions.auctionEnd, sql`now()`)));
 
   let computed = 0;
   let skipped = 0;

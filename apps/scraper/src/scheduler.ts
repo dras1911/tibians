@@ -409,11 +409,12 @@ export function createScheduler(
   let stopped = false;
 
   /**
-   * Throttle wycen (W18): `computeValuations()` po Full loop, ale nie
-   * częściej niż raz na `valuationIntervalMs` (domyślnie 30 min) — pełny
-   * przelicznik to ~1500 UPDATE-ów, nie chcemy go odpalać co 15 min.
+   * Throttle wycen (W18): `computeValuations()` po Full loop. Domyślnie 0
+   * = po KAŻDYM pełnym cyklu (~15 min) — nowe aukcje mają wycenę niemal
+   * od razu (użytkownik: „czemu nie przy każdej ofercie jest szacowana
+   * wartość?"). Można podnieść, gdy obciążenie DB zacznie boleć.
    */
-  const valuationIntervalMs = options.valuationIntervalMs ?? 30 * 60 * 1000;
+  const valuationIntervalMs = options.valuationIntervalMs ?? 0;
   let lastValuationAtMs = 0;
 
   function isAborted(): boolean {

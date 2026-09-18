@@ -11,7 +11,8 @@ import { LocaleSwitch } from "./locale-switch";
 import { MegaMenu, type MegaMenuGroup } from "./mega-menu";
 import { MobileSheetTrigger } from "./mobile-sheet";
 import { ThemeToggle } from "./theme-toggle";
-import { UserMenu } from "./user-menu";
+// W19: logowanie Discord wyłączone (wszystko darmowe) — przywróć z <UserMenu />.
+// import { UserMenu } from "./user-menu";
 import { cn } from "@/lib/utils";
 
 import type { Locale } from "@/i18n/routing";
@@ -231,9 +232,11 @@ export function Header() {
             <LocaleSwitch />
           </div>
 
-          {/* Account — Discord login (T78). Visible on every breakpoint:
-              on mobile it sits before the hamburger so it stays reachable. */}
-          <UserMenu />
+          {/* Account — Discord login (T78) — WYŁĄCZONY (W19, 2026-09-18).
+              Decyzja: wszystko darmowe, bez kont/logowania (donacje przez
+              Tibia Coins — strona /support). Przywróć <UserMenu /> gdy
+              logowanie wróci. */}
+          {/* <UserMenu /> */}
 
           {/* Mobile only — hamburger trigger */}
           <div className="md:hidden">

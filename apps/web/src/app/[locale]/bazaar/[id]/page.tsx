@@ -264,13 +264,7 @@ export default async function AuctionDetailPage({
 
       {/* Główna zawartość — 2 kolumny (md+): wycena + wykres / taby */}
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <EstimatedValue
-          estimatedValue={a.estimatedValue}
-          valueConfidence={a.valueConfidence}
-          marketBid={a.bid}
-          pricePerLevel={a.pricePerLevel}
-          level={a.level}
-        />
+        <EstimatedValue estimatedValue={a.estimatedValue} marketBid={a.bid} />
         <BidHistoryChart points={detail.priceHistory} />
       </div>
 

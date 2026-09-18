@@ -1931,7 +1931,12 @@
     "tagline": "Kalkulatory, wycena postaci i analiza Char Bazaar dla graczy Tibii.",
     "sections": {
       "product": "Produkt",
-      "legal": "Prawne"
+      "legal": "Prawne",
+      "support": "Wesprzyj nas ❤️"
+    },
+    "support": {
+      "free": "Tibians jest w 100% darmowy — bez reklam, kont i bramek płatności.",
+      "sendTo": "Wsparcie: wyślij dowolne Tibia Coins na postać:"
     },
     "links": {
       "bazaar": "Bazaar",

@@ -11,14 +11,13 @@ import {
   type ValuationConfig,
 } from "@tibians/calc";
 import type { VocationBase, VocationPromoted } from "@tibians/character-context";
-import { Coins, Crown, Shield, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
+import { Coins, Shield, Sparkles, TrendingDown, TrendingUp } from "lucide-react";
 import { useFormatter, useTranslations } from "next-intl";
 
 import {
   CalculatorForm,
   CalculatorNumberInput,
   FormField,
-  PremiumBlur,
   ResultDisplay,
   type Recommendation,
   type ResultSecondaryValue,
@@ -30,13 +29,7 @@ import {
   AccordionItem,
   AccordionTrigger,
 } from "@/components/ui/accordion";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -151,24 +144,18 @@ const formSchema = z
     charmExpansion: z.boolean(),
     weeklyTaskExpansion: z.boolean(),
     twistOfFate: z.boolean(),
-    blessingsActive: z.coerce
-      .number()
-      .int()
-      .min(0, "invalidBlessings")
-      .max(7, "invalidBlessings"),
+    blessingsActive: z.coerce.number().int().min(0, "invalidBlessings").max(7, "invalidBlessings"),
 
-    marketBid: z
-      .union([z.literal(""), z.coerce.number().int().min(0)])
-      .optional(),
+    marketBid: z.union([z.literal(""), z.coerce.number().int().min(0)]).optional(),
   })
-  .refine(
-    (d) => d.questsCompleted <= d.questsTotal,
-    { message: "invalidQuests", path: ["questsCompleted"] },
-  )
-  .refine(
-    (d) => d.imbuementsUnlocked <= d.imbuementsTotal,
-    { message: "invalidImbuements", path: ["imbuementsUnlocked"] },
-  );
+  .refine((d) => d.questsCompleted <= d.questsTotal, {
+    message: "invalidQuests",
+    path: ["questsCompleted"],
+  })
+  .refine((d) => d.imbuementsUnlocked <= d.imbuementsTotal, {
+    message: "invalidImbuements",
+    path: ["imbuementsUnlocked"],
+  });
 
 type FormData = z.infer<typeof formSchema>;
 
@@ -419,9 +406,7 @@ function useComputed(
         vocation: data.vocation,
         vocationPromoted: VOCATION_TO_PROMOTED[data.vocation],
         sex: data.sex,
-        ...(data.world && data.world !== ""
-          ? { world: data.world }
-          : {}),
+        ...(data.world && data.world !== "" ? { world: data.world } : {}),
       },
       skills,
       progression: {
@@ -564,15 +549,7 @@ function useComputed(
       breakdown,
       deltaPercent,
     };
-  }, [
-    store,
-    config,
-    format,
-    tErrors,
-    tResult,
-    tRecs,
-    tBreakdown,
-  ]);
+  }, [store, config, format, tErrors, tResult, tRecs, tBreakdown]);
 }
 
 // ───────────────────────────────────────────────────────────────────────
@@ -606,11 +583,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
         <legend className="px-1 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
           {tIdentity("sectionLabel")}
         </legend>
-        <FormField
-          id="cv-name"
-          label={tIdentity("name.label")}
-          error={fieldErrors.name}
-        >
+        <FormField id="cv-name" label={tIdentity("name.label")} error={fieldErrors.name}>
           <CalculatorNumberInput
             id="cv-name"
             type="text"
@@ -647,9 +620,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
           >
             <Select
               value={store.vocation}
-              onValueChange={(v) =>
-                patchState({ vocation: v as VocationBase })
-              }
+              onValueChange={(v) => patchState({ vocation: v as VocationBase })}
             >
               <SelectTrigger id="cv-vocation">
                 <SelectValue placeholder="Vocation" />
@@ -667,10 +638,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
 
         <div className="grid grid-cols-2 gap-3">
           <FormField id="cv-sex" label={tIdentity("sex.label")}>
-            <Select
-              value={store.sex}
-              onValueChange={(v) => patchState({ sex: v as "M" | "F" })}
-            >
+            <Select value={store.sex} onValueChange={(v) => patchState({ sex: v as "M" | "F" })}>
               <SelectTrigger id="cv-sex">
                 <SelectValue />
               </SelectTrigger>
@@ -684,11 +652,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             </Select>
           </FormField>
 
-          <FormField
-            id="cv-world"
-            label={tIdentity("world.label")}
-            help={tIdentity("world.help")}
-          >
+          <FormField id="cv-world" label={tIdentity("world.label")} help={tIdentity("world.help")}>
             <CalculatorNumberInput
               id="cv-world"
               type="text"
@@ -753,10 +717,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-charmPointsUnused"
-            label={tProgression("charmPointsUnused.label")}
-          >
+          <FormField id="cv-charmPointsUnused" label={tProgression("charmPointsUnused.label")}>
             <CalculatorNumberInput
               id="cv-charmPointsUnused"
               min={0}
@@ -766,10 +727,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-minorCharmEchoes"
-            label={tProgression("minorCharmEchoes.label")}
-          >
+          <FormField id="cv-minorCharmEchoes" label={tProgression("minorCharmEchoes.label")}>
             <CalculatorNumberInput
               id="cv-minorCharmEchoes"
               min={0}
@@ -779,10 +737,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-bossPoints"
-            label={tProgression("bossPoints.label")}
-          >
+          <FormField id="cv-bossPoints" label={tProgression("bossPoints.label")}>
             <CalculatorNumberInput
               id="cv-bossPoints"
               min={0}
@@ -806,10 +761,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-questsTotal"
-            label={tProgression("questsTotal.label")}
-          >
+          <FormField id="cv-questsTotal" label={tProgression("questsTotal.label")}>
             <CalculatorNumberInput
               id="cv-questsTotal"
               min={0}
@@ -833,10 +785,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-imbuementsTotal"
-            label={tProgression("imbuementsTotal.label")}
-          >
+          <FormField id="cv-imbuementsTotal" label={tProgression("imbuementsTotal.label")}>
             <CalculatorNumberInput
               id="cv-imbuementsTotal"
               min={0}
@@ -846,10 +795,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-achievementPoints"
-            label={tProgression("achievementPoints.label")}
-          >
+          <FormField id="cv-achievementPoints" label={tProgression("achievementPoints.label")}>
             <CalculatorNumberInput
               id="cv-achievementPoints"
               min={0}
@@ -859,10 +805,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
             />
           </FormField>
 
-          <FormField
-            id="cv-animusMasteries"
-            label={tProgression("animusMasteries.label")}
-          >
+          <FormField id="cv-animusMasteries" label={tProgression("animusMasteries.label")}>
             <CalculatorNumberInput
               id="cv-animusMasteries"
               min={0}
@@ -1011,9 +954,7 @@ export function CharacterValueForm({ config: _config }: CharacterValueCalculator
                   patchState({ [key]: Boolean(checked) } as Partial<StoreState>)
                 }
               />
-              <span className="text-sm font-medium leading-none">
-                {tFlags(key)}
-              </span>
+              <span className="text-sm font-medium leading-none">{tFlags(key)}</span>
             </label>
           ))}
         </div>
@@ -1120,13 +1061,7 @@ export function CharacterValueResult({ config }: CharacterValueCalculatorProps) 
             </span>
             {deltaPercent !== null && (
               <Badge
-                variant={
-                  deltaPercent < -5
-                    ? "success"
-                    : deltaPercent > 5
-                      ? "warning"
-                      : "secondary"
-                }
+                variant={deltaPercent < -5 ? "success" : deltaPercent > 5 ? "warning" : "secondary"}
                 className="ml-2 gap-1"
               >
                 {deltaPercent < 0 ? (
@@ -1184,11 +1119,7 @@ export function CharacterValueResult({ config }: CharacterValueCalculatorProps) 
                               })
                             : format.number(s.value, { useGrouping: true })}
                       </span>
-                      {s.unit ? (
-                        <span className="ml-1 text-muted-foreground">
-                          {s.unit}
-                        </span>
-                      ) : null}
+                      {s.unit ? <span className="ml-1 text-muted-foreground">{s.unit}</span> : null}
                     </dd>
                   </div>
                 );
@@ -1204,7 +1135,7 @@ export function CharacterValueResult({ config }: CharacterValueCalculatorProps) 
         )}
       </Card>
 
-      {/* ── Breakdown accordion (Premium — gated w T84/85) ── */}
+      {/* ── Breakdown accordion (W19: darmowe — bez bramki Premium) ── */}
       <Card className="overflow-hidden">
         <CardHeader className="gap-2 pb-3">
           <div className="flex items-center justify-between gap-2">
@@ -1212,24 +1143,17 @@ export function CharacterValueResult({ config }: CharacterValueCalculatorProps) 
               <Sparkles className="h-4 w-4 text-primary" aria-hidden="true" />
               {tResult("breakdownTitle")}
             </CardTitle>
-            <Badge variant="outline" className="gap-1">
-              <Crown className="h-3 w-3" aria-hidden="true" />
-              Premium
-            </Badge>
           </div>
           <CardDescription>{tResult("breakdownDescription")}</CardDescription>
         </CardHeader>
         <CardContent className="pt-0">
-          {/* W T22: pokazujemy wszystko (real gating w T84/85) */}
-          <PremiumBlur showBadge={false}>
-            <BreakdownAccordion
-              breakdown={breakdown}
-              tBreakdown={tBreakdown}
-              tSkillKeys={tSkillKeys}
-              format={format}
-              estimatedValue={estimatedValue}
-            />
-          </PremiumBlur>
+          <BreakdownAccordion
+            breakdown={breakdown}
+            tBreakdown={tBreakdown}
+            tSkillKeys={tSkillKeys}
+            format={format}
+            estimatedValue={estimatedValue}
+          />
         </CardContent>
       </Card>
     </div>
@@ -1272,9 +1196,7 @@ function BreakdownAccordion({
         </AccordionTrigger>
         <AccordionContent>
           <div className="rounded-md bg-muted/40 p-3 text-sm text-muted-foreground">
-            <p>
-              Bazowa wartość = level × stawka × vocation modifier.
-            </p>
+            <p>Bazowa wartość = level × stawka × vocation modifier.</p>
             <p className="mt-2">
               Łączna wycena:{" "}
               <span className="numeric font-semibold text-foreground tabular-nums">
@@ -1308,9 +1230,7 @@ function BreakdownAccordion({
                   key={key}
                   className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5"
                 >
-                  <span className="text-muted-foreground">
-                    {tSkillKeys(key)}
-                  </span>
+                  <span className="text-muted-foreground">{tSkillKeys(key)}</span>
                   <span className="numeric tabular-nums font-medium">
                     +{format.number(value, { useGrouping: true })} TC
                   </span>
@@ -1409,11 +1329,7 @@ function ItemsList({
   format: ReturnType<typeof useFormatter>;
 }) {
   if (items.length === 0) {
-    return (
-      <p className="text-xs text-muted-foreground italic">
-        Brak pozycji w tej kategorii.
-      </p>
-    );
+    return <p className="text-xs text-muted-foreground italic">Brak pozycji w tej kategorii.</p>;
   }
   return (
     <ul className="space-y-1.5 text-sm">
@@ -1422,9 +1338,7 @@ function ItemsList({
           key={`${item.key}-${idx}`}
           className="flex items-center justify-between gap-2 rounded-md bg-muted/40 px-2 py-1.5"
         >
-          <span className="font-mono text-xs text-muted-foreground">
-            {item.key}
-          </span>
+          <span className="font-mono text-xs text-muted-foreground">{item.key}</span>
           <span className="numeric tabular-nums font-medium">
             +{format.number(item.value, { useGrouping: true })} TC
           </span>
@@ -1438,27 +1352,14 @@ function ItemsList({
 // Recommendation renderer (matches result-display tone/structure)
 // ───────────────────────────────────────────────────────────────────────
 
-function renderRecommendation(
-  rec: Recommendation,
-  _t: ReturnType<typeof useTranslations>,
-) {
+function renderRecommendation(rec: Recommendation, _t: ReturnType<typeof useTranslations>) {
   if (typeof rec === "object" && rec !== null && "tone" in rec) {
     const Icon =
-      rec.tone === "success"
-        ? TrendingDown
-        : rec.tone === "warning"
-          ? TrendingUp
-          : Coins;
+      rec.tone === "success" ? TrendingDown : rec.tone === "warning" ? TrendingUp : Coins;
     return (
       <div className="flex items-start gap-3">
         <Badge
-          variant={
-            rec.tone === "success"
-              ? "success"
-              : rec.tone === "warning"
-                ? "warning"
-                : "info"
-          }
+          variant={rec.tone === "success" ? "success" : rec.tone === "warning" ? "warning" : "info"}
           className="shrink-0 gap-1 px-2 py-0.5"
         >
           <Icon className="h-3.5 w-3.5" aria-hidden="true" />
@@ -1479,9 +1380,7 @@ function renderRecommendation(
 // Compound export
 // ───────────────────────────────────────────────────────────────────────
 
-export function CharacterValueCalculator({
-  config,
-}: CharacterValueCalculatorProps) {
+export function CharacterValueCalculator({ config }: CharacterValueCalculatorProps) {
   return <CharacterValueForm config={config} />;
 }
 

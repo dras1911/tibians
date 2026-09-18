@@ -1931,7 +1931,12 @@
     "tagline": "Calculators, character valuation and Char Bazaar analytics for Tibia players.",
     "sections": {
       "product": "Product",
-      "legal": "Legal"
+      "legal": "Legal",
+      "support": "Support us ❤️"
+    },
+    "support": {
+      "free": "Tibians is 100% free — no ads, no accounts, no paywalls.",
+      "sendTo": "Support: send any amount of Tibia Coins to the character:"
     },
     "links": {
       "bazaar": "Bazaar",

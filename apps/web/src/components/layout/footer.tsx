@@ -22,6 +22,12 @@ import { cn } from "@/lib/utils";
  * unambiguous). The footer is therefore rendered in the locale layout
  * (NOT mounted per-page), guaranteeing presence on every route.
  */
+/**
+ * Nazwa postaci do donacji Tibia Coins (W19 — wszystko darmowe).
+ * ⚠️ PODMIEŃ na właściwą nazwę postaci w Tibii.
+ */
+const SUPPORT_CHARACTER_NAME = "Twoja Postać";
+
 export function Footer() {
   const t = useTranslations("Footer");
   const tNav = useTranslations("Nav");
@@ -31,7 +37,7 @@ export function Footer() {
   return (
     <footer className="border-t bg-background">
       <div className="container py-10">
-        <div className="grid gap-8 md:grid-cols-[1.5fr_1fr_1fr]">
+        <div className="grid gap-8 md:grid-cols-[1.5fr_1fr_1fr_1fr]">
           {/* Brand column */}
           <div className="space-y-3">
             <div className="flex items-center gap-2">
@@ -41,21 +47,15 @@ export function Footer() {
               >
                 <Shield className="h-4 w-4" />
               </span>
-              <span className="text-base font-semibold tracking-tight">
-                {tNav("brand")}
-              </span>
+              <span className="text-base font-semibold tracking-tight">{tNav("brand")}</span>
             </div>
-            <p className="max-w-sm text-sm text-muted-foreground">
-              {t("tagline")}
-            </p>
+            <p className="max-w-sm text-sm text-muted-foreground">{t("tagline")}</p>
           </div>
 
           {/* Product nav */}
           <FooterColumn title={t("sections.product")}>
             <FooterLink href="/bazaar">{t("links.bazaar")}</FooterLink>
-            <FooterLink href="/calculators">
-              {t("links.calculators")}
-            </FooterLink>
+            <FooterLink href="/calculators">{t("links.calculators")}</FooterLink>
             <FooterLink href="/reference">{t("links.reference")}</FooterLink>
             <FooterLink href="/bosses">{t("links.bosses")}</FooterLink>
             <FooterLink href="/blog">{t("links.blog")}</FooterLink>
@@ -64,6 +64,15 @@ export function Footer() {
           {/* Legal */}
           <FooterColumn title={t("sections.legal")}>
             <FooterLink href="/privacy">{tCommon("privacyPolicy")}</FooterLink>
+          </FooterColumn>
+
+          {/* Wesprzyj (W19) — wszystko darmowe, dobrowolne donacje TC */}
+          <FooterColumn title={t("sections.support")}>
+            <p className="text-sm text-muted-foreground">{t("support.free")}</p>
+            <p className="text-sm text-muted-foreground">
+              {t("support.sendTo")}{" "}
+              <span className="font-semibold text-foreground">{SUPPORT_CHARACTER_NAME}</span>
+            </p>
           </FooterColumn>
         </div>
 
@@ -80,21 +89,13 @@ export function Footer() {
           <p>{t("notAffiliated")}</p>
         </div>
 
-        <p className="mt-6 text-[0.7rem] text-muted-foreground/70">
-          {t("copyright", { year })}
-        </p>
+        <p className="mt-6 text-[0.7rem] text-muted-foreground/70">{t("copyright", { year })}</p>
       </div>
     </footer>
   );
 }
 
-function FooterColumn({
-  title,
-  children,
-}: {
-  title: string;
-  children: React.ReactNode;
-}) {
+function FooterColumn({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="space-y-3">
       <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
@@ -105,13 +106,7 @@ function FooterColumn({
   );
 }
 
-function FooterLink({
-  href,
-  children,
-}: {
-  href: string;
-  children: React.ReactNode;
-}) {
+function FooterLink({ href, children }: { href: string; children: React.ReactNode }) {
   return (
     <li>
       <Link
