@@ -517,6 +517,18 @@ Pełna lista: `git log --oneline`
     (#15) — `PG_APP_NAME=tibians-scraper` + `pg_terminate_backend` sesji o tej nazwie
     (`1c4ff4c`). Zweryfikowane: FK errors 0, 6 aukcji Penumbry weszło, ending-soon żyje.
 12. **BattlEye**: „Zielone"/„Żółte" bez dopisków w nawiasie (PL/EN) — `ee39d96`.
+13. **Research Exiva.pro** (exiva.pro/pl/bazaar — panel filtrów, karty, modal szczegółów;
+    zrzuty `tmp-verify/exiva-*.png`). Ich filtry: Cena (dobra/uczciwa/zbyt drogi), Profesja,
+    PvP, BattlEye, Lokalizacja, Świat, Transfer regularny, poziom, skille, Charm/Boss/Task/
+    Achievement points, Nowe aukcje (24h), Store Upgrades, Wyróżnienia (Ferumbras Hat, Golden
+    Outfit, Vortexion, Rift Runner, Soul War/Primal/Rotten Blood available).
+14. **Wdrożone filtry z Exiva** (`80eef26`): Wyróżnienia (4 klucze — EXISTS po item/outfit/mount),
+    Boss points min/max, Achievement points min/max, Nowe aukcje (24h). Karty: progression
+    mini-line rozszerzona do 5 kolumn (imbues/charms/boss/achieve/quests).
+15. **Poza zakresem (brak danych / duże)**: Cena (dobra/uczciwa/zbyt drogi — `estimated_value`
+    puste), Task Points + Rotten Blood (scraper nie zbiera), modal szczegółów jak Exiva
+    (sekcje charms/bestiariusz). Blog Exiva — features do rozważenia: watchlist, returning
+    auction indicator, quest access, tag detection, smart highlights, insights, share.
 
 ### Znane drobiazgi (do zrobienia)
 
