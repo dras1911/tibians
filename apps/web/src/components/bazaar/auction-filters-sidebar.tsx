@@ -364,6 +364,13 @@ export function AuctionFiltersSidebar({
     [highlightsSelected, update],
   );
 
+  // Wyróżnienia: pokazuj tylko te z danymi (count > 0); gdy facetów brak
+  // (degradacja bazy) — pokaż wszystkie.
+  const visibleHighlights =
+    facetCounts.storeItems.length > 0
+      ? HIGHLIGHT_KEYS.filter((key) => findCount(facetCounts.storeItems, key) > 0)
+      : HIGHLIGHT_KEYS;
+
   // ── Tagi „Różne" (wzór: ExevoPan) — skróty do filtrów z progami ────
   const miscTags: { key: string; checked: boolean; onToggle: (on: boolean) => void }[] = [
     {
@@ -1017,7 +1024,7 @@ export function AuctionFiltersSidebar({
               {tAdvanced("highlights.label")}
             </h4>
             <div className="grid grid-cols-1 gap-1">
-              {HIGHLIGHT_KEYS.map((key) => (
+              {visibleHighlights.map((key) => (
                 <MustHaveToggle
                   key={key}
                   id={`hl-${key}`}
