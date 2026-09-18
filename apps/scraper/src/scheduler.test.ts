@@ -188,6 +188,7 @@ interface MockDb extends SchedulerDb {
     recordScrapeError: number;
     fetchCalibrationSamples: number;
     recordCalibrationRun: number;
+    computeValuations: number;
   };
 }
 
@@ -206,6 +207,7 @@ function makeMockDb(overrides: Partial<SchedulerDb> = {}): MockDb {
     recordScrapeError: 0,
     fetchCalibrationSamples: 0,
     recordCalibrationRun: 0,
+    computeValuations: 0,
   };
   let runCounter = 0n;
 
@@ -314,6 +316,13 @@ function makeMockDb(overrides: Partial<SchedulerDb> = {}): MockDb {
     async recordCalibrationRun(input) {
       calls.recordCalibrationRun += 1;
       return (overrides.recordCalibrationRun ?? (async () => undefined))(input);
+    },
+
+    async computeValuations() {
+      calls.computeValuations += 1;
+      return (
+        overrides.computeValuations ?? (async () => ({ computed: 0, skipped: 0, failed: 0 }))
+      )();
     },
     async end() {
       // no-op

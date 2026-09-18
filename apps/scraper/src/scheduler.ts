@@ -149,6 +149,13 @@ export interface SchedulerDb {
   archiveFinishedAuctions(ids: readonly bigint[]): Promise<number>;
   /** IDs aukcji aktywnych, których `auction_end` jest w oknie `[NOW, NOW+window]`. */
   getEndingSoonIds(withinHours: number): Promise<readonly bigint[]>;
+  /**
+   * Przelicz wyceny (W18): `estimated_value` + `valuation_history` dla
+   * aktywnych aukcji. Wywoływane po Full loop (throttle w schedulerze —
+   * domyślnie max raz na 30 min), żeby „spodziewana cena" na stronie
+   * nadążała za zmianami danych (nowe detale, nowe aukcje).
+   */
+  computeValuations(): Promise<{ computed: number; skipped: number; failed: number }>;
 
   // ── Reference data (items / outfits / mounts) — dla Reference loop ───
   upsertItems(items: readonly Item[]): Promise<number>;
@@ -287,6 +294,11 @@ export interface SchedulerOptions {
     endingSoonMs: number;
     referenceMs: number;
   }>;
+  /**
+   * Minimalny odstęp między przeliczeniami wycen po Full loop (W18).
+   * Domyślnie 30 min; `0` = co każdy Full loop (testy).
+   */
+  valuationIntervalMs?: number;
   /** AbortSignal — zewnętrzny sygnał STOP (np. parent process). */
   signal?: AbortSignal;
 }
@@ -395,6 +407,14 @@ export function createScheduler(
 
   let started = false;
   let stopped = false;
+
+  /**
+   * Throttle wycen (W18): `computeValuations()` po Full loop, ale nie
+   * częściej niż raz na `valuationIntervalMs` (domyślnie 30 min) — pełny
+   * przelicznik to ~1500 UPDATE-ów, nie chcemy go odpalać co 15 min.
+   */
+  const valuationIntervalMs = options.valuationIntervalMs ?? 30 * 60 * 1000;
+  let lastValuationAtMs = 0;
 
   function isAborted(): boolean {
     return internalAbort.signal.aborted;
@@ -648,7 +668,28 @@ export function createScheduler(
         }
       }
 
-      // 7. POST /api/revalidate (T38) — webhook do Next.js.
+      // 7. WYCENY (W18) — przelicz `estimated_value` dla aktywnych aukcji,
+      // ale max raz na `valuationIntervalMs` (domyślnie 30 min). Błąd wyceny
+      // jest nie-krytyczny (nie blokuje zapisu aukcji) — log i kontynuuj.
+      if (!isAborted() && Date.now() - lastValuationAtMs >= valuationIntervalMs) {
+        try {
+          const vstats = await db.computeValuations();
+          lastValuationAtMs = Date.now();
+          logger.info("Full loop: wyceny przeliczone", {
+            computed: vstats.computed,
+            skipped: vstats.skipped,
+            failed: vstats.failed,
+          });
+        } catch (err) {
+          errorsCount += 1;
+          errorSummary.valuation = err instanceof Error ? err.message : String(err);
+          logger.warn("Full loop: computeValuations failed", {
+            error: err instanceof Error ? err.message : String(err),
+          });
+        }
+      }
+
+      // 8. POST /api/revalidate (T38) — webhook do Next.js.
       if (!isAborted() && revalidate) {
         try {
           await revalidate.revalidate({

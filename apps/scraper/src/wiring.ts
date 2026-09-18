@@ -38,6 +38,7 @@ import { VocationSchema } from "@tibians/shared/auction";
 
 import { AuctionSummarySchema, type AuctionSummary } from "./scrapers/auction-list.js";
 import type { SchedulerDb, UpsertAuctionInput, UpsertAuctionResult } from "./scheduler.js";
+import { runValuation } from "./valuation-run.js";
 
 /**
  * Fallback dla `outfitUrl`, gdy aukcja nie ma outfitu w słowniku
@@ -193,6 +194,17 @@ export function createSchedulerDb(database: Db = db): SchedulerDb {
         report: input.report,
         generatedAt: input.generatedAt,
       });
+    },
+
+    /* ── Wyceny (W18) ──────────────────────────────────────────── */
+
+    async computeValuations() {
+      const stats = await runValuation();
+      return {
+        computed: stats.computed,
+        skipped: stats.skipped,
+        failed: stats.failed,
+      };
     },
 
     /* ── MV + shutdown ──────────────────────────────────────────── */
