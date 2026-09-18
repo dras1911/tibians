@@ -179,9 +179,56 @@ function medianOf(sorted: readonly number[]): number {
 }
 
 /**
- * Mediana rynkowa dla aukcji: próbki tego samego `vocation_base` w oknie
- * poziomu. Najpierw ±15%, gdy <10 próbek — ±30%. `null` = za mało danych
- * (→ fallback na formułę `estimateValue`).
+ * k-NN: mediana z `k` próbek NAJBLIŻSZYCH poziomem (ta sama vocation).
+ *
+ * Dla ekstremów (lvl 1500+ lub 8-20) okna ±15/30% bywają za wąskie —
+ * bierzemy najbliższe dostępne poziomy, żeby topowe postacie nie spadały
+ * na formułę (która przy wagach z sufitu daje 500k+ TC).
+ */
+function nearestMedian(
+  bucket: { levels: number[]; prices: number[] },
+  level: number,
+  k = 40,
+): { median: number; samples: number } | null {
+  const n = bucket.levels.length;
+  if (n < 10) return null;
+
+  const pos = lowerBound(bucket.levels, level);
+  const idx: number[] = [];
+  let left = pos - 1;
+  let right = pos;
+  const take = Math.min(k, n);
+
+  while (idx.length < take) {
+    if (left < 0) {
+      idx.push(right);
+      right += 1;
+      continue;
+    }
+    if (right >= n) {
+      idx.push(left);
+      left -= 1;
+      continue;
+    }
+    const dl = Math.abs(level - (bucket.levels[left] ?? 0));
+    const dr = Math.abs((bucket.levels[right] ?? 0) - level);
+    if (dl <= dr) {
+      idx.push(left);
+      left -= 1;
+    } else {
+      idx.push(right);
+      right += 1;
+    }
+  }
+
+  const prices = idx.map((i) => bucket.prices[i] ?? 0).sort((a, b) => a - b);
+  return { median: medianOf(prices), samples: prices.length };
+}
+
+/**
+ * Mediana rynkowa dla aukcji: próbki tego samego `vocation_base`.
+ * Kolejność: okno ±15% → ±30% (wymóg ≥10 próbek) → k-NN (40 najbliższych)
+ * → `null` (→ fallback na formułę `estimateValue`).
  */
 function marketMedianFor(
   bucket: { levels: number[]; prices: number[] } | undefined,
@@ -200,7 +247,8 @@ function marketMedianFor(
       return { median: medianOf(prices), samples };
     }
   }
-  return null;
+
+  return nearestMedian(bucket, level);
 }
 
 /**
