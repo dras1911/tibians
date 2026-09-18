@@ -98,7 +98,11 @@ export type StoreItemKey = (typeof STORE_ITEM_KEYS)[number];
 /**
  * Wyróżnienia (highlights — wzór: Exiva.pro „Wyróżnienia", rozszerzone W18).
  *
- * Kuratorowana lista rzadkich/wartościowych itemów, outfitów i mountów.
+ * Kuratorowana lista UNIKALNYCH, rzadkich pozycji — celowo NIE ma tu
+ * outfity/mountów ze Store (kupisz je za TC — zero wartości jako
+ * wyróżnienie). Kryterium: nie-store + rzadkie (liczniki w setkach aukcji
+ * są OK dla ikonicznych; tu bierzemy te z pojedynczymi sztukami).
+ *
  * Liczniki liczy `getStoreItemFacetCounts`; pozycje z zerem (brak danych
  * w słownikach) są UKRYWANE w UI — lista może być szersza niż to, co
  * aktualnie widać.
@@ -107,15 +111,16 @@ export type StoreItemKey = (typeof STORE_ITEM_KEYS)[number];
  * (`HIGHLIGHT_FILTERS`).
  */
 export const HIGHLIGHT_KEYS = [
-  // outfity
+  // outfity (unikalne/questowe — is_store = false)
   "goldenOutfit",
-  "bladeDancer",
-  "phoenixEvoker",
-  // mounty
-  "riftWatcher",
-  "voidWatcher",
-  "goldSphinx",
-  "shadowSphinx",
+  "dragonSlayer",
+  "rootwalker",
+  "feralTrapper",
+  "falconer",
+  // mounty (unikalne/questowe — is_store = false)
+  "radiantNimbus",
+  "crimsonBayPredator",
+  "ashenCoastPredator",
   "vortexion",
   "riftRunner",
   // itemy

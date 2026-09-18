@@ -166,15 +166,16 @@ const HIGHLIGHT_FILTERS: Record<
   HighlightKey,
   { table: "items" | "outfits" | "mounts"; pattern: string }
 > = {
-  // outfity
+  // outfity — unikalne/questowe (is_store = false), najrzadsze w danych
   goldenOutfit: { table: "outfits", pattern: "%golden outfit%" },
-  bladeDancer: { table: "outfits", pattern: "%blade dancer%" },
-  phoenixEvoker: { table: "outfits", pattern: "%phoenix evoker%" },
-  // mounty
-  riftWatcher: { table: "mounts", pattern: "rift watcher" },
-  voidWatcher: { table: "mounts", pattern: "void watcher" },
-  goldSphinx: { table: "mounts", pattern: "gold sphinx" },
-  shadowSphinx: { table: "mounts", pattern: "shadow sphinx" },
+  dragonSlayer: { table: "outfits", pattern: "dragon slayer" },
+  rootwalker: { table: "outfits", pattern: "rootwalker" },
+  feralTrapper: { table: "outfits", pattern: "feral trapper" },
+  falconer: { table: "outfits", pattern: "falconer" },
+  // mounty — unikalne/questowe (is_store = false)
+  radiantNimbus: { table: "mounts", pattern: "radiant nimbus" },
+  crimsonBayPredator: { table: "mounts", pattern: "crimson bay predator" },
+  ashenCoastPredator: { table: "mounts", pattern: "ashen coast predator" },
   vortexion: { table: "mounts", pattern: "%vortexion%" },
   riftRunner: { table: "mounts", pattern: "%rift runner%" },
   // itemy — dokładna nazwa „Ferumbras' Hat" (bez % — inaczej łapie
