@@ -576,8 +576,8 @@ ZASADY:
 ## 13. Stan zapisany
 
 ```
-Commit:     77ad445 (local == remote)
-Testy:      scraper 296 · web 147 · shared 106 — zielone
+Commit:     c1a4a55 (local == remote)
+Testy:      scraper 296 · web 149 · shared 106 — zielone
 Typecheck:  ruszane pakiety (shared/db/web/scraper) — 0 błędów
 Kontenery:  5/5 działają
 MCP:        tibians_db podłączony (read-only, tunel 15432) — patrz §14
@@ -589,10 +589,16 @@ Home:       hero (mniejszy) + sekcja „kończące się" z 9 aukcjami (grid 3 ko
             „Ostatnio dodane" i kalkulatory; karty: ikony skilli, stonowane tagi atutów
 Porównanie: wspólny stan localStorage (`useCompareSelection`) + pasek `CompareBar`
             (fixed bottom) → `/bazaar/compare?a=&b=`; działa na home i bazaarze (3e4b5d8)
-Bazar:      filtry DZIAŁAJĄ (bug #13 — `splitBazaarParams`); nowe sekcje: „Store items"
+Bazar:      filtry DZIAŁAJĄ (bug #13 — `splitBazaarParams`); sekcje: „Store items"
             (7 itemów + przeniesione Charm/Prey/Weekly/WorldTransfer) i „Różne"
-            (biddedOnly, charm points i TC invested min/max); bez presetów; BattlEye
-            tylko zielone/żółte; „Zawiera" zamiast „Must-have" (77ad445)
+            (tagi jak ExevoPan: Soul War, Primal Ordeal, Dużo charmów/questów/
+            przedmiotów z Store, Rzadkie nazwy + biddedOnly, charm/TC min-max);
+            bez presetów; BattlEye tylko zielone/żółte; „Zawiera" zamiast
+            „Must-have"; sidebar sticky z własnym scrollem; „Najnowsze" =
+            auctionStart desc (c1a4a55)
+Scraper:    Penumbra FK naprawione (#14), zombie-locki czyszczone przy starcie
+            (#15, PG_APP_NAME), ending-soon żyje; „aktywne" wymaga
+            auction_end > now() (defensywa #18) — 1c4ff4c/ee39d96
 ```
 
 ---
