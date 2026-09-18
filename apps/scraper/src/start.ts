@@ -26,14 +26,35 @@
  * jako „lock zajęty"). Handlery rejestrujemy TYLKO tutaj — `src/index.ts`
  * celowo ich nie ma (wołał `process.exit(0)` natychmiast, psując shutdown).
  */
-import { pool } from '@tibians/db';
+import { pool } from "@tibians/db";
 
-import { createPgAdvisoryLockClient } from './pg-advisory-lock.js';
-import { startScheduler } from './index.js';
-import { createSchedulerDb } from './wiring.js';
+import { createPgAdvisoryLockClient } from "./pg-advisory-lock.js";
+import { startScheduler } from "./index.js";
+import { createSchedulerDb } from "./wiring.js";
 
 async function main(): Promise<void> {
-  console.log('[start] Tibians scraper — bootstrap produkcyjny');
+  console.log("[start] Tibians scraper — bootstrap produkcyjny");
+
+  // ── Cleanup zombie-sesji po poprzednim życiu kontenera ───────────────
+  // Advisory locki są session-scoped: gdy proces scrapera zginie bez
+  // graceful shutdownu (deploy/crash), stara sesja po stronie serwera żyje
+  // dalej i trzyma lock → pętle dostają „Advisory lock busy" w kółko
+  // (na produkcji ending-soon stał tak godzinami). Ubijamy sesje o naszej
+  // nazwie aplikacji — `pg_terminate_backend` zwalnia ich locki.
+  const appName = process.env.PG_APP_NAME;
+  if (appName !== undefined && appName !== "") {
+    try {
+      const res = await pool.query(
+        "SELECT pg_terminate_backend(pid) AS killed FROM pg_stat_activity WHERE application_name = $1 AND pid <> pg_backend_pid()",
+        [appName],
+      );
+      if ((res.rowCount ?? 0) > 0) {
+        console.log(`[start] ubitych zombie-sesji "${appName}": ${res.rowCount}`);
+      }
+    } catch (error) {
+      console.warn("[start] cleanup zombie-sesji nie powiódł się:", error);
+    }
+  }
 
   const schedulerDb = createSchedulerDb();
   const lockClient = createPgAdvisoryLockClient(pool);
@@ -55,26 +76,24 @@ async function main(): Promise<void> {
       // `stop()` zamyka pętle, czeka na in-flight i zamyka zasoby DB.
       await handle.stop();
       await lockClient.end?.();
-      console.log('[start] shutdown zakończony');
+      console.log("[start] shutdown zakończony");
     } catch (error) {
-      console.error('[start] błąd podczas shutdownu:', error);
+      console.error("[start] błąd podczas shutdownu:", error);
       process.exitCode = 1;
     }
   };
 
-  process.on('SIGTERM', () => {
-    void shutdown('SIGTERM');
+  process.on("SIGTERM", () => {
+    void shutdown("SIGTERM");
   });
-  process.on('SIGINT', () => {
-    void shutdown('SIGINT');
+  process.on("SIGINT", () => {
+    void shutdown("SIGINT");
   });
 
-  console.log(
-    '[start] scheduler wystartował (Full 15min / EndingSoon 30s / Reference 24h)',
-  );
+  console.log("[start] scheduler wystartował (Full 15min / EndingSoon 30s / Reference 24h)");
 }
 
 void main().catch((error: unknown) => {
-  console.error('[start] FATAL — bootstrap nie powiódł się:', error);
+  console.error("[start] FATAL — bootstrap nie powiódł się:", error);
   process.exit(1);
 });

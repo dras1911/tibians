@@ -17,17 +17,17 @@
  * Połączenie jest lazy: dopiero pierwsze wywołanie `db`/`pool` otwiera pulę.
  * Pozwala to na typecheck/build bez ustawionego DATABASE_URL.
  */
-import 'dotenv/config';
+import "dotenv/config";
 
-import { drizzle, type NodePgDatabase } from 'drizzle-orm/node-postgres';
-import { Pool } from 'pg';
+import { drizzle, type NodePgDatabase } from "drizzle-orm/node-postgres";
+import { Pool } from "pg";
 
-import { schema } from './schema';
+import { schema } from "./schema";
 
-export * from './schema';
-export * from './seed';
-export * from './config-loader';
-export * from './queries';
+export * from "./schema";
+export * from "./seed";
+export * from "./config-loader";
+export * from "./queries";
 
 /**
  * Tworzy nowy pg.Pool + Drizzle wrapper.
@@ -65,7 +65,7 @@ function getState(): DbState {
     const url = process.env.DATABASE_URL;
     if (!url) {
       throw new Error(
-        '[@tibians/db] DATABASE_URL is not set. Copy .env.example to .env and configure it.',
+        "[@tibians/db] DATABASE_URL is not set. Copy .env.example to .env and configure it.",
       );
     }
     const pool = new Pool({
@@ -73,6 +73,9 @@ function getState(): DbState {
       max: 10,
       idleTimeoutMillis: 30_000,
       connectionTimeoutMillis: 5_000,
+      // Nazwa aplikacji w `pg_stat_activity` — pozwala m.in. ubijać zombie
+      // sesje po restarcie kontenera (cleanup w `apps/scraper/src/start.ts`).
+      ...(process.env.PG_APP_NAME ? { application_name: process.env.PG_APP_NAME } : {}),
     });
     const db = drizzle(pool, { schema });
     globalForDb.__tibiansDbState = { pool, db };
@@ -91,7 +94,7 @@ export const db = new Proxy({} as NodePgDatabase<typeof schema>, {
   get(_target, prop) {
     const { db: realDb } = getState();
     const value = (realDb as unknown as Record<string | symbol, unknown>)[prop];
-    return typeof value === 'function' ? value.bind(realDb) : value;
+    return typeof value === "function" ? value.bind(realDb) : value;
   },
 }) as NodePgDatabase<typeof schema>;
 
@@ -102,7 +105,7 @@ export const pool = new Proxy({} as Pool, {
   get(_target, prop) {
     const { pool: realPool } = getState();
     const value = (realPool as unknown as Record<string | symbol, unknown>)[prop];
-    return typeof value === 'function' ? value.bind(realPool) : value;
+    return typeof value === "function" ? value.bind(realPool) : value;
   },
 }) as Pool;
 

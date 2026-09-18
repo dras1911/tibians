@@ -93,6 +93,9 @@ services:
       - .env.production
     environment:
       NODE_ENV: production
+      # Nazwa w `pg_stat_activity` — cleanup zombie-sesji przy starcie
+      # (start.ts ubija stare sesje o tej nazwie, żeby zwolnić advisory-locki).
+      PG_APP_NAME: tibians-scraper
       TIBIADATA_BASE_URL: http://tibiadata:8080
       # Transport przez przeglądarkę (Cloudflare!): CloakBrowser + WARP.
       # Fallback: FlareSolverr (profil `fallback` — patrz niżej).

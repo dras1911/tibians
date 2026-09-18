@@ -170,6 +170,24 @@ export async function upsertAuction(
     // `auction_items.item_id → items.id` itd. (przy relacjach).
     await ensureReferenceData(tx, input.reference);
 
+    // Wyrównaj `world_id` do ID ŚWIATA W BAZIE (po nazwie z harvestu).
+    // Parser nadaje nieznanym światom deterministyczny hash, który może się
+    // różnić od `worlds.id` (świat dodany wcześniej — seed/TibiaData; np.
+    // Penumbra: hash=13731 vs id=62). Bez wyrównania INSERT aukcji leci
+    // z hashem → FK fail i aukcja nigdy nie wchodzi do bazy.
+    const harvestWorldName = input.reference?.world?.name;
+    if (harvestWorldName != null) {
+      const worldRows = await tx
+        .select({ id: worlds.id })
+        .from(worlds)
+        .where(eq(worlds.name, harvestWorldName))
+        .limit(1);
+      const dbWorldId = worldRows[0]?.id;
+      if (dbWorldId !== undefined) {
+        auctionRow.worldId = dbWorldId;
+      }
+    }
+
     const returned = await tx
       .insert(auctions)
       .values(auctionRow)
