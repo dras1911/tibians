@@ -49,10 +49,13 @@ import {
   Globe,
   RotateCcw,
   Search,
+  ShoppingBag,
   SlidersHorizontal,
   Sparkles,
   X,
 } from "lucide-react";
+
+import { STORE_ITEM_KEYS } from "@tibians/shared/auction";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -118,6 +121,8 @@ export interface FacetCounts {
   world: FacetCount[];
   pvpType: FacetCount[];
   battleye: FacetCount[];
+  /** Store items — liczniki kuratorowanych kluczy (bez filtrów). */
+  storeItems: FacetCount[];
   /** Łączna liczba aktywnych aukcji (bez filtrów). */
   totalActive: number;
 }
@@ -226,7 +231,9 @@ const PVP_TYPES: PvPTypeFilter[] = [
   "Retro Hardcore PvP",
 ];
 
-const BATTLEYE_TYPES: BattlEyeFilter[] = ["protected", "initially protected", "not protected"];
+// Tylko zielone (protected) i żółte (initially protected) — na Tibii nie ma
+// światów bez BattlEye, więc „not protected” nie jest oferowane w filtrach.
+const BATTLEYE_TYPES: BattlEyeFilter[] = ["protected", "initially protected"];
 
 const REGIONS: RegionFilter[] = ["EU", "NA", "BR", "OCE"];
 
@@ -256,6 +263,10 @@ function countActiveFilters(f: BazaarFiltersUi): number {
   if (f.hasTwistOfFate) count++;
   if (f.imbuesFull) count++;
   if (f.mustHaveItemId !== undefined) count++;
+  if (f.storeItems) count++;
+  if (f.biddedOnly) count++;
+  if (f.charmPointsMin !== undefined || f.charmPointsMax !== undefined) count++;
+  if (f.tcInvestedMin !== undefined || f.tcInvestedMax !== undefined) count++;
   if (
     f.gemsMinLesser !== undefined ||
     f.gemsMinRegular !== undefined ||
@@ -304,6 +315,23 @@ export function AuctionFiltersSidebar({
     [filters, onFilterChange],
   );
 
+  // ── Store items (CSV w `filters.storeItems`) ───────────────────────
+  const storeItemsSelected = React.useMemo(
+    () => new Set((filters.storeItems ?? "").split(",").filter(Boolean)),
+    [filters.storeItems],
+  );
+  const toggleStoreItem = React.useCallback(
+    (key: string, on: boolean) => {
+      const next = new Set(storeItemsSelected);
+      if (on) next.add(key);
+      else next.delete(key);
+      // Stała kolejność kluczy (STORE_ITEM_KEYS) — stabilny URL.
+      const list = STORE_ITEM_KEYS.filter((k) => next.has(k));
+      update({ storeItems: list.length > 0 ? list.join(",") : undefined });
+    },
+    [storeItemsSelected, update],
+  );
+
   const clearOne = React.useCallback(
     (key: keyof BazaarFiltersUi) => {
       const next = { ...filters };
@@ -324,6 +352,12 @@ export function AuctionFiltersSidebar({
         delete next.storeMinOutfits;
         delete next.storeMinMounts;
         delete next.storeMinItems;
+      } else if (key === "charmPointsMin" || key === "charmPointsMax") {
+        delete next.charmPointsMin;
+        delete next.charmPointsMax;
+      } else if (key === "tcInvestedMin" || key === "tcInvestedMax") {
+        delete next.tcInvestedMin;
+        delete next.tcInvestedMax;
       } else if (key === "mustHaveItemId" || key === "mustHaveItemName") {
         delete next.mustHaveItemId;
         delete next.mustHaveItemName;
@@ -858,28 +892,59 @@ export function AuctionFiltersSidebar({
                 onToggle={(v) => update({ imbuesFull: v ? true : undefined })}
               />
               <MustHaveToggle
-                id="mh-charmexpansion"
+                id="mh-twistoffate"
+                label={tAdvanced("mustHave.twistOfFate")}
+                checked={filters.hasTwistOfFate === true}
+                onToggle={(v) => update({ hasTwistOfFate: v ? true : undefined })}
+              />
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* ── Store items (kuratorowana lista jak ExevoPan) ───────── */}
+          <section aria-labelledby="filter-store-items">
+            <h4
+              id="filter-store-items"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              <ShoppingBag className="mr-1 inline h-3.5 w-3.5" aria-hidden="true" />
+              {tAdvanced("storeItems.label")}
+            </h4>
+            <div className="grid grid-cols-1 gap-1">
+              {STORE_ITEM_KEYS.map((key) => (
+                <MustHaveToggle
+                  key={key}
+                  id={`si-${key}`}
+                  label={tAdvanced(`storeItems.items.${key}`)}
+                  checked={storeItemsSelected.has(key)}
+                  count={findCount(facetCounts.storeItems, key)}
+                  onToggle={(v) => toggleStoreItem(key, v)}
+                />
+              ))}
+              <MustHaveToggle
+                id="si-charmexpansion"
                 label={tAdvanced("mustHave.charmExpansion")}
                 checked={filters.hasCharmExpansion === true}
                 onToggle={(v) => update({ hasCharmExpansion: v ? true : undefined })}
               />
               <MustHaveToggle
-                id="mh-preyslot"
+                id="si-preyslot"
                 label={tAdvanced("mustHave.preySlot")}
                 checked={filters.hasPreySlot === true}
                 onToggle={(v) => update({ hasPreySlot: v ? true : undefined })}
               />
               <MustHaveToggle
-                id="mh-weeklytask"
+                id="si-weeklytask"
                 label={tAdvanced("mustHave.weeklyTaskExp")}
                 checked={filters.hasWeeklyTaskExp === true}
                 onToggle={(v) => update({ hasWeeklyTaskExp: v ? true : undefined })}
               />
               <MustHaveToggle
-                id="mh-twistoffate"
-                label={tAdvanced("mustHave.twistOfFate")}
-                checked={filters.hasTwistOfFate === true}
-                onToggle={(v) => update({ hasTwistOfFate: v ? true : undefined })}
+                id="si-worldtransfer"
+                label={tAdvanced("mustHave.worldTransfer")}
+                checked={filters.hasWorldTransfer === true}
+                onToggle={(v) => update({ hasWorldTransfer: v ? true : undefined })}
               />
             </div>
           </section>
@@ -984,6 +1049,56 @@ export function AuctionFiltersSidebar({
                 min={0}
                 onChange={(v) => update({ storeMinItems: v })}
               />
+            </div>
+          </section>
+
+          {/* ── Różne (misc — jak ExevoPan) ─────────────────────────── */}
+          <section aria-labelledby="filter-misc">
+            <h4
+              id="filter-misc"
+              className="mb-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground"
+            >
+              {tAdvanced("misc.label")}
+            </h4>
+            <div className="space-y-2">
+              <MustHaveToggle
+                id="misc-biddedonly"
+                label={tAdvanced("misc.biddedOnly")}
+                checked={filters.biddedOnly === true}
+                onToggle={(v) => update({ biddedOnly: v ? true : undefined })}
+              />
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField
+                  id="misc-charmmin"
+                  label={tAdvanced("misc.charmMin")}
+                  value={filters.charmPointsMin}
+                  min={0}
+                  onChange={(v) => update({ charmPointsMin: v })}
+                />
+                <NumberField
+                  id="misc-charmmax"
+                  label={tAdvanced("misc.charmMax")}
+                  value={filters.charmPointsMax}
+                  min={0}
+                  onChange={(v) => update({ charmPointsMax: v })}
+                />
+              </div>
+              <div className="grid grid-cols-2 gap-2">
+                <NumberField
+                  id="misc-tcmin"
+                  label={tAdvanced("misc.tcMin")}
+                  value={filters.tcInvestedMin}
+                  min={0}
+                  onChange={(v) => update({ tcInvestedMin: v })}
+                />
+                <NumberField
+                  id="misc-tcmax"
+                  label={tAdvanced("misc.tcMax")}
+                  value={filters.tcInvestedMax}
+                  min={0}
+                  onChange={(v) => update({ tcInvestedMax: v })}
+                />
+              </div>
             </div>
           </section>
         </CollapsibleContent>
@@ -1111,6 +1226,10 @@ function countAdvancedActive(f: BazaarFiltersUi): number {
   if (f.hasTwistOfFate) count++;
   if (f.imbuesFull) count++;
   if (f.mustHaveItemId !== undefined) count++;
+  if (f.storeItems) count++;
+  if (f.biddedOnly) count++;
+  if (f.charmPointsMin !== undefined || f.charmPointsMax !== undefined) count++;
+  if (f.tcInvestedMin !== undefined || f.tcInvestedMax !== undefined) count++;
   if (
     f.gemsMinLesser !== undefined ||
     f.gemsMinRegular !== undefined ||
@@ -1134,10 +1253,12 @@ interface MustHaveToggleProps {
   id: string;
   label: string;
   checked: boolean;
+  /** Opcjonalny licznik (np. ile aukcji ma dany store item). */
+  count?: number;
   onToggle: (checked: boolean) => void;
 }
 
-function MustHaveToggle({ id, label, checked, onToggle }: MustHaveToggleProps) {
+function MustHaveToggle({ id, label, checked, count, onToggle }: MustHaveToggleProps) {
   return (
     <label
       htmlFor={id}
@@ -1153,6 +1274,11 @@ function MustHaveToggle({ id, label, checked, onToggle }: MustHaveToggleProps) {
         className="h-4 w-4"
       />
       <span className="flex-1 truncate">{label}</span>
+      {count !== undefined ? (
+        <span className="numeric font-mono text-xs tabular-nums text-muted-foreground">
+          {count}
+        </span>
+      ) : null}
     </label>
   );
 }
@@ -1260,7 +1386,7 @@ function SkillMinControl({ filters, update, skillOptions, t }: SkillMinControlPr
         </SelectContent>
       </Select>
 
-      {/* Slider 0..250 (skill minimum) */}
+      {/* Slider 0..250 + input liczbowy (mobile: wpisz wartość) */}
       <div className="flex items-center gap-2">
         <span className="font-mono text-xs tabular-nums text-muted-foreground">≥</span>
         <Slider
@@ -1272,9 +1398,21 @@ function SkillMinControl({ filters, update, skillOptions, t }: SkillMinControlPr
           aria-label={t("skillMin.min")}
           className="flex-1"
         />
-        <span className="numeric min-w-[2.5rem] text-right font-mono text-xs tabular-nums">
-          {selectedMin}
-        </span>
+        <Input
+          type="number"
+          inputMode="numeric"
+          min={0}
+          max={250}
+          step={1}
+          value={selectedMin}
+          onChange={(event) => {
+            const raw = Number(event.target.value);
+            if (Number.isNaN(raw)) return;
+            handleMinChange(Math.min(250, Math.max(0, Math.trunc(raw))));
+          }}
+          aria-label={t("skillMin.min")}
+          className="numeric h-8 w-[4.5rem] text-right font-mono text-xs tabular-nums"
+        />
       </div>
     </div>
   );

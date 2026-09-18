@@ -21,7 +21,7 @@
  *   7. **Mobile FAB → Sheet** (T14): filtr dostępny przez `Sheet`.
  *   8. **Sticky rząd aktywnych chipów + Kopiuj link** (T43): renderowany
  *      przez `<ActiveFiltersBar>` tuż pod toolbar.
- *   9. **Presety filtrów** (T44): `<PresetDropdown>` w prawym górnym
+ *   9. **Live indicator** (T44): `<BazaarLiveIndicator>` w prawym górnym
  *      rogu toolbara.
  *
  * Filozofia (arch §5):
@@ -57,7 +57,6 @@ import {
 } from "./index";
 import { ActiveFiltersBar } from "./active-filters-bar";
 import { BazaarLiveIndicator } from "./bazaar-live-indicator";
-import { PresetDropdown } from "./preset-dropdown";
 import { EmptyResults, type EmptyResultsSuggestion } from "./empty-results";
 import { VirtualizedAuctionGrid } from "./virtualized-grid";
 import { useBazaarFilters } from "@/lib/hooks/use-bazaar-filters";
@@ -122,6 +121,7 @@ const EMPTY_FACETS: FacetCounts = {
   world: [],
   pvpType: [],
   battleye: [],
+  storeItems: [],
   totalActive: 0,
 };
 
@@ -156,7 +156,7 @@ export interface BazaarClientProps {
 
 /**
  * BazaarClient — używa `useBazaarFilters()` dla URL state filtrów
- * (T43). Renderuje `<ActiveFiltersBar>` (T43) + `<PresetDropdown>`
+ * (T43). Renderuje `<ActiveFiltersBar>` (T43) + live indicator
  * (T44) wokół głównego grida.
  *
  * UWAGA: ten komponent używa `useSearchParams()`, więc **musi być
@@ -295,7 +295,7 @@ function BazaarClientInner({
 
   return (
     <div className="flex flex-col gap-4">
-      {/* ── Top bar (toolbar + preset dropdown + live indicator) ────── */}
+      {/* ── Top bar (toolbar + live indicator) ────── */}
       <div className="flex flex-wrap items-end justify-between gap-2">
         <div className="min-w-0 flex-1">
           <AuctionResultsToolbar
@@ -310,7 +310,6 @@ function BazaarClientInner({
         </div>
         <div className="flex shrink-0 items-center gap-2">
           <BazaarLiveIndicator />
-          <PresetDropdown />
         </div>
       </div>
 

@@ -39,10 +39,13 @@ export {
 
 // Filtry i paginacja (task 38 — HTTP API kontrakt)
 export {
+  auctionFiltersObject,
   auctionFiltersSchema,
   paginationSchema,
   endingSoonQuerySchema,
   totalPagesOf,
+  STORE_ITEM_KEYS,
+  type StoreItemKey,
   type AuctionFilters,
   type Pagination,
   type EndingSoonQuery,

@@ -377,7 +377,7 @@
           "melee": "Melee (sword/club/axe)"
         },
         "mustHave": {
-          "label": "Must-have",
+          "label": "Includes",
           "soulWar": "💀 Soul War",
           "primalOrdeal": "🦖 Primal Ordeal",
           "worldTransfer": "🌍 World Transfer",
@@ -407,6 +407,26 @@
           "outfits": "Outfits",
           "mounts": "Mounts",
           "items": "Items"
+        },
+        "storeItems": {
+          "label": "Store items",
+          "items": {
+            "trainingDummy": "🎯 Training Dummy",
+            "goldPouch": "💰 Gold Pouch",
+            "goldConverter": "🪙 Gold Converter",
+            "hirelings": "🏮 Hirelings",
+            "imbuementShrine": "🔮 Imbuement Shrine",
+            "rewardShrine": "🏆 Reward Shrine",
+            "mailbox": "📬 Mailbox"
+          }
+        },
+        "misc": {
+          "label": "Misc",
+          "biddedOnly": "Bidded only",
+          "charmMin": "Charm points min",
+          "charmMax": "Charm points max",
+          "tcMin": "TC invested min",
+          "tcMax": "TC invested max"
         }
       },
       "presets": {

@@ -11,11 +11,7 @@
  *   - AuctionCountdownCell (compact countdown dla tabeli)
  */
 
-export {
-  type AuctionSummary,
-  toAuctionSummary,
-  toAuctionSummaries,
-} from "./auction-summary";
+export { type AuctionSummary, toAuctionSummary, toAuctionSummaries } from "./auction-summary";
 
 export { AuctionCard, type AuctionCardProps } from "./auction-card";
 export { AuctionTable, type AuctionTableProps } from "./auction-table";
@@ -42,27 +38,15 @@ export {
   type BattlEyeFilter,
   type SkillFilterKey,
 } from "./auction-filters-sidebar";
-export {
-  BazaarClient,
-  type BazaarClientProps,
-  sortKeyToUrlParams,
-} from "./bazaar-client";
+export { BazaarClient, type BazaarClientProps, sortKeyToUrlParams } from "./bazaar-client";
 export { ActiveFiltersBar } from "./active-filters-bar";
-export {
-  PresetDropdown,
-  formatPresetPreview,
-} from "./preset-dropdown";
 export {
   RareItemCombobox,
   type ReferenceItemOption,
   type RareItemComboboxProps,
 } from "./rare-item-combobox";
 // T45 — EmptyResults + sugestie server-side
-export {
-  EmptyResults,
-  type EmptyResultsProps,
-  type EmptyResultsSuggestion,
-} from "./empty-results";
+export { EmptyResults, type EmptyResultsProps, type EmptyResultsSuggestion } from "./empty-results";
 // T46 — Virtualizacja (>100 aukcji)
 export {
   VirtualizedAuctionGrid,
@@ -70,18 +54,9 @@ export {
   type VirtualizedAuctionGridProps,
 } from "./virtualized-grid";
 // T51 — Porównanie 2 aukcji (side-by-side + picker)
-export {
-  ComparePicker,
-  type ComparePickerProps,
-} from "./compare-picker";
-export {
-  CompareTable,
-  type CompareTableProps,
-} from "./compare-table";
+export { ComparePicker, type ComparePickerProps } from "./compare-picker";
+export { CompareTable, type CompareTableProps } from "./compare-table";
 // T52 — Podobne aukcje na detalu
-export {
-  SimilarAuctions,
-  type SimilarAuctionsProps,
-} from "./similar-auctions";
+export { SimilarAuctions, type SimilarAuctionsProps } from "./similar-auctions";
 // T55/T56 — LivePriceFlash: animacja flash przy zmianie bid (SSE/polling)
 export { LivePriceFlash, type LivePriceFlashProps } from "./live-price-flash";

@@ -25,23 +25,17 @@ import { History as HistoryIcon } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 
 import { Breadcrumbs, type BreadcrumbItem } from "@/components/layout/breadcrumbs";
-import {
-  HistoryClient,
-  toHistorySummaries,
-} from "./history-client";
+import { HistoryClient, toHistorySummaries } from "./history-client";
 import {
   getFinishedAuctions,
   getWorldsByRegion,
   type FinishedAuctionFilters,
 } from "@/lib/server/auctions";
-import {
-  paginationSchema,
-  totalPagesOf,
-} from "@tibians/shared/auction";
+import { splitBazaarParams } from "@/lib/server/bazaar-params";
+import { paginationSchema, totalPagesOf } from "@tibians/shared/auction";
 import { routing, type Locale } from "@/i18n/routing";
 
-const SITE_URL =
-  process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
+const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
 
 const PATH = "/bazaar/history";
 
@@ -74,14 +68,11 @@ export async function generateMetadata({
   // Title ≤ 60 znaków (SEO best practice).
   const title = t("pageTitle");
   const localizedTitle = `${title} · Tibians`;
-  const finalTitle =
-    localizedTitle.length <= 60 ? localizedTitle : title;
+  const finalTitle = localizedTitle.length <= 60 ? localizedTitle : title;
 
   const description = t("pageDescription");
   const finalDescription =
-    description.length <= 155
-      ? description
-      : `${description.slice(0, 152)}…`;
+    description.length <= 155 ? description : `${description.slice(0, 152)}…`;
 
   const canonical = `${SITE_URL}/${locale}${PATH}`;
   const languages: Record<string, string> = {};
@@ -152,10 +143,7 @@ function flattenSearchParams(
  * - `dateFrom` → 00:00:00 UTC początku dnia (cały dzień inclusive).
  * - `dateTo` → 23:59:59.999 UTC końca dnia (cały dzień inclusive).
  */
-function parseDateParam(
-  value: string | undefined,
-  endOfDay: boolean,
-): Date | undefined {
+function parseDateParam(value: string | undefined, endOfDay: boolean): Date | undefined {
   if (value === undefined || value === "") return undefined;
   // Format `YYYY-MM-DD` (HTML `<input type="date">`).
   if (!/^\d{4}-\d{2}-\d{2}$/u.test(value)) return undefined;
@@ -186,9 +174,11 @@ export default async function HistoryPage({
   // ── Parsowanie + walidacja query params (Zod) ──────────────────────
   const flat = flattenSearchParams(rawSearch);
 
+  // Tylko klucze schematu — flat zawiera też parametry filtrów historii,
+  // a `paginationSchema` jest `.strict()` (inaczej fallback do strony 1).
   let pagination;
   try {
-    pagination = paginationSchema.parse(flat);
+    pagination = paginationSchema.parse(splitBazaarParams(flat).paginationParams);
   } catch {
     pagination = paginationSchema.parse({});
   }
@@ -219,31 +209,26 @@ export default async function HistoryPage({
   // 2. Lista światów (dla filtra w panelu).
   const listPromise = getFinishedAuctions(finishedFilters, pagination);
   const worldsPromise = getWorldsByRegion();
-  const [listResult, worldsByRegion] = await Promise.all([
-    listPromise,
-    worldsPromise,
-  ]);
+  const [listResult, worldsByRegion] = await Promise.all([listPromise, worldsPromise]);
 
   const { rows, total } = listResult;
   const totalPages = totalPagesOf(total, pagination.pageSize);
 
   // Wszystkie światy (EU + NA + BR) — flat lista dla `<HistoryFilters>`.
-  const allWorlds = [
-    ...worldsByRegion.EU,
-    ...worldsByRegion.NA,
-    ...worldsByRegion.BR,
-  ];
+  const allWorlds = [...worldsByRegion.EU, ...worldsByRegion.NA, ...worldsByRegion.BR];
 
   // ── JSON-LD ItemList schema (SEO §4.3 + arch §5 — ItemList) ──────
   const jsonLd = {
     "@context": "https://schema.org",
     "@type": "ItemList",
-    itemListElement: rows.slice(0, 25).map((row: { auctionId: bigint; characterName: string }, idx: number) => ({
-      "@type": "ListItem",
-      position: idx + 1,
-      url: `${SITE_URL}/${locale}/bazaar/${row.auctionId.toString()}`,
-      name: row.characterName,
-    })),
+    itemListElement: rows
+      .slice(0, 25)
+      .map((row: { auctionId: bigint; characterName: string }, idx: number) => ({
+        "@type": "ListItem",
+        position: idx + 1,
+        url: `${SITE_URL}/${locale}/bazaar/${row.auctionId.toString()}`,
+        name: row.characterName,
+      })),
     numberOfItems: total,
   };
 
@@ -264,9 +249,7 @@ export default async function HistoryPage({
           <HistoryIcon className="h-6 w-6 text-primary" aria-hidden="true" />
           {t("pageTitle")}
         </h1>
-        <p className="mt-2 text-sm text-muted-foreground sm:text-base">
-          {t("pageDescription")}
-        </p>
+        <p className="mt-2 text-sm text-muted-foreground sm:text-base">{t("pageDescription")}</p>
       </header>
 
       {/* Filtry + lista (client island) */}

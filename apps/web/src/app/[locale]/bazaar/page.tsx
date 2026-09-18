@@ -34,8 +34,10 @@ import {
   getFacetCounts,
   getWorldsByRegion,
   getSuggestionCounts,
+  getStoreItemFacetCounts,
 } from "@/lib/server/auctions";
-import { auctionFiltersSchema, paginationSchema, totalPagesOf } from "@tibians/shared/auction";
+import { parseBazaarSearchParams } from "@/lib/server/bazaar-params";
+import { totalPagesOf } from "@tibians/shared/auction";
 import { routing, type Locale } from "@/i18n/routing";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.replace(/\/$/, "") ?? "https://tibians.tools";
@@ -139,16 +141,7 @@ export default async function BazaarPage({
   // T39: search params = URL state — źródło prawdy (T43).
   const flat = flattenSearchParams(rawSearch);
 
-  let filters;
-  let pagination;
-  try {
-    filters = auctionFiltersSchema.parse(flat);
-    pagination = paginationSchema.parse(flat);
-  } catch {
-    // Fallback na domyślne filtry (arch §6.4 pkt 4 — URL zawsze działa).
-    filters = auctionFiltersSchema.parse({});
-    pagination = paginationSchema.parse({});
-  }
+  const { filters, pagination } = parseBazaarSearchParams(flat);
 
   // ── Równoległe zapytania do DB (T34 + T41) ────────────────────────
   // Arch §8.2: `next: { tags: ['auctions'] }` — revalidowane przez
@@ -170,6 +163,7 @@ export default async function BazaarPage({
     listAuctions(filters, pagination),
     getFacetCounts(filters),
     getWorldsByRegion(),
+    getStoreItemFacetCounts(),
   ]).catch((error: unknown) => {
     console.error("[bazaar] zapytania DB nie powiodły się — degradacja do stanu pustego:", error);
     return null;
@@ -184,6 +178,7 @@ export default async function BazaarPage({
     world: [],
     pvpType: [],
     battleye: [],
+    storeItems: [],
     totalActive: 0,
   };
   const worldsByRegion = dbResult?.[2] ?? {
@@ -192,6 +187,7 @@ export default async function BazaarPage({
     BR: [],
     OCE: [],
   };
+  const storeItemFacetCounts = dbResult?.[3] ?? [];
 
   const { rows, total } = listResult;
 
@@ -243,7 +239,7 @@ export default async function BazaarPage({
             totalPages={totalPages}
             page={pagination.page}
             pageSize={pagination.pageSize}
-            facetCounts={facetCounts}
+            facetCounts={{ ...facetCounts, storeItems: storeItemFacetCounts }}
             worldsByRegion={worldsByRegion}
             defaultView={defaultView}
             suggestions={suggestions}

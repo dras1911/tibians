@@ -33,10 +33,7 @@
 import * as React from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 
-import {
-  auctionFiltersSchema,
-  type AuctionFilters,
-} from "@tibians/shared/auction";
+import { auctionFiltersSchema, type AuctionFilters } from "@tibians/shared/auction";
 
 // ───────────────────────────────────────────────────────────────────────
 // Typ filtrów UI — superset AuctionFilters
@@ -49,7 +46,7 @@ import {
  *
  * Pola opcjonalne — każdy preset / URL state może zawierać podzbiór.
  */
-export interface BazaarFiltersUi extends Partial<AuctionFilters> {
+export interface BazaarFiltersUi extends Omit<Partial<AuctionFilters>, "storeItems"> {
   // Skill minimum (T42 — już w AuctionFilters jako skillType/skillMin,
   // powtarzamy tu dla jasności typu przy destrukturyzacji).
   skillType?: AuctionFilters["skillType"];
@@ -84,6 +81,9 @@ export interface BazaarFiltersUi extends Partial<AuctionFilters> {
   storeMinMounts?: number | undefined;
   storeMinItems?: number | undefined;
 
+  /** Store items (kuratorowane klucze, CSV — `?storeItems=goldPouch,mailbox`). */
+  storeItems?: string | undefined;
+
   /** Computed flag (server-side, przyszłe W9+). */
   overpriced?: boolean | undefined;
 }
@@ -113,6 +113,7 @@ const EXTRA_FILTER_KEYS = [
   "storeMinOutfits",
   "storeMinMounts",
   "storeMinItems",
+  "storeItems",
   "overpriced",
 ] as const;
 
@@ -123,9 +124,7 @@ function parseBoolParam(value: string | null): boolean | undefined {
   return value === "1" || value === "true";
 }
 
-function parseIntParam(
-  value: string | null,
-): number | undefined {
+function parseIntParam(value: string | null): number | undefined {
   if (value === null || value === "") return undefined;
   const parsed = Number.parseInt(value, 10);
   return Number.isFinite(parsed) ? parsed : undefined;
@@ -137,9 +136,7 @@ function parseIntParam(
  * "extra keys" (luźniej — pozwala na URL-e z filtrami nieobsługiwanymi
  * jeszcze przez API).
  */
-export function readFiltersFromSearchParams(
-  searchParams: URLSearchParams,
-): BazaarFiltersUi {
+export function readFiltersFromSearchParams(searchParams: URLSearchParams): BazaarFiltersUi {
   // ── 1. Parsowanie pól znanych API (auctionFiltersSchema) ───────────
   // Próbujemy parsować `auctionFiltersSchema` dla minimalnej walidacji
   // pól znanych serwerowi. Błędy ignorujemy (URL może mieć "extra"
@@ -158,7 +155,7 @@ export function readFiltersFromSearchParams(
   const schemaResult = auctionFiltersSchema.safeParse(known);
 
   const filters: BazaarFiltersUi = schemaResult.success
-    ? { ...schemaResult.data }
+    ? { ...schemaResult.data, storeItems: undefined }
     : {};
 
   // ── 2. Rozszerzone pola (T42+) ─────────────────────────────────────
@@ -183,6 +180,10 @@ export function readFiltersFromSearchParams(
   filters.storeMinOutfits = parseIntParam(searchParams.get("storeMinOutfits"));
   filters.storeMinMounts = parseIntParam(searchParams.get("storeMinMounts"));
   filters.storeMinItems = parseIntParam(searchParams.get("storeMinItems"));
+
+  const storeItemsParam = searchParams.get("storeItems");
+  if (storeItemsParam) filters.storeItems = storeItemsParam;
+
   filters.overpriced = parseBoolParam(searchParams.get("overpriced"));
 
   // ── 3. Cleanup: usuń pola `undefined` (czystszy obiekt) ────────────
@@ -216,6 +217,15 @@ export function buildQueryString(
   if (filters.hasSoulWar === true) params.set("hasSoulWar", "1");
   if (filters.hasPrimalOrdeal === true) params.set("hasPrimalOrdeal", "1");
   if (filters.search) params.set("search", filters.search);
+  if (filters.biddedOnly === true) params.set("biddedOnly", "1");
+  if (filters.charmPointsMin !== undefined)
+    params.set("charmPointsMin", String(filters.charmPointsMin));
+  if (filters.charmPointsMax !== undefined)
+    params.set("charmPointsMax", String(filters.charmPointsMax));
+  if (filters.tcInvestedMin !== undefined)
+    params.set("tcInvestedMin", String(filters.tcInvestedMin));
+  if (filters.tcInvestedMax !== undefined)
+    params.set("tcInvestedMax", String(filters.tcInvestedMax));
 
   // ── Extended (T42+) ────────────────────────────────────────────────
   for (const key of EXTRA_FILTER_KEYS) {
@@ -252,9 +262,7 @@ export interface UseBazaarFiltersReturn {
    * Ustawia filtry. Natychmiast aktualizuje local state (optymistyczny UI),
    * debounce'uje write do URL (300 ms).
    */
-  setFilters: (
-    next: BazaarFiltersUi | ((prev: BazaarFiltersUi) => BazaarFiltersUi),
-  ) => void;
+  setFilters: (next: BazaarFiltersUi | ((prev: BazaarFiltersUi) => BazaarFiltersUi)) => void;
   /**
    * Resetuje WSZYSTKIE filtry (do pustego obiektu).
    * NIE resetuje paginacji/sortowania — za to odpowiada `extra` w
@@ -278,18 +286,13 @@ const DEFAULT_DEBOUNCE_MS = 300;
  * setFilters({ vocation: "Knight", levelMin: 300, levelMax: 600 });
  * ```
  */
-export function useBazaarFilters(
-  options: { debounceMs?: number } = {},
-): UseBazaarFiltersReturn {
+export function useBazaarFilters(options: { debounceMs?: number } = {}): UseBazaarFiltersReturn {
   const debounceMs = options.debounceMs ?? DEFAULT_DEBOUNCE_MS;
   const router = useRouter();
   const searchParams = useSearchParams();
 
   // ── 1. Filters z URL (read) — zawsze aktualne po nawigacji/back ───
-  const filters = React.useMemo(
-    () => readFiltersFromSearchParams(searchParams),
-    [searchParams],
-  );
+  const filters = React.useMemo(() => readFiltersFromSearchParams(searchParams), [searchParams]);
 
   // ── 2. Local mirror + debounced write ─────────────────────────────
   const [localFilters, setLocalFilters] = React.useState(filters);
@@ -324,11 +327,7 @@ export function useBazaarFilters(
   );
 
   const setFilters = React.useCallback(
-    (
-      next:
-        | BazaarFiltersUi
-        | ((prev: BazaarFiltersUi) => BazaarFiltersUi),
-    ) => {
+    (next: BazaarFiltersUi | ((prev: BazaarFiltersUi) => BazaarFiltersUi)) => {
       const resolved =
         typeof next === "function"
           ? (next as (prev: BazaarFiltersUi) => BazaarFiltersUi)(localFilters)

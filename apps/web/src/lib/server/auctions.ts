@@ -24,11 +24,13 @@ import { and, asc, desc, eq, gt, gte, lte, ne, sql, SQL } from "drizzle-orm";
 import { z } from "zod";
 
 import { db } from "@tibians/db";
-import { auctions, scrapeRuns, worlds } from "@tibians/db/schema";
+import { auctionItems, auctions, items, scrapeRuns, worlds } from "@tibians/db/schema";
 import {
   auctionFiltersSchema,
+  STORE_ITEM_KEYS,
   type AuctionFilters,
   type Pagination,
+  type StoreItemKey,
   type Vocation,
 } from "@tibians/shared/auction";
 
@@ -108,13 +110,44 @@ export interface AuctionRow {
   worldBattleye: "protected" | "initially protected" | "not protected";
 }
 
+// ───────────────────────────────────────────────────────────────────────
+// Store items — mapowanie kuratorowanych kluczy na wzorce nazw itemów
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Klucz filtra → wzorzec nazwy itemu (`items.name`, ILIKE).
+ *
+ * Wzorce łączą warianty tego samego przedmiotu (np. „mailbox" łapie też
+ * „ornate mailbox"; „dummy" — exercise dummy wszystkich typów).
+ * Wymaga `items.is_store_item = true`.
+ */
+const STORE_ITEM_NAME_PATTERNS: Record<StoreItemKey, string> = {
+  trainingDummy: "%dummy%",
+  goldPouch: "%gold pouch%",
+  goldConverter: "%gold converter%",
+  hirelings: "%hireling lamp%",
+  imbuementShrine: "%imbuing shrine%",
+  rewardShrine: "%reward shrine%",
+  mailbox: "%mailbox%",
+};
+
+/** `EXISTS` — aukcja ma (co najmniej jeden) store item pasujący do wzorca. */
+function storeItemExists(pattern: string): SQL {
+  return sql`EXISTS (
+    SELECT 1 FROM ${auctionItems} ai
+    JOIN ${items} i ON i.id = ai.item_id
+    WHERE ai.auction_id = ${auctions.auctionId}
+      AND i.is_store_item = true
+      AND i.name ILIKE ${pattern}
+  )`;
+}
+
 /**
  * Helper: buduje warunki WHERE z `AuctionFilters` — czyste Drizzle SQL,
  * używane przez listAuctions i endingSoon.
  */
 function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
   const conditions: SQL[] = [];
-
   if (filters.status) {
     conditions.push(eq(auctions.status, filters.status));
   }
@@ -181,6 +214,34 @@ function buildWhereConditions(filters: AuctionFilters): SQL | undefined {
     conditions.push(
       sql`${auctions.imbuementsUnlocked} >= ${auctions.imbuementsTotal} AND ${auctions.imbuementsTotal} > 0`,
     );
+  }
+
+  // Store items (kuratorowane klucze; AND — aukcja musi mieć wszystkie).
+  if (filters.storeItems && filters.storeItems.length > 0) {
+    for (const key of filters.storeItems) {
+      conditions.push(storeItemExists(STORE_ITEM_NAME_PATTERNS[key]));
+    }
+  }
+
+  // Tylko aukcje z aktualnie złożoną ofertą (bid_type = current).
+  if (filters.biddedOnly === true) {
+    conditions.push(eq(auctions.bidType, "current"));
+  }
+
+  // Charm points — zakres.
+  if (filters.charmPointsMin !== undefined) {
+    conditions.push(gte(auctions.charmPoints, filters.charmPointsMin));
+  }
+  if (filters.charmPointsMax !== undefined) {
+    conditions.push(lte(auctions.charmPoints, filters.charmPointsMax));
+  }
+
+  // Zainwestowane Tibia Coins — zakres (aukcje bez danych odpadają).
+  if (filters.tcInvestedMin !== undefined) {
+    conditions.push(sql`${auctions.tcInvested} >= ${filters.tcInvestedMin}`);
+  }
+  if (filters.tcInvestedMax !== undefined) {
+    conditions.push(sql`${auctions.tcInvested} <= ${filters.tcInvestedMax}`);
   }
 
   // BattlEye jest na `worlds`, nie `auctions` — dołączamy do WHERE przez JOIN.
@@ -1025,7 +1086,32 @@ export interface FacetCountsServer {
   world: { value: string; count: number }[];
   pvpType: { value: string; count: number }[];
   battleye: { value: string; count: number }[];
+  /** Store items (kuratorowane klucze) — liczone osobno, bez innych filtrów. */
+  storeItems: { value: string; count: number }[];
   totalActive: number;
+}
+
+/**
+ * Liczniki store itemów (dla sekcji „Store items" w sidebarze).
+ *
+ * Liczone na pełnym zbiorze aktywnych aukcji (bez filtrów) — jak w ExevoPan
+ * licznik przy opcji pokazuje popularność przedmiotu, nie wynik bieżącego
+ * zapytania. 7 równoległych COUNT z EXISTS na indeksie `idx_ai_item`.
+ */
+export async function getStoreItemFacetCounts(): Promise<{ value: string; count: number }[]> {
+  const results = await Promise.all(
+    STORE_ITEM_KEYS.map((key) =>
+      db
+        .select({ count: sql<number>`COUNT(*)::int` })
+        .from(auctions)
+        .where(and(eq(auctions.status, "active"), storeItemExists(STORE_ITEM_NAME_PATTERNS[key]))),
+    ),
+  );
+
+  return STORE_ITEM_KEYS.map((key, index) => ({
+    value: key,
+    count: Number(results[index]?.[0]?.count ?? 0),
+  }));
 }
 
 /**
@@ -1166,6 +1252,9 @@ export async function getFacetCounts(filters: AuctionFilters): Promise<FacetCoun
       value: String(r.value),
       count: Number(r.count),
     })),
+    // Store items liczone osobno (`getStoreItemFacetCounts`) — tutaj puste;
+    // page.tsx scala: `{ ...facetCounts, storeItems: storeItemFacetCounts }`.
+    storeItems: [],
     totalActive: Number(totalR[0]?.count ?? 0),
   };
 }

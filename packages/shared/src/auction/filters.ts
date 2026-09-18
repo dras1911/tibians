@@ -63,6 +63,29 @@ const BidBoundSchema = z.coerce
   .int("Oferta musi być liczbą całkowitą")
   .min(0, "Oferta nie może być ujemna");
 
+// ───────────────────────────────────────────────────────────────────────
+// Store items — kuratorowana lista (jak ExevoPan)
+// ───────────────────────────────────────────────────────────────────────
+
+/**
+ * Klucze store itemów oferowane w filtrze (`?storeItems=a,b`).
+ *
+ * Aukcja musi mieć WSZYSTKIE wybrane (AND). Mapowanie klucz → wzorzec nazwy
+ * itemu w DB: `apps/web/src/lib/server/auctions.ts` (`STORE_ITEM_NAME_PATTERNS`)
+ * — łączy warianty tego samego itemu (np. „mailbox" i „ornate mailbox").
+ */
+export const STORE_ITEM_KEYS = [
+  "trainingDummy",
+  "goldPouch",
+  "goldConverter",
+  "hirelings",
+  "imbuementShrine",
+  "rewardShrine",
+  "mailbox",
+] as const;
+
+export type StoreItemKey = (typeof STORE_ITEM_KEYS)[number];
+
 /**
  * Schemat filtrów listy aukcji. Wszystkie pola opcjonalne.
  *
@@ -85,7 +108,15 @@ const BidBoundSchema = z.coerce
  *   sortBy      → AuctionOrderColumn
  *   sortDir     → asc|desc
  */
-export const auctionFiltersSchema = z
+/**
+ * Bazowy obiekt schematu filtrów (BEZ refine'ów).
+ *
+ * `.shape` tego obiektu służy do rozdzielania searchParams od paginacji
+ * (patrz `apps/web/src/lib/server/bazaar-params.ts`) — refine'y opakowują
+ * obiekt w `ZodEffects`, które nie eksponują `shape`. Kontrakt zewnętrzny
+ * to `auctionFiltersSchema` (obiekt + refine'y).
+ */
+export const auctionFiltersObject = z
   .object({
     /** Nazwa świata (rozwiązywana do worldId po stronie DB). */
     world: z
@@ -160,6 +191,31 @@ export const auctionFiltersSchema = z
       .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
       .transform((v) => v === "true" || v === "1")
       .optional(),
+    /**
+     * Store items (kuratorowana lista jak ExevoPan) — CSV kluczy,
+     * np. `?storeItems=goldPouch,mailbox`. Aukcja musi mieć WSZYSTKIE
+     * wybrane itemy (AND).
+     */
+    storeItems: z
+      .string()
+      .transform((s) => s.split(",").filter(Boolean))
+      .pipe(z.array(z.enum(STORE_ITEM_KEYS)).max(STORE_ITEM_KEYS.length))
+      .optional(),
+
+    /** Tylko aukcje z aktualnie złożoną ofertą (`bid_type = current`). */
+    biddedOnly: z
+      .union([z.literal("true"), z.literal("false"), z.literal("1"), z.literal("0")])
+      .transform((v) => v === "true" || v === "1")
+      .optional(),
+
+    /** Min/max charm points. */
+    charmPointsMin: z.coerce.number().int().min(0).optional(),
+    charmPointsMax: z.coerce.number().int().min(0).optional(),
+
+    /** Min/max zainwestowane Tibia Coins (`tc_invested`; brak danych = odpada). */
+    tcInvestedMin: z.coerce.number().int().min(0).optional(),
+    tcInvestedMax: z.coerce.number().int().min(0).optional(),
+
     /** BattlEye (wymuszenie na świecie — wcześniej dostępne tylko w UI). */
     battleye: z.enum(["protected", "initially protected", "not protected"]).optional(),
 
@@ -173,10 +229,10 @@ export const auctionFiltersSchema = z
     sortBy: AuctionOrderColumnSchema.default("auctionEnd"),
     sortDir: AuctionOrderDirectionSchema.default("asc"),
   })
-  .strict()
-  // ─────────────────────────────────────────────────────────────────
-  // Cross-validation refinements
-  // ─────────────────────────────────────────────────────────────────
+  .strict();
+
+/** Pełny schemat filtrów = obiekt + cross-validation refine'y. */
+export const auctionFiltersSchema = auctionFiltersObject
   /** levelMin ≤ levelMax. */
   .refine((f) => f.levelMin == null || f.levelMax == null || f.levelMin <= f.levelMax, {
     message: "levelMin nie może być większy niż levelMax",
@@ -198,6 +254,21 @@ export const auctionFiltersSchema = z
     {
       message: "skillType wymaga podania skillMin lub skillMax",
       path: ["skillType"],
+    },
+  )
+  .refine(
+    (f) =>
+      f.charmPointsMin == null || f.charmPointsMax == null || f.charmPointsMin <= f.charmPointsMax,
+    {
+      message: "charmPointsMin nie może być większy niż charmPointsMax",
+      path: ["charmPointsMin"],
+    },
+  )
+  .refine(
+    (f) => f.tcInvestedMin == null || f.tcInvestedMax == null || f.tcInvestedMin <= f.tcInvestedMax,
+    {
+      message: "tcInvestedMin nie może być większy niż tcInvestedMax",
+      path: ["tcInvestedMin"],
     },
   );
 
